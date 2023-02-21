@@ -76,7 +76,11 @@ type alias MainScreenModel =
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , location : ( Float, Float )
     , currentTime : Posix
-    , zone : Zone
+
+    -- NOTE: depending on flags I may have the date
+    -- before I actually have the zone to
+    -- make the next request with the correct date
+    , zone : Maybe Zone
     , primaryColor : Color
     , isOptionMenuOpen : Bool
 
@@ -84,6 +88,7 @@ type alias MainScreenModel =
     -- but if the user is mainly on the MainScreen + caching then it's
     -- unnecessary overhead and logic that's not worth it
     -- NOTE: could be made into a Loading | Loaded | Error type union
+    -- can't be bothered though
     , country : String
     , state : String
     , countryAndStateVisibility : Animator.Timeline Bool
@@ -249,10 +254,7 @@ init val =
                         , currentRefetchingAnim = Animator.init NotRefetching
                         , location = ( latitude, longitude )
                         , currentTime = Time.millisToPosix posixTimeNow
-
-                        -- TODO: fetch zone before re-fetching data.
-                        -- delay is not noticeably by the user
-                        , zone = Time.utc
+                        , zone = Nothing
                         , primaryColor = primary
                         , isOptionMenuOpen = False
                         , country = ""
@@ -336,7 +338,7 @@ update topMsg topModel =
                                         , currentRefetchingAnim = Animator.init NotRefetching
                                         , location = modelData.location
                                         , currentTime = modelData.currentTime
-                                        , zone = modelData.zone
+                                        , zone = Just modelData.zone
                                         , primaryColor = primary
                                         , isOptionMenuOpen = False
                                         , country = ""
@@ -419,30 +421,40 @@ update topMsg topModel =
                             )
 
                 RefetchWeatherOnBackground ->
-                    ( { model
-                        | currentRefetchingAnim =
-                            model.currentRefetchingAnim
-                                |> Animator.go Animator.immediately Refetching
-                        , currentRefetchingStatus = Refetching
-                      }
-                    , Cmd.batch
-                        [ let
-                            ( latitude, longitude ) =
-                                model.location
-                          in
-                          Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
-                        , Api.getData model.location model.currentTime model.zone GotRefetchingWeatherResp
-                        ]
+                    (case model.zone of
+                        Just zone ->
+                            ( { model
+                                | currentRefetchingAnim =
+                                    model.currentRefetchingAnim
+                                        |> Animator.go Animator.immediately Refetching
+                                , currentRefetchingStatus = Refetching
+                              }
+                            , Cmd.batch
+                                [ let
+                                    ( latitude, longitude ) =
+                                        model.location
+                                  in
+                                  Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
+                                , Api.getData model.location model.currentTime zone GotRefetchingWeatherResp
+                                ]
+                            )
+
+                        Nothing ->
+                            ( model, Cmd.none )
                     )
                         |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
 
                 GotCurrentZoneMainScreen zone ->
-                    -- TODO: This probably should be split into two states
-                    -- HasCurrentZone and HasNoCurrentZone but i can't be bothered
-                    -- it would be for the sake of the query being made for the first moment
+                    -- NOTE: currently the states of 'hasZone' and 'hasNoZone' are "implicit"
+                    -- i.e: i have to remember to change both and how they work together
+                    -- will split it into two later
+                    -- currently how it works is i don't fetch any data if i have no zone
+                    -- and i fetch the zone if i have no zone, all this is
+                    -- being set up in the flags, otherwise it works as normal
+                    -- since LoadingScreen would pass zone to MainScreen
                     ( MainScreen
                         { model
-                            | zone = zone
+                            | zone = Just zone
                             , currentRefetchingAnim =
                                 model.currentRefetchingAnim
                                     |> Animator.go Animator.immediately Refetching
@@ -659,6 +671,12 @@ loadingScreenView model =
 
 mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen model =
+    let
+        -- NOTE: this is just accounting for the brief moment
+        -- if and where I don't have the user's time zone
+        zone =
+            Maybe.withDefault Time.utc model.zone
+    in
     el
         [ width fill
         , height fill
@@ -770,19 +788,19 @@ mainScreen model =
                     (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
                         [ text
                             (model.currentTime
-                                |> Time.toWeekday model.zone
+                                |> Time.toWeekday zone
                                 |> dayToString
                             )
                         , text ", "
                         , text
                             (model.currentTime
-                                |> Time.toDay model.zone
+                                |> Time.toDay zone
                                 |> String.fromInt
                             )
                         , text " "
                         , text
                             (model.currentTime
-                                |> Time.toMonth model.zone
+                                |> Time.toMonth zone
                                 |> monthToString
                             )
                         ]
@@ -792,7 +810,7 @@ mainScreen model =
                         let
                             closestHourly : Hourly
                             closestHourly =
-                                timeClosestToMine model.zone model.currentTime x xs
+                                timeClosestToMine zone model.currentTime x xs
 
                             actualTemp : String
                             actualTemp =
@@ -832,7 +850,7 @@ mainScreen model =
                         let
                             closestHourly : Hourly
                             closestHourly =
-                                timeClosestToMine model.zone model.currentTime x xs
+                                timeClosestToMine zone model.currentTime x xs
 
                             actualTemp : String
                             actualTemp =
@@ -858,7 +876,7 @@ mainScreen model =
 
                             todayHourlyData : List Hourly
                             todayHourlyData =
-                                hourlyDataOfToday model.zone model.currentTime model.apiData.hourly
+                                hourlyDataOfToday zone model.currentTime model.apiData.hourly
 
                             lowestTempOfToday : String
                             lowestTempOfToday =
@@ -926,7 +944,7 @@ mainScreen model =
                                 Icons.air
                                 (case model.apiData.hourly of
                                     x :: xs ->
-                                        (timeClosestToMine model.zone model.currentTime x xs
+                                        (timeClosestToMine zone model.currentTime x xs
                                             |> .windSpeed
                                             -- NOTE: in theory this will never happen
                                             -- as we know what temperature it is "right now"
@@ -947,7 +965,7 @@ mainScreen model =
                                 Outlined.water_drop
                                 (case model.apiData.hourly of
                                     x :: xs ->
-                                        (timeClosestToMine model.zone model.currentTime x xs
+                                        (timeClosestToMine zone model.currentTime x xs
                                             |> .relativeHumidity
                                             |> String.fromInt
                                         )
@@ -961,7 +979,7 @@ mainScreen model =
                                 Outlined.visibility
                                 (case model.apiData.hourly of
                                     x :: xs ->
-                                        (timeClosestToMine model.zone model.currentTime x xs
+                                        (timeClosestToMine zone model.currentTime x xs
                                             |> .visibility
                                             |> toKm
                                             |> round
