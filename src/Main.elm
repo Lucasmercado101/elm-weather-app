@@ -71,22 +71,19 @@ animator =
 
 
 type alias MainScreenModel =
-    { apiData : ResponseData
-    , currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
+    { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , location : ( Float, Float )
-    , currentTime : Posix
-
-    -- NOTE: depending on flags I may have the date
-    -- before I actually have the zone to
-    -- make the next request with the correct date
-    , zone : Maybe Zone
     , primaryColor : Color
     , isOptionMenuOpen : Bool
+    , zone : Maybe Zone
+    , currentTime : Posix
 
     -- NOTE: could be fetched before on the loading screen
     -- but if the user is mainly on the MainScreen + caching then it's
     -- unnecessary overhead and logic that's not worth it
+    , apiData : ResponseData
+
     -- NOTE: could be made into a Loading | Loaded | Error type union
     -- can't be bothered though
     , country : String
@@ -135,10 +132,8 @@ type MainScreenMsg
     | OpenOptionsMenu
     | CloseOptionsMenu
     | RefetchWeatherOnBackground
-    | GotRefetchingWeatherResp (Result Http.Error ResponseData)
+    | GotRefetchingWeatherResp (Result Http.Error ( ResponseData, Posix, Zone ))
     | Tick Time.Posix
-    | GotCurrentZoneMainScreen Zone
-    | GotCurrentTimeMainScreen Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
 
 
@@ -262,8 +257,8 @@ init val =
                         , countryAndStateVisibility = Animator.init False
                         }
                     , Cmd.batch
-                        [ Task.perform GotCurrentZoneMainScreen Time.here
-                            |> Cmd.map OnMainScreenMsg
+                        [ Api.getDataAsTask ( latitude, longitude )
+                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
                         , Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
                             |> Cmd.map OnMainScreenMsg
                         ]
@@ -421,71 +416,41 @@ update topMsg topModel =
                             )
 
                 RefetchWeatherOnBackground ->
-                    (case model.zone of
-                        Just zone ->
-                            ( { model
-                                | currentRefetchingAnim =
-                                    model.currentRefetchingAnim
-                                        |> Animator.go Animator.immediately Refetching
-                                , currentRefetchingStatus = Refetching
-                              }
-                            , Cmd.batch
-                                [ let
-                                    ( latitude, longitude ) =
-                                        model.location
-                                  in
-                                  Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
-
-                                --  TODO: currently refetching using given coordinates,
-                                --  but it should be the coordinates given if no locations perms allowed
-                                --  otherwise get current location and fetch using that, also add option to change
-                                --  location on menu
-                                , Api.getData model.location model.currentTime zone GotRefetchingWeatherResp
-                                ]
-                            )
-
-                        Nothing ->
-                            ( model, Cmd.none )
-                    )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
-
-                GotCurrentZoneMainScreen zone ->
-                    -- NOTE: currently the states of 'hasZone' and 'hasNoZone' are "implicit"
-                    -- i.e: i have to remember to change both and how they work together
-                    -- will split it into two later
-                    -- currently how it works is i don't fetch any data if i have no zone
-                    -- and i fetch the zone if i have no zone, all this is
-                    -- being set up in the flags, otherwise it works as normal
-                    -- since LoadingScreen would pass zone to MainScreen
                     ( MainScreen
                         { model
-                            | zone = Just zone
-                            , currentRefetchingAnim =
+                            | currentRefetchingAnim =
                                 model.currentRefetchingAnim
                                     |> Animator.go Animator.immediately Refetching
                             , currentRefetchingStatus = Refetching
                         }
-                    , Api.getData model.location model.currentTime zone GotRefetchingWeatherResp
-                        |> Cmd.map OnMainScreenMsg
-                    )
+                    , Cmd.batch
+                        (let
+                            ( latitude, longitude ) =
+                                model.location
+                         in
+                         [ Api.getReverseGeocoding ( latitude, longitude ) (\l -> OnMainScreenMsg (GotCountryAndStateMainScreen l))
 
-                GotCurrentTimeMainScreen time ->
-                    ( MainScreen
-                        { model
-                            | currentTime = time
-                        }
-                    , Cmd.none
+                         --  TODO: currently refetching using given coordinates,
+                         --  but it should be the coordinates given if no locations perms allowed
+                         --  otherwise get current location and fetch using that, also add option to change
+                         --  location on menu
+                         , Api.getDataAsTask ( latitude, longitude )
+                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
+                         ]
+                        )
                     )
 
                 GotRefetchingWeatherResp result ->
                     (case result of
-                        Ok data ->
+                        Ok ( data, posix, zone ) ->
                             ( { model
                                 | apiData = data
                                 , currentRefetchingAnim =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately NotRefetching
                                 , currentRefetchingStatus = NotRefetching
+                                , currentTime = posix
+                                , zone = Just zone
                               }
                             , Cmd.none
                             )
