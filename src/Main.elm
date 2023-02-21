@@ -145,40 +145,45 @@ type Msg
 
 
 -- MAIN
-
-
-flagsDecoder : JD.Decoder Flags
-flagsDecoder =
-    JD.map2 Flags
-        (JD.field "posixTimeNow" JD.int)
-        (JD.maybe
-            (JD.field "location"
-                (JD.map2
-                    (\lat long ->
-                        { latitude = lat
-                        , longitude = long
-                        }
-                    )
-                    (JD.field "latitude" JD.float)
-                    (JD.field "longitude" JD.float)
-                )
-            )
-        )
-
-
-
 -- TODO: handle receiving error on
 -- location: granted but error on attempting to get location
 
 
-type alias Flags =
-    { posixTimeNow : Int
-    , location :
-        Maybe
-            { latitude : Float
-            , longitude : Float
-            }
-    }
+type Flags
+    = TimeOnly { posixTimeNow : Int }
+    | TimeAndLocationCoords { posixTimeNow : Int, latitude : Float, longitude : Float }
+
+
+posixFlagDecoder : JD.Decoder Flags
+posixFlagDecoder =
+    JD.field "posixTimeNow" JD.int
+        |> JD.map (\l -> TimeOnly { posixTimeNow = l })
+
+
+posixAndLocationsFlagDecoder : JD.Decoder Flags
+posixAndLocationsFlagDecoder =
+    JD.map3
+        (\time latitude longitude ->
+            TimeAndLocationCoords
+                { posixTimeNow = time
+                , latitude = latitude
+                , longitude = longitude
+                }
+        )
+        (JD.field "posixTimeNow" JD.int)
+        (JD.field "latitude" JD.float)
+        (JD.field "longitude" JD.float)
+
+
+flagsDecoders : JD.Value -> Result JD.Error Flags
+flagsDecoders value =
+    JD.decodeValue
+        (JD.oneOf
+            [ posixAndLocationsFlagDecoder
+            , posixFlagDecoder
+            ]
+        )
+        value
 
 
 main : Program JD.Value Model Msg
@@ -193,10 +198,15 @@ main =
 
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
-    case JD.decodeValue flagsDecoder val of
-        Ok { posixTimeNow, location } ->
-            case location of
-                Just { latitude, longitude } ->
+    case flagsDecoders val of
+        Ok flags ->
+            case flags of
+                TimeOnly { posixTimeNow } ->
+                    ( WelcomeScreen (Welcome.welcomeScreenInit posixTimeNow)
+                    , Cmd.none
+                    )
+
+                TimeAndLocationCoords { posixTimeNow, latitude, longitude } ->
                     ( MainScreen
                         { apiData =
                             { daily = [ ( Time.millisToPosix 0, Api.ClearSky, 15 ) ]
@@ -238,24 +248,20 @@ init val =
                         ]
                     )
 
-                -- ( LoadingScreen
-                --     (LoadingScreenHasNoCurrentZone
-                --         { location = ( latitude, longitude )
-                --         , currentTime = Time.millisToPosix posixTimeNow
-                --         }
-                --     )
-                -- , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
-                -- )
-                Nothing ->
-                    ( WelcomeScreen (Welcome.welcomeScreenInit posixTimeNow)
-                    , Cmd.none
-                    )
-
+        -- ( LoadingScreen
+        --     (LoadingScreenHasNoCurrentZone
+        --         { location = ( latitude, longitude )
+        --         , currentTime = Time.millisToPosix posixTimeNow
+        --         }
+        --     )
+        -- , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
+        -- )
         Err err ->
-            -- TODO: handle this, will need to call Time.now in welcome
-            ( WelcomeScreen (Welcome.welcomeScreenInit 0)
-            , Cmd.none
-            )
+            Debug.log (Debug.toString err) <|
+                -- TODO: handle this, will need to call Time.now in welcome
+                ( WelcomeScreen (Welcome.welcomeScreenInit 0)
+                , Cmd.none
+                )
 
 
 

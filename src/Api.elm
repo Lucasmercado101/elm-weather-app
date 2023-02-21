@@ -151,8 +151,7 @@ getData ( lat, long ) startDate zone msg =
 
 type alias ResponseData =
     { daily : Daily
-    , hourly :
-        List Hourly
+    , hourly : List Hourly
     }
 
 

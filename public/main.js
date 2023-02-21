@@ -1,4 +1,6 @@
 "use strict";
+console.time("initial");
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("worker.js")
@@ -26,10 +28,10 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-const startAppWFlags = (flags = {}) =>
+const startAppWFlags = (latitude, longitude) =>
   Elm.Main.init({
     node: document.getElementById("root"),
-    flags: { posixTimeNow: Date.now(), ...flags }
+    flags: { posixTimeNow: Date.now(), latitude, longitude }
   });
 
 // try {
@@ -57,8 +59,10 @@ if (navigator.permissions) {
                 console.log("Here");
               });
             }
-            console.log("after");
-            const app = startAppWFlags({ location: position.coords });
+            const app = startAppWFlags(
+              position.coords.latitude,
+              position.coords.longitude
+            );
             main(app);
           },
           (error) => {
