@@ -17,6 +17,9 @@ if ("serviceWorker" in navigator) {
   });
 
   navigator.serviceWorker.addEventListener("message", (event) => {
+    // NOTE: instead of adding it to cache on SW
+    // i'm passing it to here and storing it in localStorage
+    // as It's about 9-10~ times faster than using cache.match
     const data = event.data;
     if (data.type === "meteo") {
       try {
