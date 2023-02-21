@@ -11,9 +11,8 @@ import Utils exposing (..)
 
 
 type alias WelcomeScreenModel =
-    { errorMessage : Maybe String
-    , manualLocation : ( String, String )
-    , manualLocationErr : String
+    { manualLocation : ( String, String )
+    , errorBanner : String
 
     -- It's only to pass it along to the next step/screen
     , currentTime : Posix
@@ -45,9 +44,8 @@ welcomeScreenSubscriptions _ =
 
 welcomeScreenInit : Int -> WelcomeScreenModel
 welcomeScreenInit posixTimeNow =
-    { errorMessage = Nothing
-    , manualLocation = ( "", "" )
-    , manualLocationErr = ""
+    { manualLocation = ( "", "" )
+    , errorBanner = ""
     , receivedLocation = Nothing
     , currentTime = Time.millisToPosix posixTimeNow
     }
@@ -58,47 +56,42 @@ welcomeScreenUpdate msg model =
     let
         ( lat, lon ) =
             model.manualLocation
+
+        -- NOTE: parent will intercept this and move on to the next screen
+        exitScreen : { latitude : Float, longitude : Float } -> WelcomeScreenModel
+        exitScreen val =
+            { model | receivedLocation = Just val }
     in
     case msg of
         RequestLocationPerms ->
-            ( { model | errorMessage = Nothing }, requestLocPerms )
+            ( { model | errorBanner = "" }, requestLocPerms )
 
         ReceivedLocation coords ->
-            -- NOTE: signal to parent
-            { model | receivedLocation = Just coords } |> pure
+            exitScreen coords |> pure
 
         RequestLocationPermsApiError err ->
             { model
-                | errorMessage =
+                | errorBanner =
                     err
                         |> codeToGeoLocationApiError
                         |> geoLocationApiErrorToString
-                        |> Just
             }
                 |> pure
 
         NoGeoLocationApi () ->
-            { model | errorMessage = Just noGeoApiAvailableErrStr } |> pure
+            { model | errorBanner = noGeoApiAvailableErrStr } |> pure
 
         OnChangeLatitude str ->
-            { model
-                | errorMessage = model.errorMessage
-                , manualLocation = ( str, lon )
-            }
-                |> pure
+            { model | manualLocation = ( str, lon ) } |> pure
 
         OnChangeLongitude str ->
-            { model
-                | errorMessage = model.errorMessage
-                , manualLocation = ( lat, str )
-            }
-                |> pure
+            { model | manualLocation = ( lat, str ) } |> pure
 
         SubmitManualLocationForm ->
             let
                 setManualError : String -> WelcomeScreenModel
                 setManualError errStr =
-                    { model | errorMessage = Nothing, manualLocationErr = errStr }
+                    { model | errorBanner = errStr }
             in
             (case String.toFloat lat of
                 Just latFloat ->
@@ -112,7 +105,7 @@ welcomeScreenUpdate msg model =
                                     setManualError "Longitude must be between -180 and 180"
 
                                 else
-                                    { model | receivedLocation = Just { latitude = latFloat, longitude = lonFloat } }
+                                    exitScreen { latitude = latFloat, longitude = lonFloat }
 
                             Nothing ->
                                 setManualError "Longitude must be a valid number"
@@ -124,13 +117,10 @@ welcomeScreenUpdate msg model =
 
 
 welcomeScreenView : WelcomeScreenModel -> Element WelcomeScreenMsg
-welcomeScreenView { manualLocationErr, manualLocation, errorMessage } =
+welcomeScreenView { errorBanner, manualLocation } =
     let
         ( lat, lon ) =
             manualLocation
-
-        errStr =
-            errorMessage |> Maybe.withDefault ""
     in
     el
         [ width fill
@@ -155,7 +145,7 @@ welcomeScreenView { manualLocationErr, manualLocation, errorMessage } =
                         , Font.bold
                         , paddingXY 24 12
                         , Font.size 22
-                        , if errStr == noGeoApiAvailableErrStr then
+                        , if errorBanner == noGeoApiAvailableErrStr then
                             Font.strike
 
                           else
@@ -168,7 +158,7 @@ welcomeScreenView { manualLocationErr, manualLocation, errorMessage } =
                     [ centerX
                     , Background.color black
                     ]
-                    [ if manualLocationErr /= "" then
+                    [ if errorBanner /= "" then
                         column [ width fill ]
                             [ paragraph
                                 [ paddingXY 24 12
@@ -190,7 +180,7 @@ welcomeScreenView { manualLocationErr, manualLocation, errorMessage } =
                                     , Font.light
                                     , Font.size 18
                                     ]
-                                    (text manualLocationErr)
+                                    (text errorBanner)
                                 ]
                             , el [ width fill, height (px 1), Background.color primary ] none
                             ]
@@ -236,3 +226,8 @@ welcomeScreenView { manualLocationErr, manualLocation, errorMessage } =
                 ]
             )
         )
+
+
+noGeoApiAvailableErrStr : String
+noGeoApiAvailableErrStr =
+    "No Geolocation API available on your device"

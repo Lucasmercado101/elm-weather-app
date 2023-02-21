@@ -586,19 +586,18 @@ view model =
                     none
 
                 WelcomeScreen noLocationDataModel ->
-                    case noLocationDataModel.errorMessage of
-                        Just errStr ->
-                            paragraph
-                                [ Background.color black
-                                , Font.color primary
-                                , Font.bold
-                                , paddingXY 24 12
-                                , Font.size 22
-                                ]
-                                [ text "Error: ", el [ Font.light ] (text errStr) ]
+                    if noLocationDataModel.errorBanner /= "" then
+                        paragraph
+                            [ Background.color black
+                            , Font.color primary
+                            , Font.bold
+                            , paddingXY 24 12
+                            , Font.size 22
+                            ]
+                            [ text "Error: ", el [ Font.light ] (text noLocationDataModel.errorBanner) ]
 
-                        Nothing ->
-                            none
+                    else
+                        none
             )
         ]
         (case model of

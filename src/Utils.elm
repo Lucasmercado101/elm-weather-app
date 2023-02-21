@@ -1,13 +1,8 @@
 module Utils exposing (..)
 
 import Element exposing (Color, Element)
-import Html exposing (Html)
+import Html
 import Time
-
-
-noGeoApiAvailableErrStr : String
-noGeoApiAvailableErrStr =
-    "No Geolocation API available on your device"
 
 
 paddingBottom : Int -> Element.Attribute msg
