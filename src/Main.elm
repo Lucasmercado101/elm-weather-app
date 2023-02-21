@@ -677,7 +677,7 @@ mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen model =
     let
         -- NOTE: this is just accounting for the brief moment
-        -- if and where I don't have the user's time zone
+        -- if and when I don't have the user's time zone
         zone =
             Maybe.withDefault Time.utc model.zone
     in
