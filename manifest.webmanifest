@@ -2,8 +2,8 @@
   "theme_color": "#fee142",
   "background_color": "#fee142",
   "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
+  "scope": "https://github.com/Lucasmercado101/elm-weather-app/",
+  "start_url": "https://github.com/Lucasmercado101/elm-weather-app/",
   "name": "WeatherMate",
   "short_name": "WeatherMate",
   "icons": [
