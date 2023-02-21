@@ -133,106 +133,101 @@ welcomeScreenView { manualLocationErr, manualLocation } =
     el
         [ width fill
         , height fill
+        , Background.color primary
         ]
-        (el
-            [ width fill
-            , height fill
-            , Background.color primary
-            ]
-            (column [ width fill, centerX, centerY ]
-                [ paragraph [ Font.center, Font.size 52, Font.semiBold ]
-                    [ el [ Font.center ] (text "Welcome to")
-                    , br
-                    , el [ Font.heavy ] (text "WeatherMate")
-                    ]
-                , el [ paddingTop 18, centerX ]
-                    (button
-                        [ centerX
-                        , Background.color black
-                        , Font.color primary
-                        , Font.bold
-                        , paddingXY 24 12
-                        , Font.size 22
-                        , if manualLocationErr == noGeoApiAvailableErrStr then
-                            Font.strike
-
-                          else
-                            Font.bold
-                        ]
-                        { label = text "Enable Location Permission", onPress = Just RequestLocationPerms }
-                    )
-                , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
-                , column
+        (column [ width fill, centerX, centerY ]
+            [ paragraph [ Font.center, Font.size 52, Font.semiBold ]
+                [ el [ Font.center ] (text "Welcome to")
+                , br
+                , el [ Font.heavy ] (text "WeatherMate")
+                ]
+            , el [ paddingTop 18, centerX ]
+                (button
                     [ centerX
                     , Background.color black
-                    ]
-                    [ if manualLocationErr /= "" then
-                        column [ width fill ]
-                            [ paragraph
-                                [ paddingXY 24 12
-                                , Font.center
-                                , spacing 8
-                                ]
-                                [ el
-                                    [ centerX
-                                    , Font.color primary
-                                    , Font.heavy
-                                    , Font.underline
-                                    , Font.size 22
-                                    ]
-                                    (text "Error")
-                                , br
-                                , el
-                                    [ centerX
-                                    , Font.color primary
-                                    , Font.light
-                                    , Font.size 18
-                                    ]
-                                    (text manualLocationErr)
-                                ]
-                            , el [ width fill, height (px 1), Background.color primary ] none
-                            ]
+                    , Font.color primary
+                    , Font.bold
+                    , paddingXY 24 12
+                    , Font.size 22
+                    , if manualLocationErr == noGeoApiAvailableErrStr then
+                        Font.strike
 
                       else
-                        none
-                    , column
-                        [ paddingXY 24 24
-                        , width fill
-                        , spacing 24
-                        ]
-                        [ Input.text
-                            [ width fill
-                            , Background.color primary
-                            ]
-                            { onChange = \l -> OnChangeLatitude l
-                            , text = lat
-                            , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "-150.58")))
-                            , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
-                            }
-                        , Input.text
-                            [ width fill
-                            , Background.color primary
-                            ]
-                            { onChange = \l -> OnChangeLongitude l
-                            , text = lon
-                            , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "75.88")))
-                            , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
-                            }
-                        ]
-                    , el [ width fill, height (px 1), Background.color primary ] none
-                    , el [ centerX ]
-                        (button
-                            [ paddingXY 24 12
-                            , centerX
-                            , Font.color primary
-                            , Font.bold
-                            , Font.size 22
-                            ]
-                            { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
-                        )
+                        Font.bold
                     ]
+                    { label = text "Enable Location Permission", onPress = Just RequestLocationPerms }
+                )
+            , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
+            , column
+                [ centerX
+                , Background.color black
                 ]
-            )
+                [ if manualLocationErr /= "" then
+                    column [ width fill ]
+                        [ paragraph
+                            [ paddingXY 24 12
+                            , Font.center
+                            , spacing 8
+                            ]
+                            [ el
+                                [ centerX
+                                , Font.color primary
+                                , Font.heavy
+                                , Font.underline
+                                , Font.size 22
+                                ]
+                                (text "Error")
+                            , br
+                            , el
+                                [ centerX
+                                , Font.color primary
+                                , Font.light
+                                , Font.size 18
+                                ]
+                                (text manualLocationErr)
+                            ]
+                        , el [ width fill, height (px 1), Background.color primary ] none
+                        ]
+
+                  else
+                    none
+                , column
+                    [ paddingXY 24 24
+                    , width fill
+                    , spacing 24
+                    ]
+                    [ Input.text
+                        [ width fill
+                        , Background.color primary
+                        ]
+                        { onChange = \l -> OnChangeLatitude l
+                        , text = lat
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "-150.58")))
+                        , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
+                        }
+                    , Input.text
+                        [ width fill
+                        , Background.color primary
+                        ]
+                        { onChange = \l -> OnChangeLongitude l
+                        , text = lon
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "75.88")))
+                        , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
+                        }
+                    ]
+                , el [ width fill, height (px 1), Background.color primary ] none
+                , el [ centerX ]
+                    (button
+                        [ paddingXY 24 12
+                        , centerX
+                        , Font.color primary
+                        , Font.bold
+                        , Font.size 22
+                        ]
+                        { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
+                    )
+                ]
+            ]
         )
 
 
