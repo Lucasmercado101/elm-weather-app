@@ -2,11 +2,12 @@ module Api exposing (..)
 
 import Http
 import Iso8601
-import Json.Decode exposing (Decoder, field, float, int, list, map, map2, map3, map4, map7, maybe, string)
+import Json.Decode exposing (Decoder, decodeString, field, float, int, list, map, map2, map3, map4, map7, maybe, string)
 import MIcons exposing (foggy, partlyCloudy, rainy, snowing, weatherSnowy)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Icon)
-import Time exposing (Posix)
+import Task exposing (Task)
+import Time exposing (Posix, Zone)
 import Time.Extra exposing (Interval(..), add, posixToParts)
 import Utils exposing (monthToInt)
 
@@ -147,6 +148,126 @@ getData ( lat, long ) startDate zone msg =
             Http.expectJson msg
                 responseDataDecoder
         }
+
+
+getDataAsTask : ( Float, Float ) -> Task Http.Error ( ResponseData, Posix, Zone )
+getDataAsTask ( lat, lon ) =
+    Task.map2 Tuple.pair Time.here Time.now
+        |> Task.andThen
+            (\( zone, posix ) ->
+                let
+                    startDate =
+                        posix
+
+                    latitude =
+                        String.fromFloat lat
+
+                    longitude =
+                        String.fromFloat lon
+
+                    endDate =
+                        startDate |> add Day 7 zone
+
+                    dateToStr : Time.Extra.Parts -> String
+                    dateToStr parts =
+                        String.fromInt parts.year
+                            ++ "-"
+                            ++ (parts.month
+                                    |> monthToInt
+                                    |> String.fromInt
+                                    |> (\l ->
+                                            if String.length l == 1 then
+                                                "0" ++ l
+
+                                            else
+                                                l
+                                       )
+                               )
+                            ++ "-"
+                            ++ (parts.day
+                                    |> String.fromInt
+                                    |> (\l ->
+                                            if String.length l == 1 then
+                                                "0" ++ l
+
+                                            else
+                                                l
+                                       )
+                               )
+
+                    startDateString =
+                        startDate
+                            |> posixToParts zone
+                            |> dateToStr
+
+                    endDateStrings =
+                        endDate
+                            |> posixToParts zone
+                            |> dateToStr
+                in
+                Http.task
+                    { method = "GET"
+                    , headers = []
+                    , url = endpoint { latitude = latitude, longitude = longitude, startDate = startDateString, endDate = endDateStrings }
+                    , body = Http.emptyBody
+                    , resolver =
+                        Http.stringResolver
+                            (\response ->
+                                case response of
+                                    Http.BadUrl_ url ->
+                                        Err (Http.BadUrl url)
+
+                                    Http.Timeout_ ->
+                                        Err Http.Timeout
+
+                                    Http.NetworkError_ ->
+                                        Err Http.NetworkError
+
+                                    Http.BadStatus_ metadata body ->
+                                        Err (Http.BadStatus metadata.statusCode)
+
+                                    Http.GoodStatus_ metadata body ->
+                                        case decodeString responseDataDecoder body of
+                                            Ok value ->
+                                                Ok ( value, posix, zone )
+
+                                            Err err ->
+                                                Err (Http.BadBody (Json.Decode.errorToString err))
+                            )
+                    , timeout = Just 10000
+                    }
+            )
+
+
+
+-- getDataAsTask : Task Http.Error ResponseData
+-- getDataAsTask =
+--     Http.task
+--         { method = "GET"
+--         , headers = []
+--         , url = "a"
+--         , body = Http.emptyBody
+--         , resolver =
+--             Http.stringResolver
+--                 (\response ->
+--                     case response of
+--                         Http.BadUrl_ url ->
+--                             Err (Http.BadUrl url)
+--                         Http.Timeout_ ->
+--                             Err Http.Timeout
+--                         Http.NetworkError_ ->
+--                             Err Http.NetworkError
+--                         Http.BadStatus_ metadata body ->
+--                             Err (Http.BadStatus metadata.statusCode)
+--                         Http.GoodStatus_ metadata body ->
+--                             case decodeString responseDataDecoder body of
+--                                 Ok value ->
+--                                     Ok value
+--                                 Err err ->
+--                                     Err (Http.BadBody (Json.Decode.errorToString err))
+--                 )
+--         , timeout = Just 10000
+--         }
 
 
 type alias ResponseData =
