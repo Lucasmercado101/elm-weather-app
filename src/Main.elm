@@ -743,33 +743,20 @@ mainScreen model =
                                     Animator.at 0
                         )
                     ]
-                    [ el
+                    [ paragraph
                         [ centerX
                         , centerY
                         , Font.heavy
                         , Font.size 28
+                        , Font.center
                         ]
-                        -- TODO: fix style, when it's too big
-                        -- too much text, it messes up the styles
-                        (text
-                            (if model.state == "" then
-                                if model.country == "" then
-                                    model.country
-
-                                else
-                                    --  NOTE: will never make it here
-                                    ""
-
-                             else
-                                model.state
-                            )
-                        )
-                    , el
+                        [ text model.country ]
+                    , paragraph
                         [ centerX
                         , centerY
                         , Font.center
                         ]
-                        (text model.country)
+                        [ text model.state ]
                     ]
                 , button
                     [ padding 15
