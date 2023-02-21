@@ -1,11 +1,11 @@
 "use strict";
-console.time("initial");
+console.time("time to initial elm app");
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("worker.js")
     .then((e) => {
-      console.log("SW Registered");
+      console.log("Service Worker Registered");
     })
     .catch((err) => {
       console.log("Error registering: Not on HTTPS");
@@ -107,5 +107,5 @@ function main(app) {
       app.ports.noGeoLocationApiAvailableReceiver.send();
     }
   });
-  console.timeEnd("initial");
+  console.timeEnd("time to initial elm app");
 }
