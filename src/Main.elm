@@ -684,342 +684,337 @@ mainScreen model =
     el
         [ width fill
         , height fill
+        , Background.color model.primaryColor
+        , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
         ]
-        (el
+        (column
             [ width fill
             , height fill
-            , Background.color model.primaryColor
-            , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
             ]
-            (column
-                [ width fill
-                , height fill
+            [ row [ centerY, width fill, paddingBottom 15 ]
+                [ button
+                    [ padding 15
+                    , Font.color black
+                    , Font.heavy
+                    , Font.center
+                    ]
+                    { label =
+                        el
+                            [ rotate
+                                (Animator.move model.currentRefetchingAnim <|
+                                    \state ->
+                                        case state of
+                                            NotRefetching ->
+                                                Animator.at 0
+
+                                            Refetching ->
+                                                Animator.wrap 0 (2 * pi)
+                                                    |> Animator.loop (Animator.millis 800)
+
+                                            Error _ ->
+                                                Animator.at 0
+                                )
+                            ]
+                            (case model.currentRefetchingStatus of
+                                NotRefetching ->
+                                    Icons.refresh 28 Inherit
+                                        |> Element.html
+
+                                Refetching ->
+                                    Icons.hourglass_empty 28 Inherit
+                                        |> Element.html
+
+                                Error _ ->
+                                    Icons.sync_problem 28 Inherit
+                                        |> Element.html
+                            )
+                    , onPress = Just RefetchWeatherOnBackground
+                    }
+                , column
+                    [ width fill
+                    , spacing 6
+                    , alpha
+                        (Animator.move model.countryAndStateVisibility <|
+                            \state ->
+                                if state == True then
+                                    Animator.at 1
+
+                                else
+                                    Animator.at 0
+                        )
+                    ]
+                    [ el
+                        [ centerX
+                        , centerY
+                        , Font.heavy
+                        , Font.size 28
+                        ]
+                        -- TODO: fix style, when it's too big
+                        -- too much text, it messes up the styles
+                        (text
+                            (if model.state == "" then
+                                if model.country == "" then
+                                    model.country
+
+                                else
+                                    --  NOTE: will never make it here
+                                    ""
+
+                             else
+                                model.state
+                            )
+                        )
+                    , el
+                        [ centerX
+                        , centerY
+                        , Font.center
+                        ]
+                        (text model.country)
+                    ]
+                , button
+                    [ padding 15
+                    , Font.color black
+                    , Font.heavy
+                    , Font.center
+                    ]
+                    { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
                 ]
-                [ row [ centerY, width fill, paddingBottom 15 ]
-                    [ button
-                        [ padding 15
-                        , Font.color black
-                        , Font.heavy
-                        , Font.center
-                        ]
-                        { label =
-                            el
-                                [ rotate
-                                    (Animator.move model.currentRefetchingAnim <|
-                                        \state ->
-                                            case state of
-                                                NotRefetching ->
-                                                    Animator.at 0
+            , el
+                [ centerX
+                , Background.color black
+                , paddingXY 16 8
+                , Border.rounded 200
+                ]
+                (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
+                    [ text
+                        (model.currentTime
+                            |> Time.toWeekday zone
+                            |> dayToString
+                        )
+                    , text ", "
+                    , text
+                        (model.currentTime
+                            |> Time.toDay zone
+                            |> String.fromInt
+                        )
+                    , text " "
+                    , text
+                        (model.currentTime
+                            |> Time.toMonth zone
+                            |> monthToString
+                        )
+                    ]
+                )
+            , case model.apiData.hourly of
+                x :: xs ->
+                    let
+                        closestHourly : Hourly
+                        closestHourly =
+                            timeClosestToMine zone model.currentTime x xs
 
-                                                Refetching ->
-                                                    Animator.wrap 0 (2 * pi)
-                                                        |> Animator.loop (Animator.millis 800)
+                        actualTemp : String
+                        actualTemp =
+                            case closestHourly.temperature of
+                                Just val ->
+                                    val |> round |> String.fromInt
 
-                                                Error _ ->
-                                                    Animator.at 0
-                                    )
-                                ]
-                                (case model.currentRefetchingStatus of
-                                    NotRefetching ->
-                                        Icons.refresh 28 Inherit
-                                            |> Element.html
-
-                                    Refetching ->
-                                        Icons.hourglass_empty 28 Inherit
-                                            |> Element.html
-
-                                    Error _ ->
-                                        Icons.sync_problem 28 Inherit
-                                            |> Element.html
-                                )
-                        , onPress = Just RefetchWeatherOnBackground
-                        }
-                    , column
-                        [ width fill
-                        , spacing 6
-                        , alpha
-                            (Animator.move model.countryAndStateVisibility <|
-                                \state ->
-                                    if state == True then
-                                        Animator.at 1
-
-                                    else
-                                        Animator.at 0
-                            )
-                        ]
-                        [ el
-                            [ centerX
-                            , centerY
-                            , Font.heavy
-                            , Font.size 28
-                            ]
-                            -- TODO: fix style, when it's too big
-                            -- too much text, it messes up the styles
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
+                    in
+                    column [ width fill ]
+                        [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
                             (text
-                                (if model.state == "" then
-                                    if model.country == "" then
-                                        model.country
-
-                                    else
-                                        --  NOTE: will never make it here
-                                        ""
-
-                                 else
-                                    model.state
+                                (wmoCodeToString
+                                    (closestHourly.weatherCode
+                                        -- NOTE: in theory this will never happen
+                                        -- as we know the weather code it is "right now"
+                                        |> Maybe.withDefault Api.ClearSky
+                                    )
                                 )
                             )
-                        , el
-                            [ centerX
-                            , centerY
-                            , Font.center
-                            ]
-                            (text model.country)
+                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
                         ]
-                    , button
-                        [ padding 15
-                        , Font.color black
-                        , Font.heavy
-                        , Font.center
-                        ]
-                        { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
-                    ]
-                , el
-                    [ centerX
-                    , Background.color black
-                    , paddingXY 16 8
-                    , Border.rounded 200
-                    ]
-                    (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
-                        [ text
-                            (model.currentTime
-                                |> Time.toWeekday zone
-                                |> dayToString
-                            )
-                        , text ", "
-                        , text
-                            (model.currentTime
-                                |> Time.toDay zone
-                                |> String.fromInt
-                            )
-                        , text " "
-                        , text
-                            (model.currentTime
-                                |> Time.toMonth zone
-                                |> monthToString
-                            )
-                        ]
-                    )
-                , case model.apiData.hourly of
-                    x :: xs ->
-                        let
-                            closestHourly : Hourly
-                            closestHourly =
-                                timeClosestToMine zone model.currentTime x xs
 
-                            actualTemp : String
-                            actualTemp =
-                                case closestHourly.temperature of
-                                    Just val ->
-                                        val |> round |> String.fromInt
+                _ ->
+                    text "--"
+            , -- Daily summary
+              el
+                [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
+                , Font.heavy
+                ]
+                (text "Daily summary")
+            , case model.apiData.hourly of
+                x :: xs ->
+                    let
+                        closestHourly : Hourly
+                        closestHourly =
+                            timeClosestToMine zone model.currentTime x xs
 
-                                    Nothing ->
+                        actualTemp : String
+                        actualTemp =
+                            case closestHourly.temperature of
+                                Just val ->
+                                    val |> numberWithSign
+
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
+
+                        perceivedTemp : String
+                        perceivedTemp =
+                            case closestHourly.apparentTemperature of
+                                Just val ->
+                                    val |> numberWithSign
+
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
+
+                        todayHourlyData : List Hourly
+                        todayHourlyData =
+                            hourlyDataOfToday zone model.currentTime model.apiData.hourly
+
+                        lowestTempOfToday : String
+                        lowestTempOfToday =
+                            todayHourlyData
+                                |> List.map .temperature
+                                |> List.foldr
+                                    (\l ->
+                                        case l of
+                                            Just val ->
+                                                Maybe.map (min val)
+
+                                            Nothing ->
+                                                Maybe.map (min 0)
+                                    )
+                                    (Just 999)
+                                |> Maybe.withDefault 0
+                                |> numberWithSign
+
+                        highestTempOfToday : String
+                        highestTempOfToday =
+                            todayHourlyData
+                                |> List.map .temperature
+                                |> List.foldr
+                                    (\l ->
+                                        case l of
+                                            Just val ->
+                                                Maybe.map (max val)
+
+                                            Nothing ->
+                                                Maybe.map (max 0)
+                                    )
+                                    (Just 0)
+                                |> Maybe.withDefault 0
+                                |> numberWithSign
+                    in
+                    paragraph
+                        [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
+                        , Font.bold
+                        , Font.size 16
+                        , width fill
+                        ]
+                        [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
+                        , br
+                        , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
+                        ]
+
+                _ ->
+                    none
+            , column
+                [ width fill
+                ]
+                [ el
+                    [ padding 15
+                    , width fill
+                    ]
+                    (row
+                        [ Font.color white
+                        , Background.color black
+                        , width fill
+                        , padding 30
+                        , Border.rounded 12
+                        , spaceEvenly
+                        ]
+                        [ statCard model.primaryColor
+                            Icons.air
+                            (case model.apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone model.currentTime x xs
+                                        |> .windSpeed
                                         -- NOTE: in theory this will never happen
                                         -- as we know what temperature it is "right now"
-                                        "--"
-                        in
-                        column [ width fill ]
-                            [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
-                                (text
-                                    (wmoCodeToString
-                                        (closestHourly.weatherCode
-                                            -- NOTE: in theory this will never happen
-                                            -- as we know the weather code it is "right now"
-                                            |> Maybe.withDefault Api.ClearSky
-                                        )
+                                        |> Maybe.withDefault 0
+                                        |> round
+                                        |> String.fromInt
                                     )
-                                )
-                            , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
-                            ]
+                                        ++ "km/h"
 
-                    _ ->
-                        text "--"
-                , -- Daily summary
+                                _ ->
+                                    -- NOTE: in theory it will never reach here
+                                    -- as there will always be one item in the list
+                                    -- either way it's handled as "--" in all 3 stat cards
+                                    "--"
+                            )
+                            "Wind"
+                        , statCard model.primaryColor
+                            Outlined.water_drop
+                            (case model.apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone model.currentTime x xs
+                                        |> .relativeHumidity
+                                        |> String.fromInt
+                                    )
+                                        ++ "%"
+
+                                _ ->
+                                    "--"
+                            )
+                            "Humidity"
+                        , statCard model.primaryColor
+                            Outlined.visibility
+                            (case model.apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone model.currentTime x xs
+                                        |> .visibility
+                                        |> toKm
+                                        |> round
+                                        |> String.fromInt
+                                    )
+                                        ++ "km"
+
+                                _ ->
+                                    "--"
+                            )
+                            "Visibility"
+                        ]
+                    )
+                , -- Weekly Forecast
                   el
                     [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
                     , Font.heavy
                     ]
-                    (text "Daily summary")
-                , case model.apiData.hourly of
-                    x :: xs ->
-                        let
-                            closestHourly : Hourly
-                            closestHourly =
-                                timeClosestToMine zone model.currentTime x xs
-
-                            actualTemp : String
-                            actualTemp =
-                                case closestHourly.temperature of
-                                    Just val ->
-                                        val |> numberWithSign
-
-                                    Nothing ->
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        "--"
-
-                            perceivedTemp : String
-                            perceivedTemp =
-                                case closestHourly.apparentTemperature of
-                                    Just val ->
-                                        val |> numberWithSign
-
-                                    Nothing ->
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        "--"
-
-                            todayHourlyData : List Hourly
-                            todayHourlyData =
-                                hourlyDataOfToday zone model.currentTime model.apiData.hourly
-
-                            lowestTempOfToday : String
-                            lowestTempOfToday =
-                                todayHourlyData
-                                    |> List.map .temperature
-                                    |> List.foldr
-                                        (\l ->
-                                            case l of
-                                                Just val ->
-                                                    Maybe.map (min val)
-
-                                                Nothing ->
-                                                    Maybe.map (min 0)
-                                        )
-                                        (Just 999)
-                                    |> Maybe.withDefault 0
-                                    |> numberWithSign
-
-                            highestTempOfToday : String
-                            highestTempOfToday =
-                                todayHourlyData
-                                    |> List.map .temperature
-                                    |> List.foldr
-                                        (\l ->
-                                            case l of
-                                                Just val ->
-                                                    Maybe.map (max val)
-
-                                                Nothing ->
-                                                    Maybe.map (max 0)
-                                        )
-                                        (Just 0)
-                                    |> Maybe.withDefault 0
-                                    |> numberWithSign
-                        in
-                        paragraph
-                            [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
-                            , Font.bold
-                            , Font.size 16
-                            , width fill
-                            ]
-                            [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
-                            , br
-                            , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
-                            ]
-
-                    _ ->
-                        none
-                , column
+                    (text "Weekly Forecast")
+                , el
                     [ width fill
                     ]
-                    [ el
+                    (row
                         [ padding 15
+                        , spacing 18
                         , width fill
+                        , scrollbarX
                         ]
-                        (row
-                            [ Font.color white
-                            , Background.color black
-                            , width fill
-                            , padding 30
-                            , Border.rounded 12
-                            , spaceEvenly
-                            ]
-                            [ statCard model.primaryColor
-                                Icons.air
-                                (case model.apiData.hourly of
-                                    x :: xs ->
-                                        (timeClosestToMine zone model.currentTime x xs
-                                            |> .windSpeed
-                                            -- NOTE: in theory this will never happen
-                                            -- as we know what temperature it is "right now"
-                                            |> Maybe.withDefault 0
-                                            |> round
-                                            |> String.fromInt
-                                        )
-                                            ++ "km/h"
+                        (List.map (\( date, code, max ) -> weeklyForecastCard date max code) model.apiData.daily)
+                    )
 
-                                    _ ->
-                                        -- NOTE: in theory it will never reach here
-                                        -- as there will always be one item in the list
-                                        -- either way it's handled as "--" in all 3 stat cards
-                                        "--"
-                                )
-                                "Wind"
-                            , statCard model.primaryColor
-                                Outlined.water_drop
-                                (case model.apiData.hourly of
-                                    x :: xs ->
-                                        (timeClosestToMine zone model.currentTime x xs
-                                            |> .relativeHumidity
-                                            |> String.fromInt
-                                        )
-                                            ++ "%"
-
-                                    _ ->
-                                        "--"
-                                )
-                                "Humidity"
-                            , statCard model.primaryColor
-                                Outlined.visibility
-                                (case model.apiData.hourly of
-                                    x :: xs ->
-                                        (timeClosestToMine zone model.currentTime x xs
-                                            |> .visibility
-                                            |> toKm
-                                            |> round
-                                            |> String.fromInt
-                                        )
-                                            ++ "km"
-
-                                    _ ->
-                                        "--"
-                                )
-                                "Visibility"
-                            ]
-                        )
-                    , -- Weekly Forecast
-                      el
-                        [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
-                        , Font.heavy
-                        ]
-                        (text "Weekly Forecast")
-                    , el
-                        [ width fill
-                        ]
-                        (row
-                            [ padding 15
-                            , spacing 18
-                            , width fill
-                            , scrollbarX
-                            ]
-                            (List.map (\( date, code, max ) -> weeklyForecastCard date max code) model.apiData.daily)
-                        )
-
-                    -- Attribution
-                    , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]
-                    ]
+                -- Attribution
+                , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]
                 ]
-            )
+            ]
         )
 
 
