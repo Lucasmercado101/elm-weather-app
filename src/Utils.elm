@@ -189,3 +189,7 @@ geoLocationApiErrorToString error =
 type InitialWebRequest b
     = Loading
     | Failure b
+
+
+type alias Coordinates =
+    { latitude : Float, longitude : Float }

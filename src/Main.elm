@@ -3,6 +3,7 @@ module Main exposing (..)
 import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, wmoCodeToIcon, wmoCodeToString)
 import Browser
+import Cmd.Extra exposing (pure)
 import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
@@ -73,16 +74,18 @@ animator =
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
-    , location : ( Float, Float )
+    , location : Coordinates
     , primaryColor : Color
     , isOptionMenuOpen : Bool
     , zone : Maybe Zone
-    , currentTime : Posix
 
     -- NOTE: could be fetched before on the loading screen
     -- but if the user is mainly on the MainScreen + caching then it's
     -- unnecessary overhead and logic that's not worth it
-    , apiData : ResponseData
+    -- NOTE: when I fetch I return response and current time posix
+    -- they're synced as I don't need to use posix anywhere else
+    -- but when I get the data and to do things at the time I fetched it
+    , apiData : Maybe ( ResponseData, Posix )
 
     -- NOTE: could be made into a Loading | Loaded | Error type union
     -- can't be bothered though
@@ -92,23 +95,8 @@ type alias MainScreenModel =
     }
 
 
-type LoadingScreenModel
-    = LoadingScreenHasNoCurrentZone LoadingScreenModelNoZoneData
-    | LoadingScreenHasCurrentZone LoadingScreenModelData
-
-
-type alias LoadingScreenModelNoZoneData =
-    { location : ( Float, Float )
-    , currentTime : Posix
-    }
-
-
-type alias LoadingScreenModelData =
-    { fetchingRequest : InitialWebRequest Http.Error
-    , location : ( Float, Float )
-    , currentTime : Posix
-    , zone : Zone
-    }
+type alias LoadingScreenModel =
+    ( InitialWebRequest Http.Error, Coordinates )
 
 
 type Model
@@ -123,8 +111,7 @@ type Model
 
 type LoadingScreenMsg
     = RetryFetchingWeather
-    | GotWeatherResponse (Result Http.Error ResponseData)
-    | GotCurrentZoneLoadingScreenMsg Zone
+    | GotWeatherResponse (Result Http.Error ( ResponseData, Posix, Zone ))
 
 
 type MainScreenMsg
@@ -150,28 +137,19 @@ type Msg
 
 
 type Flags
-    = TimeOnly { posixTimeNow : Int }
-    | TimeAndLocationCoords { posixTimeNow : Int, latitude : Float, longitude : Float }
+    = GeoLocationCoords Coordinates
     | CachedWeatherData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData }
 
 
-posixFlagDecoder : JD.Decoder Flags
-posixFlagDecoder =
-    JD.field "posixTimeNow" JD.int
-        |> JD.map (\l -> TimeOnly { posixTimeNow = l })
-
-
-posixAndLocationsFlagDecoder : JD.Decoder Flags
-posixAndLocationsFlagDecoder =
-    JD.map3
-        (\time latitude longitude ->
-            TimeAndLocationCoords
-                { posixTimeNow = time
-                , latitude = latitude
+geoLocationsCoordsFlagDecoder : JD.Decoder Flags
+geoLocationsCoordsFlagDecoder =
+    JD.map2
+        (\latitude longitude ->
+            GeoLocationCoords
+                { latitude = latitude
                 , longitude = longitude
                 }
         )
-        (JD.field "posixTimeNow" JD.int)
         (JD.field "latitude" JD.float)
         (JD.field "longitude" JD.float)
 
@@ -186,7 +164,7 @@ cachedWeatherDataFlagDecoder =
                 }
         )
         (JD.field "posixTimeNow" JD.int)
-        Api.responseDataDecoder
+        (JD.field "cachedWeatherData" Api.responseDataDecoder)
 
 
 flagsDecoders : JD.Value -> Result JD.Error Flags
@@ -194,8 +172,7 @@ flagsDecoders value =
     JD.decodeValue
         (JD.oneOf
             [ cachedWeatherDataFlagDecoder
-            , posixAndLocationsFlagDecoder
-            , posixFlagDecoder
+            , geoLocationsCoordsFlagDecoder
             ]
         )
         value
@@ -221,55 +198,48 @@ init val =
     case flagsDecoders val of
         Ok flags ->
             case flags of
-                TimeOnly { posixTimeNow } ->
-                    ( WelcomeScreen (Welcome.welcomeScreenInit posixTimeNow)
-                    , Cmd.none
+                -- NOTE: Rare: realistically the data would've already
+                -- been fetched as soon as coordinates were given
+                GeoLocationCoords coords ->
+                    ( LoadingScreen ( Loading, coords )
+                    , Api.getWeatherData coords
+                        |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
                     )
 
-                -- NOTE: Very rare, realistically the data would've been
-                -- already fetched as soon as coordinates were given
-                TimeAndLocationCoords { posixTimeNow, latitude, longitude } ->
-                    ( LoadingScreen
-                        (LoadingScreenHasNoCurrentZone
-                            { location = ( latitude, longitude )
-                            , currentTime = Time.millisToPosix posixTimeNow
-                            }
-                        )
-                    , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
-                    )
-
-                CachedWeatherData { posixTimeNow, cachedWeatherData } ->
+                CachedWeatherData { cachedWeatherData, posixTimeNow } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
                     in
                     ( MainScreen
-                        { apiData = cachedWeatherData
+                        { apiData = Just ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                         , currentRefetchingStatus = NotRefetching
                         , currentRefetchingAnim = Animator.init NotRefetching
-                        , location = ( latitude, longitude )
-                        , currentTime = Time.millisToPosix posixTimeNow
-                        , zone = Nothing
+                        , location = { latitude = latitude, longitude = longitude }
                         , primaryColor = primary
                         , isOptionMenuOpen = False
                         , country = ""
                         , state = ""
                         , countryAndStateVisibility = Animator.init False
+
+                        -- TODO: handle zone, when refreshing there's no good initial value
+                        , zone = Just Time.utc
                         }
                     , Cmd.batch
-                        [ Api.getWeatherData ( latitude, longitude )
+                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
                             |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
-                        , Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
+                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
                             |> Cmd.map OnMainScreenMsg
                         ]
                     )
 
         Err err ->
-            -- NOTE: this will not happen unless i screw up the flags
-            -- if i want to handle it: I will need to call Time.now in welcome to get the current time
-            ( WelcomeScreen (Welcome.welcomeScreenInit 0)
-            , Cmd.none
-            )
+            Debug.log (Debug.toString err) <|
+                -- NOTE: this will not happen unless i screw up the flags
+                -- if i want to handle it: I will need to call Time.now in welcome to get the current time
+                ( WelcomeScreen (Welcome.welcomeScreenInit 0)
+                , Cmd.none
+                )
 
 
 
@@ -283,89 +253,47 @@ update topMsg topModel =
             Welcome.welcomeScreenUpdate msg model
                 |> (\( a, b ) ->
                         case a.receivedLocation of
-                            Just { latitude, longitude } ->
-                                ( LoadingScreen
-                                    (LoadingScreenHasNoCurrentZone
-                                        { location = ( latitude, longitude )
-                                        , currentTime = model.currentTime
-                                        }
-                                    )
-                                , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
+                            Just coords ->
+                                ( LoadingScreen ( Loading, coords )
+                                , Api.getWeatherData coords
+                                    |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
                                 )
 
                             Nothing ->
                                 ( WelcomeScreen a, Cmd.map OnWelcomeScreenMsg b )
                    )
 
-        ( OnLoadingScreenMsg msg, LoadingScreen model ) ->
+        ( OnLoadingScreenMsg msg, (LoadingScreen ( state, coords )) as model ) ->
             -- NOTE: could probably be refactored?
             -- doesn't seem to be worth it though
-            case model of
-                LoadingScreenHasNoCurrentZone modelData ->
-                    case msg of
-                        GotCurrentZoneLoadingScreenMsg zone ->
-                            ( LoadingScreen
-                                (LoadingScreenHasCurrentZone
-                                    { zone = zone
-                                    , location = modelData.location
-                                    , currentTime = modelData.currentTime
-                                    , fetchingRequest = Loading
-                                    }
-                                )
-                            , Cmd.map OnLoadingScreenMsg (Api.getData modelData.location modelData.currentTime zone GotWeatherResponse)
+            case msg of
+                GotWeatherResponse result ->
+                    case result of
+                        Ok ( data, currentTime, zone ) ->
+                            ( MainScreen
+                                { apiData = Just ( data, currentTime )
+                                , currentRefetchingStatus = NotRefetching
+                                , currentRefetchingAnim = Animator.init NotRefetching
+                                , location = { latitude = data.latitude, longitude = data.longitude }
+                                , zone = Just zone
+                                , primaryColor = primary
+                                , isOptionMenuOpen = False
+                                , country = ""
+                                , state = ""
+                                , countryAndStateVisibility = Animator.init False
+                                }
+                            , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
+                                |> Cmd.map OnMainScreenMsg
                             )
 
-                        -- NOTE: For future pattern matching error's sake
-                        GotWeatherResponse _ ->
-                            ( LoadingScreen (LoadingScreenHasNoCurrentZone modelData), Cmd.none )
+                        Err err ->
+                            LoadingScreen ( Failure err, coords ) |> pure
 
-                        RetryFetchingWeather ->
-                            ( LoadingScreen (LoadingScreenHasNoCurrentZone modelData), Cmd.none )
-
-                LoadingScreenHasCurrentZone modelData ->
-                    case msg of
-                        GotWeatherResponse result ->
-                            case result of
-                                Ok data ->
-                                    ( MainScreen
-                                        { apiData = data
-                                        , currentRefetchingStatus = NotRefetching
-                                        , currentRefetchingAnim = Animator.init NotRefetching
-                                        , location = modelData.location
-                                        , currentTime = modelData.currentTime
-                                        , zone = Just modelData.zone
-                                        , primaryColor = primary
-                                        , isOptionMenuOpen = False
-                                        , country = ""
-                                        , state = ""
-                                        , countryAndStateVisibility = Animator.init False
-                                        }
-                                    , let
-                                        ( latitude, longitude ) =
-                                            modelData.location
-                                      in
-                                      Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
-                                        |> Cmd.map OnMainScreenMsg
-                                    )
-
-                                Err err ->
-                                    ( LoadingScreen
-                                        (LoadingScreenHasCurrentZone
-                                            { modelData
-                                                | fetchingRequest = Failure err
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                        RetryFetchingWeather ->
-                            ( LoadingScreen (LoadingScreenHasCurrentZone { modelData | fetchingRequest = Loading })
-                            , Cmd.map OnLoadingScreenMsg (Api.getData modelData.location modelData.currentTime modelData.zone GotWeatherResponse)
-                            )
-
-                        -- NOTE: will never make it here
-                        GotCurrentZoneLoadingScreenMsg _ ->
-                            ( LoadingScreen (LoadingScreenHasCurrentZone modelData), Cmd.none )
+                RetryFetchingWeather ->
+                    ( LoadingScreen ( Loading, coords )
+                    , Api.getWeatherData coords
+                        |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
+                    )
 
         ( OnMainScreenMsg msg, MainScreen model ) ->
             case msg of
@@ -424,32 +352,26 @@ update topMsg topModel =
                             , currentRefetchingStatus = Refetching
                         }
                     , Cmd.batch
-                        (let
-                            ( latitude, longitude ) =
-                                model.location
-                         in
-                         [ Api.getReverseGeocoding ( latitude, longitude ) (\l -> OnMainScreenMsg (GotCountryAndStateMainScreen l))
+                        [ Api.getReverseGeocoding model.location (\l -> OnMainScreenMsg (GotCountryAndStateMainScreen l))
 
-                         --  TODO: currently refetching using given coordinates,
-                         --  but it should be the coordinates given if no locations perms allowed
-                         --  otherwise get current location and fetch using that, also add option to change
-                         --  location on menu
-                         , Api.getWeatherData ( latitude, longitude )
+                        --  TODO: currently refetching using given coordinates,
+                        --  but it should be the coordinates given if no locations perms allowed
+                        --  otherwise get current location and fetch using that, also add option to change
+                        --  location on menu
+                        , Api.getWeatherData model.location
                             |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
-                         ]
-                        )
+                        ]
                     )
 
                 GotRefetchingWeatherResp result ->
                     (case result of
                         Ok ( data, posix, zone ) ->
                             ( { model
-                                | apiData = data
+                                | apiData = Just ( data, posix )
                                 , currentRefetchingAnim =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately NotRefetching
                                 , currentRefetchingStatus = NotRefetching
-                                , currentTime = posix
                                 , zone = Just zone
                               }
                             , Cmd.none
@@ -579,7 +501,7 @@ view model =
 
 
 loadingScreenView : LoadingScreenModel -> Element Msg
-loadingScreenView model =
+loadingScreenView ( state, _ ) =
     el
         [ width fill
         , height fill
@@ -590,50 +512,45 @@ loadingScreenView model =
             , Background.color primary
             , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
             ]
-            (case model of
-                LoadingScreenHasNoCurrentZone _ ->
+            (case state of
+                Loading ->
                     initialLoadingScreen
 
-                LoadingScreenHasCurrentZone modelData ->
-                    case modelData.fetchingRequest of
-                        Loading ->
-                            initialLoadingScreen
+                Failure err ->
+                    column [ centerX, centerY ]
+                        [ paragraph [ Font.center, Font.size 54, Font.semiBold ]
+                            [ el [ Font.center ] (text "Something went wrong:")
+                            , br
+                            , el [ Font.heavy ]
+                                (case err of
+                                    Http.BadUrl url ->
+                                        text ("Bad URL: " ++ url)
 
-                        Failure err ->
-                            column [ centerX, centerY ]
-                                [ paragraph [ Font.center, Font.size 54, Font.semiBold ]
-                                    [ el [ Font.center ] (text "Something went wrong:")
-                                    , br
-                                    , el [ Font.heavy ]
-                                        (case err of
-                                            Http.BadUrl url ->
-                                                text ("Bad URL: " ++ url)
+                                    Http.Timeout ->
+                                        text "Timeout"
 
-                                            Http.Timeout ->
-                                                text "Timeout"
+                                    Http.NetworkError ->
+                                        text "Network Error"
 
-                                            Http.NetworkError ->
-                                                text "Network Error"
+                                    Http.BadStatus response ->
+                                        text ("Bad Status: " ++ String.fromInt response)
 
-                                            Http.BadStatus response ->
-                                                text ("Bad Status: " ++ String.fromInt response)
-
-                                            Http.BadBody _ ->
-                                                text "Error parsing body"
-                                        )
-                                    ]
-                                , el [ paddingTop 18, centerX ]
-                                    (button
-                                        [ centerX
-                                        , Background.color black
-                                        , Font.color white
-                                        , Font.bold
-                                        , paddingXY 24 12
-                                        , Font.size 22
-                                        ]
-                                        { label = text "RETRY", onPress = Just (OnLoadingScreenMsg RetryFetchingWeather) }
-                                    )
+                                    Http.BadBody _ ->
+                                        text "Error parsing body"
+                                )
+                            ]
+                        , el [ paddingTop 18, centerX ]
+                            (button
+                                [ centerX
+                                , Background.color black
+                                , Font.color white
+                                , Font.bold
+                                , paddingXY 24 12
+                                , Font.size 22
                                 ]
+                                { label = text "RETRY", onPress = Just (OnLoadingScreenMsg RetryFetchingWeather) }
+                            )
+                        ]
             )
         )
 
@@ -645,6 +562,40 @@ mainScreen model =
         -- if and when I don't have the user's time zone
         zone =
             Maybe.withDefault Time.utc model.zone
+
+        currentDateChip : Element MainScreenMsg
+        currentDateChip =
+            case model.apiData of
+                Just ( _, currentTime ) ->
+                    el
+                        [ centerX
+                        , Background.color black
+                        , paddingXY 16 8
+                        , Border.rounded 200
+                        ]
+                        (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
+                            [ text
+                                (currentTime
+                                    |> Time.toWeekday zone
+                                    |> dayToString
+                                )
+                            , text ", "
+                            , text
+                                (currentTime
+                                    |> Time.toDay zone
+                                    |> String.fromInt
+                                )
+                            , text " "
+                            , text
+                                (currentTime
+                                    |> Time.toMonth zone
+                                    |> monthToString
+                                )
+                            ]
+                        )
+
+                Nothing ->
+                    none
     in
     el
         [ width fill
@@ -731,65 +682,45 @@ mainScreen model =
                     ]
                     { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
                 ]
-            , el
-                [ centerX
-                , Background.color black
-                , paddingXY 16 8
-                , Border.rounded 200
-                ]
-                (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
-                    [ text
-                        (model.currentTime
-                            |> Time.toWeekday zone
-                            |> dayToString
-                        )
-                    , text ", "
-                    , text
-                        (model.currentTime
-                            |> Time.toDay zone
-                            |> String.fromInt
-                        )
-                    , text " "
-                    , text
-                        (model.currentTime
-                            |> Time.toMonth zone
-                            |> monthToString
-                        )
-                    ]
-                )
-            , case model.apiData.hourly of
-                x :: xs ->
-                    let
-                        closestHourly : Hourly
-                        closestHourly =
-                            timeClosestToMine zone model.currentTime x xs
+            , currentDateChip
+            , case model.apiData of
+                Just ( apiData, currentTime ) ->
+                    case apiData.hourly of
+                        x :: xs ->
+                            let
+                                closestHourly : Hourly
+                                closestHourly =
+                                    timeClosestToMine zone currentTime x xs
 
-                        actualTemp : String
-                        actualTemp =
-                            case closestHourly.temperature of
-                                Just val ->
-                                    val |> round |> String.fromInt
+                                actualTemp : String
+                                actualTemp =
+                                    case closestHourly.temperature of
+                                        Just val ->
+                                            val |> round |> String.fromInt
 
-                                Nothing ->
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    "--"
-                    in
-                    column [ width fill ]
-                        [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
-                            (text
-                                (wmoCodeToString
-                                    (closestHourly.weatherCode
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know the weather code it is "right now"
-                                        |> Maybe.withDefault Api.ClearSky
+                                        Nothing ->
+                                            -- NOTE: in theory this will never happen
+                                            -- as we know what temperature it is "right now"
+                                            "--"
+                            in
+                            column [ width fill ]
+                                [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
+                                    (text
+                                        (wmoCodeToString
+                                            (closestHourly.weatherCode
+                                                -- NOTE: in theory this will never happen
+                                                -- as we know the weather code it is "right now"
+                                                |> Maybe.withDefault Api.ClearSky
+                                            )
+                                        )
                                     )
-                                )
-                            )
-                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
-                        ]
+                                , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
+                                ]
 
-                _ ->
+                        _ ->
+                            text "--"
+
+                Nothing ->
                     text "--"
             , -- Daily summary
               el
@@ -797,85 +728,90 @@ mainScreen model =
                 , Font.heavy
                 ]
                 (text "Daily summary")
-            , case model.apiData.hourly of
-                x :: xs ->
-                    let
-                        closestHourly : Hourly
-                        closestHourly =
-                            timeClosestToMine zone model.currentTime x xs
+            , case model.apiData of
+                Just ( apiData, currentTime ) ->
+                    case apiData.hourly of
+                        x :: xs ->
+                            let
+                                closestHourly : Hourly
+                                closestHourly =
+                                    timeClosestToMine zone currentTime x xs
 
-                        actualTemp : String
-                        actualTemp =
-                            case closestHourly.temperature of
-                                Just val ->
-                                    val |> numberWithSign
+                                actualTemp : String
+                                actualTemp =
+                                    case closestHourly.temperature of
+                                        Just val ->
+                                            val |> numberWithSign
 
-                                Nothing ->
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    "--"
+                                        Nothing ->
+                                            -- NOTE: in theory this will never happen
+                                            -- as we know what temperature it is "right now"
+                                            "--"
 
-                        perceivedTemp : String
-                        perceivedTemp =
-                            case closestHourly.apparentTemperature of
-                                Just val ->
-                                    val |> numberWithSign
+                                perceivedTemp : String
+                                perceivedTemp =
+                                    case closestHourly.apparentTemperature of
+                                        Just val ->
+                                            val |> numberWithSign
 
-                                Nothing ->
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    "--"
+                                        Nothing ->
+                                            -- NOTE: in theory this will never happen
+                                            -- as we know what temperature it is "right now"
+                                            "--"
 
-                        todayHourlyData : List Hourly
-                        todayHourlyData =
-                            hourlyDataOfToday zone model.currentTime model.apiData.hourly
+                                todayHourlyData : List Hourly
+                                todayHourlyData =
+                                    hourlyDataOfToday zone currentTime apiData.hourly
 
-                        lowestTempOfToday : String
-                        lowestTempOfToday =
-                            todayHourlyData
-                                |> List.map .temperature
-                                |> List.foldr
-                                    (\l ->
-                                        case l of
-                                            Just val ->
-                                                Maybe.map (min val)
+                                lowestTempOfToday : String
+                                lowestTempOfToday =
+                                    todayHourlyData
+                                        |> List.map .temperature
+                                        |> List.foldr
+                                            (\l ->
+                                                case l of
+                                                    Just val ->
+                                                        Maybe.map (min val)
 
-                                            Nothing ->
-                                                Maybe.map (min 0)
-                                    )
-                                    (Just 999)
-                                |> Maybe.withDefault 0
-                                |> numberWithSign
+                                                    Nothing ->
+                                                        Maybe.map (min 0)
+                                            )
+                                            (Just 999)
+                                        |> Maybe.withDefault 0
+                                        |> numberWithSign
 
-                        highestTempOfToday : String
-                        highestTempOfToday =
-                            todayHourlyData
-                                |> List.map .temperature
-                                |> List.foldr
-                                    (\l ->
-                                        case l of
-                                            Just val ->
-                                                Maybe.map (max val)
+                                highestTempOfToday : String
+                                highestTempOfToday =
+                                    todayHourlyData
+                                        |> List.map .temperature
+                                        |> List.foldr
+                                            (\l ->
+                                                case l of
+                                                    Just val ->
+                                                        Maybe.map (max val)
 
-                                            Nothing ->
-                                                Maybe.map (max 0)
-                                    )
-                                    (Just 0)
-                                |> Maybe.withDefault 0
-                                |> numberWithSign
-                    in
-                    paragraph
-                        [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
-                        , Font.bold
-                        , Font.size 16
-                        , width fill
-                        ]
-                        [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
-                        , br
-                        , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
-                        ]
+                                                    Nothing ->
+                                                        Maybe.map (max 0)
+                                            )
+                                            (Just 0)
+                                        |> Maybe.withDefault 0
+                                        |> numberWithSign
+                            in
+                            paragraph
+                                [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
+                                , Font.bold
+                                , Font.size 16
+                                , width fill
+                                ]
+                                [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
+                                , br
+                                , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
+                                ]
 
-                _ ->
+                        _ ->
+                            none
+
+                Nothing ->
                     none
             , column
                 [ width fill
@@ -894,19 +830,27 @@ mainScreen model =
                         ]
                         [ statCard model.primaryColor
                             Icons.air
-                            (case model.apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone model.currentTime x xs
-                                        |> .windSpeed
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        |> Maybe.withDefault 0
-                                        |> round
-                                        |> String.fromInt
-                                    )
-                                        ++ "km/h"
+                            (case model.apiData of
+                                Just ( apiData, currentTime ) ->
+                                    case apiData.hourly of
+                                        x :: xs ->
+                                            (timeClosestToMine zone currentTime x xs
+                                                |> .windSpeed
+                                                -- NOTE: in theory this will never happen
+                                                -- as we know what temperature it is "right now"
+                                                |> Maybe.withDefault 0
+                                                |> round
+                                                |> String.fromInt
+                                            )
+                                                ++ "km/h"
 
-                                _ ->
+                                        _ ->
+                                            -- NOTE: in theory it will never reach here
+                                            -- as there will always be one item in the list
+                                            -- either way it's handled as "--" in all 3 stat cards
+                                            "--"
+
+                                Nothing ->
                                     -- NOTE: in theory it will never reach here
                                     -- as there will always be one item in the list
                                     -- either way it's handled as "--" in all 3 stat cards
@@ -915,31 +859,41 @@ mainScreen model =
                             "Wind"
                         , statCard model.primaryColor
                             Outlined.water_drop
-                            (case model.apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone model.currentTime x xs
-                                        |> .relativeHumidity
-                                        |> String.fromInt
-                                    )
-                                        ++ "%"
+                            (case model.apiData of
+                                Just ( apiData, currentTime ) ->
+                                    case apiData.hourly of
+                                        x :: xs ->
+                                            (timeClosestToMine zone currentTime x xs
+                                                |> .relativeHumidity
+                                                |> String.fromInt
+                                            )
+                                                ++ "%"
 
-                                _ ->
+                                        _ ->
+                                            "--"
+
+                                Nothing ->
                                     "--"
                             )
                             "Humidity"
                         , statCard model.primaryColor
                             Outlined.visibility
-                            (case model.apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone model.currentTime x xs
-                                        |> .visibility
-                                        |> toKm
-                                        |> round
-                                        |> String.fromInt
-                                    )
-                                        ++ "km"
+                            (case model.apiData of
+                                Just ( apiData, currentTime ) ->
+                                    case apiData.hourly of
+                                        x :: xs ->
+                                            (timeClosestToMine zone currentTime x xs
+                                                |> .visibility
+                                                |> toKm
+                                                |> round
+                                                |> String.fromInt
+                                            )
+                                                ++ "km"
 
-                                _ ->
+                                        _ ->
+                                            "--"
+
+                                Nothing ->
                                     "--"
                             )
                             "Visibility"
@@ -951,17 +905,23 @@ mainScreen model =
                     , Font.heavy
                     ]
                     (text "Weekly Forecast")
-                , el
-                    [ width fill
-                    ]
-                    (row
-                        [ padding 15
-                        , spacing 18
-                        , width fill
-                        , scrollbarX
-                        ]
-                        (List.map (\( date, code, max ) -> weeklyForecastCard date max code) model.apiData.daily)
-                    )
+                , case model.apiData of
+                    Just ( apiData, _ ) ->
+                        el
+                            [ width fill
+                            ]
+                            (row
+                                [ padding 15
+                                , spacing 18
+                                , width fill
+                                , scrollbarX
+                                ]
+                                (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
+                            )
+
+                    -- TODO:
+                    Nothing ->
+                        none
 
                 -- Attribution
                 , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]

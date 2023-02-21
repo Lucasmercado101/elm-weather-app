@@ -34,7 +34,7 @@ if ("serviceWorker" in navigator) {
 const startAppWFlags = (flags) =>
   Elm.Main.init({
     node: document.getElementById("root"),
-    flags: { posixTimeNow: Date.now(), ...flags }
+    flags: flags
   });
 
 try {
@@ -42,7 +42,12 @@ try {
   if (meteoData) {
     // TODO: try catch here
     const parsedData = JSON.parse(meteoData);
-    main(startAppWFlags(parsedData));
+    main(
+      startAppWFlags({
+        cachedWeatherData: parsedData,
+        posixTimeNow: Date.now()
+      })
+    );
   } else {
     // NOTE: I could send a flag to indicate
     // that nothing is cached and should therefore
@@ -59,10 +64,7 @@ try {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                const app = startAppWFlags({
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude
-                });
+                const app = startAppWFlags(position.coords);
                 main(app);
               },
               (error) => {

@@ -9,19 +9,19 @@ import Material.Icons.Types exposing (Icon)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import Time.Extra exposing (Interval(..), add, posixToParts)
-import Utils exposing (monthToInt)
+import Utils exposing (Coordinates, monthToInt)
 
 
 
 -- REVERSE GEOCODING API
 
 
-reverseGeocodingEndpoint : ( Float, Float ) -> String
-reverseGeocodingEndpoint ( lat, long ) =
+reverseGeocodingEndpoint : Coordinates -> String
+reverseGeocodingEndpoint { latitude, longitude } =
     "https://nominatim.openstreetmap.org/reverse?lat="
-        ++ String.fromFloat lat
+        ++ String.fromFloat latitude
         ++ "&lon="
-        ++ String.fromFloat long
+        ++ String.fromFloat longitude
         ++ "&format=json"
         ++ "&zoom=8"
 
@@ -50,14 +50,11 @@ addressDecoder =
         (field "state" string)
 
 
-getReverseGeocoding : ( Float, Float ) -> (Result Http.Error ReverseGeocodingResponse -> msg) -> Cmd msg
-getReverseGeocoding ( lat, long ) msg =
+getReverseGeocoding : Coordinates -> (Result Http.Error ReverseGeocodingResponse -> msg) -> Cmd msg
+getReverseGeocoding coordinates msg =
     Http.get
-        { url =
-            reverseGeocodingEndpoint ( lat, long )
-        , expect =
-            Http.expectJson msg
-                reverseGeocodingDecoder
+        { url = reverseGeocodingEndpoint coordinates
+        , expect = Http.expectJson msg reverseGeocodingDecoder
         }
 
 
@@ -73,8 +70,8 @@ type alias EndpointQuery =
     }
 
 
-endpoint : EndpointQuery -> String
-endpoint { latitude, longitude, startDate, endDate } =
+getWeatherDataEndpoint : EndpointQuery -> String
+getWeatherDataEndpoint { latitude, longitude, startDate, endDate } =
     -- TODO: more params dynamically, like timeZone
     "https://api.open-meteo.com/v1/forecast?latitude="
         ++ latitude
@@ -87,71 +84,8 @@ endpoint { latitude, longitude, startDate, endDate } =
         ++ ""
 
 
-getData : ( Float, Float ) -> Posix -> Time.Zone -> (Result Http.Error ResponseData -> msg) -> Cmd msg
-getData ( lat, long ) startDate zone msg =
-    let
-        latitude =
-            String.fromFloat lat
-
-        longitude =
-            String.fromFloat long
-
-        endDate =
-            startDate |> add Day 7 zone
-
-        dateToStr : Time.Extra.Parts -> String
-        dateToStr parts =
-            String.fromInt parts.year
-                ++ "-"
-                ++ (parts.month
-                        |> monthToInt
-                        |> String.fromInt
-                        |> (\l ->
-                                if String.length l == 1 then
-                                    "0" ++ l
-
-                                else
-                                    l
-                           )
-                   )
-                ++ "-"
-                ++ (parts.day
-                        |> String.fromInt
-                        |> (\l ->
-                                if String.length l == 1 then
-                                    "0" ++ l
-
-                                else
-                                    l
-                           )
-                   )
-
-        startDateString =
-            startDate
-                |> posixToParts zone
-                |> dateToStr
-
-        endDateStrings =
-            endDate
-                |> posixToParts zone
-                |> dateToStr
-    in
-    Http.get
-        { url =
-            endpoint
-                { latitude = latitude
-                , longitude = longitude
-                , startDate = startDateString
-                , endDate = endDateStrings
-                }
-        , expect =
-            Http.expectJson msg
-                responseDataDecoder
-        }
-
-
-getWeatherData : ( Float, Float ) -> Task Http.Error ( ResponseData, Posix, Zone )
-getWeatherData ( lat, lon ) =
+getWeatherData : Coordinates -> Task Http.Error ( ResponseData, Posix, Zone )
+getWeatherData { latitude, longitude } =
     Task.map2 Tuple.pair Time.here Time.now
         |> Task.andThen
             (\( zone, posix ) ->
@@ -159,11 +93,11 @@ getWeatherData ( lat, lon ) =
                     startDate =
                         posix
 
-                    latitude =
-                        String.fromFloat lat
+                    lat =
+                        String.fromFloat latitude
 
-                    longitude =
-                        String.fromFloat lon
+                    lon =
+                        String.fromFloat longitude
 
                     endDate =
                         startDate |> add Day 7 zone
@@ -208,7 +142,7 @@ getWeatherData ( lat, lon ) =
                 Http.task
                     { method = "GET"
                     , headers = []
-                    , url = endpoint { latitude = latitude, longitude = longitude, startDate = startDateString, endDate = endDateStrings }
+                    , url = getWeatherDataEndpoint { latitude = lat, longitude = lon, startDate = startDateString, endDate = endDateStrings }
                     , body = Http.emptyBody
                     , resolver =
                         Http.stringResolver
