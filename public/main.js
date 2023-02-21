@@ -49,14 +49,6 @@ try {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                if (
-                  navigator.serviceWorker &&
-                  navigator.serviceWorker.controller
-                ) {
-                  navigator.serviceWorker.ready.then((registration) => {
-                    console.log("Here");
-                  });
-                }
                 const app = startAppWFlags({
                   latitude: position.coords.latitude,
                   longitude: position.coords.longitude
