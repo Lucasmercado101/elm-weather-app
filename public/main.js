@@ -44,6 +44,13 @@ try {
     const parsedData = JSON.parse(meteoData);
     main(startAppWFlags(parsedData));
   } else {
+    // NOTE: I could send a flag to indicate
+    // that nothing is cached and should therefore
+    // cache the queries as soon as possible
+    // but it doesn't seem to be worth it as they
+    // already get cached, and performance improves,
+    // after the Service Worker gets installed and the data
+    // is queried and therefore cached
     if (navigator.permissions) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         if (result.state === "granted") {
