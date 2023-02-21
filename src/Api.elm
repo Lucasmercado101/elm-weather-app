@@ -150,8 +150,8 @@ getData ( lat, long ) startDate zone msg =
         }
 
 
-getDataAsTask : ( Float, Float ) -> Task Http.Error ( ResponseData, Posix, Zone )
-getDataAsTask ( lat, lon ) =
+getWeatherData : ( Float, Float ) -> Task Http.Error ( ResponseData, Posix, Zone )
+getWeatherData ( lat, lon ) =
     Task.map2 Tuple.pair Time.here Time.now
         |> Task.andThen
             (\( zone, posix ) ->

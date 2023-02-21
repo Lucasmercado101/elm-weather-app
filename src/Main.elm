@@ -257,7 +257,7 @@ init val =
                         , countryAndStateVisibility = Animator.init False
                         }
                     , Cmd.batch
-                        [ Api.getDataAsTask ( latitude, longitude )
+                        [ Api.getWeatherData ( latitude, longitude )
                             |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
                         , Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
                             |> Cmd.map OnMainScreenMsg
@@ -434,7 +434,7 @@ update topMsg topModel =
                          --  but it should be the coordinates given if no locations perms allowed
                          --  otherwise get current location and fetch using that, also add option to change
                          --  location on menu
-                         , Api.getDataAsTask ( latitude, longitude )
+                         , Api.getWeatherData ( latitude, longitude )
                             |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
                          ]
                         )
