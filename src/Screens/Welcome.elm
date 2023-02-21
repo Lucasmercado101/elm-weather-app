@@ -162,16 +162,17 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                 [ centerX
                 , Background.color black
                 ]
-                [ if manualLocationErr /= "" then
+                [ -- Error message
+                  if manualLocationErr /= "" then
                     column [ width fill ]
                         [ paragraph
                             [ paddingXY 24 12
                             , Font.center
                             , spacing 8
+                            , Font.color primary
                             ]
                             [ el
                                 [ centerX
-                                , Font.color primary
                                 , Font.heavy
                                 , Font.underline
                                 , Font.size 22
@@ -180,7 +181,6 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                             , br
                             , el
                                 [ centerX
-                                , Font.color primary
                                 , Font.light
                                 , Font.size 18
                                 ]
@@ -191,6 +191,8 @@ welcomeScreenView { manualLocationErr, manualLocation } =
 
                   else
                     none
+
+                -- Latitude and Longitude form
                 , column
                     [ paddingXY 24 24
                     , width fill
@@ -215,20 +217,23 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
                         }
                     ]
-                , el [ width fill, height (px 1), Background.color primary ] none
-                , el [ centerX ]
-                    (button
-                        [ paddingXY 24 12
-                        , centerX
-                        , Font.color primary
-                        , Font.bold
-                        , Font.size 22
-                        ]
-                        { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
-                    )
+                , divider
+                , button
+                    [ paddingXY 24 12
+                    , centerX
+                    , Font.color primary
+                    , Font.bold
+                    , Font.size 22
+                    ]
+                    { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
                 ]
             ]
         )
+
+
+divider : Element msg
+divider =
+    el [ width fill, height (px 1), Background.color primary ] none
 
 
 noGeoApiAvailableErrStr : String
