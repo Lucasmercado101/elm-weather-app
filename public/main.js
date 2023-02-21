@@ -44,8 +44,6 @@ try {
     if (navigator.permissions) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         if (result.state === "granted") {
-          // TODO: cache (service worker), if already fetched weather data
-          // TODO: cache location provided, either manually or by geolocation
           // NOTE:
           // Don't know if this extra IF is necessary
           if (navigator.geolocation) {
