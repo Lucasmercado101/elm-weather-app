@@ -197,15 +197,55 @@ init val =
         Ok { posixTimeNow, location } ->
             case location of
                 Just { latitude, longitude } ->
-                    ( LoadingScreen
-                        (LoadingScreenHasNoCurrentZone
-                            { location = ( latitude, longitude )
-                            , currentTime = Time.millisToPosix posixTimeNow
+                    ( MainScreen
+                        { apiData =
+                            { daily = [ ( Time.millisToPosix 0, Api.ClearSky, 15 ) ]
+                            , hourly =
+                                [ { time = Time.millisToPosix 1676938588246
+                                  , temperature = Just 52
+                                  , relativeHumidity = 15
+                                  , apparentTemperature = Just 15
+                                  , weatherCode = Just Api.ClearSky
+                                  , windSpeed = Just 13
+                                  , visibility = 15
+                                  }
+                                , { time = Time.millisToPosix 1676938582246
+                                  , temperature = Just 15
+                                  , relativeHumidity = 10
+                                  , apparentTemperature = Just 2
+                                  , weatherCode = Just Api.ClearSky
+                                  , windSpeed = Just 13
+                                  , visibility = 14
+                                  }
+                                ]
                             }
-                        )
-                    , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
+                        , currentRefetchingStatus = NotRefetching
+                        , currentRefetchingAnim = Animator.init NotRefetching
+                        , location = ( latitude, longitude )
+                        , currentTime = Time.millisToPosix posixTimeNow
+                        , zone = Time.utc
+                        , primaryColor = primary
+                        , isOptionMenuOpen = False
+                        , country = ""
+                        , state = ""
+                        , countryAndStateVisibility = Animator.init False
+                        }
+                    , Cmd.batch
+                        [ Api.getData ( latitude, longitude ) (Time.millisToPosix posixTimeNow) Time.utc GotRefetchingWeatherResp
+                            |> Cmd.map OnMainScreenMsg
+                        , Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
+                            |> Cmd.map OnMainScreenMsg
+                        ]
                     )
 
+                -- ( LoadingScreen
+                --     (LoadingScreenHasNoCurrentZone
+                --         { location = ( latitude, longitude )
+                --         , currentTime = Time.millisToPosix posixTimeNow
+                --         }
+                --     )
+                -- , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
+                -- )
                 Nothing ->
                     ( WelcomeScreen (Welcome.welcomeScreenInit posixTimeNow)
                     , Cmd.none

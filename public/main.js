@@ -8,6 +8,22 @@ if ("serviceWorker" in navigator) {
     .catch((err) => {
       console.log("Error registering: Not on HTTPS");
     });
+
+  navigator.serviceWorker.ready.then((registration) => {
+    // console.log(caches.open().then(e => ));
+    registration.active.postMessage("Hi service worker");
+  });
+
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    const data = event.data;
+    if (data.type === "meteo") {
+      try {
+        localStorage.setItem("meteo", data.data);
+      } catch (e) {
+        console.log("ERROR STORING", e);
+      }
+    }
+  });
 }
 
 const startAppWFlags = (flags = {}) =>
@@ -15,6 +31,16 @@ const startAppWFlags = (flags = {}) =>
     node: document.getElementById("root"),
     flags: { posixTimeNow: Date.now(), ...flags }
   });
+
+try {
+  const meteoData = localStorage.getItem("meteo");
+  if (meteoData) {
+    const parsedData = JSON.parse(meteoData);
+    console.log("PARSED");
+  }
+
+  main(startAppWFlags());
+} catch {}
 
 if (navigator.permissions) {
   navigator.permissions.query({ name: "geolocation" }).then((result) => {
@@ -26,6 +52,12 @@ if (navigator.permissions) {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.ready.then((registration) => {
+                console.log("Here");
+              });
+            }
+            console.log("after");
             const app = startAppWFlags({ location: position.coords });
             main(app);
           },
@@ -76,4 +108,5 @@ function main(app) {
       app.ports.noGeoLocationApiAvailableReceiver.send();
     }
   });
+  console.timeEnd("initial");
 }
