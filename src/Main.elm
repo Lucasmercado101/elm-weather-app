@@ -586,7 +586,7 @@ view model =
                     none
 
                 WelcomeScreen noLocationDataModel ->
-                    if noLocationDataModel.errorBanner /= "" then
+                    if noLocationDataModel.geoLocationApiError /= "" then
                         paragraph
                             [ Background.color black
                             , Font.color primary
@@ -594,7 +594,7 @@ view model =
                             , paddingXY 24 12
                             , Font.size 22
                             ]
-                            [ text "Error: ", el [ Font.light ] (text noLocationDataModel.errorBanner) ]
+                            [ text "Error: ", el [ Font.light ] (text noLocationDataModel.geoLocationApiError) ]
 
                     else
                         none
