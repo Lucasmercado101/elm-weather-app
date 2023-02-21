@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "dev": "elm-watch hot",
+    "parcel-build": "parcel build public/index.html"
+  },
+  "devDependencies": {
+    "@parcel/transformer-elm": "^2.8.3",
+    "elm": "^0.19.1-5",
+    "elm-watch": "^1.1.2"
+  },
+  "dependencies": {
+    "parcel": "^2.8.3"
+  }
+}
