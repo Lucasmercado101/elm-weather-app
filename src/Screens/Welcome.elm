@@ -1,7 +1,7 @@
 module Screens.Welcome exposing (..)
 
-import Cmd.Extra exposing (pure, with, withTrigger)
-import Element exposing (Element, centerX, centerY, column, el, fill, height, none, paddingXY, paragraph, px, spacing, text, width)
+import Cmd.Extra exposing (pure)
+import Element exposing (Element, alpha, centerX, centerY, column, el, fill, height, none, paddingXY, paragraph, px, spacing, text, width)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input exposing (button)
@@ -204,7 +204,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         ]
                         { onChange = \l -> OnChangeLatitude l
                         , text = lat
-                        , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "-150.58")))
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text "-150.58")))
                         , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
                         }
                     , Input.text
@@ -213,7 +213,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         ]
                         { onChange = \l -> OnChangeLongitude l
                         , text = lon
-                        , placeholder = Just (Input.placeholder [] (el [ Font.color black ] (text "75.88")))
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text "75.88")))
                         , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
                         }
                     ]
