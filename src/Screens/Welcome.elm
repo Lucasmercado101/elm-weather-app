@@ -1,5 +1,6 @@
 module Screens.Welcome exposing (..)
 
+import Cmd.Extra exposing (pure, with, withTrigger)
 import Element exposing (Element, centerX, centerY, column, el, fill, height, none, paddingXY, paragraph, px, spacing, text, width)
 import Element.Background as Background
 import Element.Font as Font
@@ -60,83 +61,66 @@ welcomeScreenUpdate msg model =
     in
     case msg of
         RequestLocationPerms ->
-            ( { model | errorMessage = Nothing }, requestLocationPerms () )
+            ( { model | errorMessage = Nothing }, requestLocPerms )
 
         ReceivedLocation coords ->
-            ( { model | receivedLocation = Just coords }, Cmd.none )
+            -- NOTE: signal to parent
+            { model | receivedLocation = Just coords } |> pure
 
         RequestLocationPermsApiError err ->
-            ( { model
+            { model
                 | errorMessage =
                     err
                         |> codeToGeoLocationApiError
                         |> geoLocationApiErrorToString
                         |> Just
-              }
-            , Cmd.none
-            )
+            }
+                |> pure
 
         NoGeoLocationApi () ->
-            ( { model | errorMessage = Just noGeoApiAvailableErrStr }
-            , Cmd.none
-            )
+            { model | errorMessage = Just noGeoApiAvailableErrStr } |> pure
 
         OnChangeLatitude str ->
-            ( { model
+            { model
                 | errorMessage = model.errorMessage
                 , manualLocation = ( str, lon )
-              }
-            , Cmd.none
-            )
+            }
+                |> pure
 
         OnChangeLongitude str ->
-            ( { model
+            { model
                 | errorMessage = model.errorMessage
                 , manualLocation = ( lat, str )
-              }
-            , Cmd.none
-            )
+            }
+                |> pure
 
         SubmitManualLocationForm ->
-            case String.toFloat lat of
+            let
+                setManualError : String -> WelcomeScreenModel
+                setManualError errStr =
+                    { model | errorMessage = Nothing, manualLocationErr = errStr }
+            in
+            (case String.toFloat lat of
                 Just latFloat ->
                     if latFloat < -90 || latFloat > 90 then
-                        ( { model
-                            | errorMessage = Nothing
-                            , manualLocationErr = "Latitude must be between -90 and 90"
-                          }
-                        , Cmd.none
-                        )
+                        setManualError "Latitude must be between -90 and 90"
 
                     else
                         case String.toFloat lon of
                             Just lonFloat ->
                                 if lonFloat < -180 || lonFloat > 180 then
-                                    ( { model
-                                        | errorMessage = Nothing
-                                        , manualLocationErr = "Longitude must be between -180 and 180"
-                                      }
-                                    , Cmd.none
-                                    )
+                                    setManualError "Longitude must be between -180 and 180"
 
                                 else
-                                    ( { model | receivedLocation = Just { latitude = latFloat, longitude = lonFloat } }, Cmd.none )
+                                    { model | receivedLocation = Just { latitude = latFloat, longitude = lonFloat } }
 
                             Nothing ->
-                                ( { model
-                                    | errorMessage = Nothing
-                                    , manualLocationErr = "Longitude must be a valid number"
-                                  }
-                                , Cmd.none
-                                )
+                                setManualError "Longitude must be a valid number"
 
                 Nothing ->
-                    ( { model
-                        | errorMessage = Nothing
-                        , manualLocationErr = "Latitude must be a valid number"
-                      }
-                    , Cmd.none
-                    )
+                    setManualError "Latitude must be a valid number"
+            )
+                |> pure
 
 
 welcomeScreenView : WelcomeScreenModel -> Element WelcomeScreenMsg
