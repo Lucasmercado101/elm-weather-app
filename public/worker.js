@@ -50,6 +50,7 @@ self.addEventListener("install", (e) => {
     (async () => {
       const cache = await caches.open(cacheName);
       // console.log("[Service Worker] Caching all: app shell and content");
+      // TODO: this can fail, try catch
       await cache.addAll(contentToCache);
     })()
   );
