@@ -435,6 +435,11 @@ update topMsg topModel =
                                         model.location
                                   in
                                   Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
+
+                                --  TODO: currently refetching using given coordinates,
+                                --  but it should be the coordinates given if no locations perms allowed
+                                --  otherwise get current location and fetch using that, also add option to change
+                                --  location on menu
                                 , Api.getData model.location model.currentTime zone GotRefetchingWeatherResp
                                 ]
                             )
