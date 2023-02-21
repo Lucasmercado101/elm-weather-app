@@ -152,6 +152,7 @@ type Msg
 type Flags
     = TimeOnly { posixTimeNow : Int }
     | TimeAndLocationCoords { posixTimeNow : Int, latitude : Float, longitude : Float }
+    | CachedWeatherData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData }
 
 
 posixFlagDecoder : JD.Decoder Flags
@@ -175,11 +176,25 @@ posixAndLocationsFlagDecoder =
         (JD.field "longitude" JD.float)
 
 
+cachedWeatherDataFlagDecoder : JD.Decoder Flags
+cachedWeatherDataFlagDecoder =
+    JD.map2
+        (\time weatherData ->
+            CachedWeatherData
+                { posixTimeNow = time
+                , cachedWeatherData = weatherData
+                }
+        )
+        (JD.field "posixTimeNow" JD.int)
+        Api.responseDataDecoder
+
+
 flagsDecoders : JD.Value -> Result JD.Error Flags
 flagsDecoders value =
     JD.decodeValue
         (JD.oneOf
-            [ posixAndLocationsFlagDecoder
+            [ cachedWeatherDataFlagDecoder
+            , posixAndLocationsFlagDecoder
             , posixFlagDecoder
             ]
         )
@@ -196,6 +211,11 @@ main =
         }
 
 
+
+-- TODO: remove from cache when location perms are revoked
+-- otherwise i have an old locations
+
+
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
     case flagsDecoders val of
@@ -206,33 +226,32 @@ init val =
                     , Cmd.none
                     )
 
+                -- NOTE: Very rare, realistically the data would've been
+                -- already fetched as soon as coordinates were given
                 TimeAndLocationCoords { posixTimeNow, latitude, longitude } ->
-                    ( MainScreen
-                        { apiData =
-                            { daily = [ ( Time.millisToPosix 0, Api.ClearSky, 15 ) ]
-                            , hourly =
-                                [ { time = Time.millisToPosix 1676938588246
-                                  , temperature = Just 52
-                                  , relativeHumidity = 15
-                                  , apparentTemperature = Just 15
-                                  , weatherCode = Just Api.ClearSky
-                                  , windSpeed = Just 13
-                                  , visibility = 15
-                                  }
-                                , { time = Time.millisToPosix 1676938582246
-                                  , temperature = Just 15
-                                  , relativeHumidity = 10
-                                  , apparentTemperature = Just 2
-                                  , weatherCode = Just Api.ClearSky
-                                  , windSpeed = Just 13
-                                  , visibility = 14
-                                  }
-                                ]
+                    ( LoadingScreen
+                        (LoadingScreenHasNoCurrentZone
+                            { location = ( latitude, longitude )
+                            , currentTime = Time.millisToPosix posixTimeNow
                             }
+                        )
+                    , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
+                    )
+
+                CachedWeatherData { posixTimeNow, cachedWeatherData } ->
+                    let
+                        { latitude, longitude } =
+                            cachedWeatherData
+                    in
+                    ( MainScreen
+                        { apiData = cachedWeatherData
                         , currentRefetchingStatus = NotRefetching
                         , currentRefetchingAnim = Animator.init NotRefetching
                         , location = ( latitude, longitude )
                         , currentTime = Time.millisToPosix posixTimeNow
+
+                        -- TODO: fetch zone before re-fetching data.
+                        -- delay is not noticeably by the user
                         , zone = Time.utc
                         , primaryColor = primary
                         , isOptionMenuOpen = False
@@ -248,20 +267,11 @@ init val =
                         ]
                     )
 
-        -- ( LoadingScreen
-        --     (LoadingScreenHasNoCurrentZone
-        --         { location = ( latitude, longitude )
-        --         , currentTime = Time.millisToPosix posixTimeNow
-        --         }
-        --     )
-        -- , Task.perform GotCurrentZoneLoadingScreenMsg Time.here |> Cmd.map OnLoadingScreenMsg
-        -- )
         Err err ->
-            Debug.log (Debug.toString err) <|
-                -- TODO: handle this, will need to call Time.now in welcome
-                ( WelcomeScreen (Welcome.welcomeScreenInit 0)
-                , Cmd.none
-                )
+            -- TODO: handle this, will need to call Time.now in welcome
+            ( WelcomeScreen (Welcome.welcomeScreenInit 0)
+            , Cmd.none
+            )
 
 
 

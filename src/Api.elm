@@ -2,7 +2,7 @@ module Api exposing (..)
 
 import Http
 import Iso8601
-import Json.Decode exposing (Decoder, field, float, int, list, map, map2, map3, map7, maybe, string)
+import Json.Decode exposing (Decoder, field, float, int, list, map, map2, map3, map4, map7, maybe, string)
 import MIcons exposing (foggy, partlyCloudy, rainy, snowing, weatherSnowy)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Icon)
@@ -152,6 +152,8 @@ getData ( lat, long ) startDate zone msg =
 type alias ResponseData =
     { daily : Daily
     , hourly : List Hourly
+    , latitude : Float
+    , longitude : Float
     }
 
 
@@ -234,9 +236,11 @@ hourlyDecoder =
 
 responseDataDecoder : Decoder ResponseData
 responseDataDecoder =
-    map2 ResponseData
+    map4 ResponseData
         (field "daily" dailyDecoder)
         (field "hourly" hourlyDecoder)
+        (field "latitude" float)
+        (field "longitude" float)
 
 
 timesToPosix : List String -> List Posix
