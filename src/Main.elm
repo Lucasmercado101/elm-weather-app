@@ -260,7 +260,7 @@ init val =
                         , countryAndStateVisibility = Animator.init False
                         }
                     , Cmd.batch
-                        [ Api.getData ( latitude, longitude ) (Time.millisToPosix posixTimeNow) Time.utc GotRefetchingWeatherResp
+                        [ Task.perform GotCurrentZoneMainScreen Time.here
                             |> Cmd.map OnMainScreenMsg
                         , Api.getReverseGeocoding ( latitude, longitude ) GotCountryAndStateMainScreen
                             |> Cmd.map OnMainScreenMsg
@@ -268,7 +268,8 @@ init val =
                     )
 
         Err err ->
-            -- TODO: handle this, will need to call Time.now in welcome
+            -- NOTE: this will not happen unless i screw up the flags
+            -- if i want to handle it: I will need to call Time.now in welcome to get the current time
             ( WelcomeScreen (Welcome.welcomeScreenInit 0)
             , Cmd.none
             )
@@ -436,11 +437,19 @@ update topMsg topModel =
                         |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
 
                 GotCurrentZoneMainScreen zone ->
+                    -- TODO: This probably should be split into two states
+                    -- HasCurrentZone and HasNoCurrentZone but i can't be bothered
+                    -- it would be for the sake of the query being made for the first moment
                     ( MainScreen
                         { model
                             | zone = zone
+                            , currentRefetchingAnim =
+                                model.currentRefetchingAnim
+                                    |> Animator.go Animator.immediately Refetching
+                            , currentRefetchingStatus = Refetching
                         }
-                    , Cmd.none
+                    , Api.getData model.location model.currentTime zone GotRefetchingWeatherResp
+                        |> Cmd.map OnMainScreenMsg
                     )
 
                 GotCurrentTimeMainScreen time ->
