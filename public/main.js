@@ -32,15 +32,15 @@ const startAppWFlags = (flags = {}) =>
     flags: { posixTimeNow: Date.now(), ...flags }
   });
 
-try {
-  const meteoData = localStorage.getItem("meteo");
-  if (meteoData) {
-    const parsedData = JSON.parse(meteoData);
-    console.log("PARSED");
-  }
+// try {
+//   const meteoData = localStorage.getItem("meteo");
+//   if (meteoData) {
+//     const parsedData = JSON.parse(meteoData);
+//     console.log("PARSED");
+//   }
 
-  main(startAppWFlags());
-} catch {}
+//   main(startAppWFlags());
+// } catch {}
 
 if (navigator.permissions) {
   navigator.permissions.query({ name: "geolocation" }).then((result) => {
