@@ -261,6 +261,8 @@ update topMsg topModel =
                                 ( LoadingScreen ( Loading, coords )
                                 , Api.getWeatherData coords
                                     |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
+                                  -- NOTE: Api.getReverseGeocoding could be called here
+                                  -- to pass it along to MainScreen but it's not really worth it
                                 )
 
                             Nothing ->
