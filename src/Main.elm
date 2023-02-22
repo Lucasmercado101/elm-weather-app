@@ -268,8 +268,8 @@ update topMsg topModel =
                    )
 
         ( OnLoadingScreenMsg msg, (LoadingScreen ( state, coords )) as model ) ->
-            -- NOTE: could probably be refactored?
-            -- doesn't seem to be worth it though
+            -- NOTE: could probably be refactored into 2 states in MSG
+            -- instead of one 2 states variants in 1 MSG variant
             case msg of
                 GotWeatherResponse result ->
                     case result of
@@ -306,6 +306,7 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
+                -- Options menu
                 ChangedPrimaryColor hexColor ->
                     { model | primaryColor = hexColor |> hexToColor |> Result.withDefault model.primaryColor }
                         |> pure
@@ -321,6 +322,7 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
+                -- Background refetching
                 GotCountryAndStateMainScreen countryAndState ->
                     case countryAndState of
                         Ok { address } ->
