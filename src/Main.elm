@@ -600,7 +600,7 @@ mainScreen model =
             -- NOTE: could be even more strict and only a custom list type with 24
             -- list items, i.e the hours in a day, each being an Hourly,
             -- definitely overkill.
-            case hourlyDataOfToday zone currentTime apiData.hourly |> NEList.fromList of
+            case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
                 Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
                     column []
                         [ el
@@ -672,7 +672,7 @@ mainScreen model =
 
         bigCurrentTemperature : Element MainScreenMsg
         bigCurrentTemperature =
-            case hourlyDataOfToday zone currentTime apiData.hourly |> NEList.fromList of
+            case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
                 Just (Nonempty firstHourly restHourly) ->
                     let
                         closestHourly : Hourly
