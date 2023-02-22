@@ -5,10 +5,16 @@
   },
   "devDependencies": {
     "@parcel/transformer-elm": "^2.8.3",
+    "@types/gulp": "^4.0.10",
     "elm": "^0.19.1-5",
-    "elm-watch": "^1.1.2"
+    "elm-watch": "^1.1.2",
+    "gulp": "^4.0.2"
   },
   "dependencies": {
+    "gulp-clean-css": "^4.3.0",
+    "gulp-elm": "^0.8.2",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-uglify": "^3.0.2",
     "parcel": "^2.8.3"
   }
 }
