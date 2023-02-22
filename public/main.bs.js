@@ -17,41 +17,17 @@ function cachedWeatherAndAddressDataFlag(cachedWeatherData) {
         };
 }
 
-// if ("serviceWorker" in navigator) {
-//   navigator.serviceWorker
-//     .register("worker.js")
-//     .then((e) => {
-//       console.log("Service Worker Registered");
-//     })
-//     .catch((err) => {
-//       console.log("Error registering: Not on HTTPS");
-//     });
+var cachedWeatherData = localStorage.getItem("weatherData");
 
-//   navigator.serviceWorker.ready.then((registration) => {
-//     registration.active.postMessage("Hi service worker");
-//   });
-
-//   navigator.serviceWorker.addEventListener("message", (event) => {
-//     // NOTE: instead of adding it to cache on SW
-//     // i'm passing it to here and storing it in localStorage
-//     // as It's about 9-10~ times faster than using cache.match
-//     const data = event.data;
-//     if (data.type === "meteo") localStorage.setItem("weatherData", data.data);
-//     if (data.type === "address") localStorage.setItem("address", data.data);
-//   });
-// }
-
-
-// ------------------------------
+var cachedAddressData = localStorage.getItem("address");
 
 const startAppWFlags = (flags) =>
   Elm.Main.init({
     node: document.getElementById("root"),
     flags: flags
   });
+;
 
-const cachedWeatherData = localStorage.getItem("weatherData");
-const cachedAddressData = localStorage.getItem("address");
 try {
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
@@ -97,5 +73,7 @@ function main(app) {
 export {
   cachedWeatherDataFlag ,
   cachedWeatherAndAddressDataFlag ,
+  cachedWeatherData ,
+  cachedAddressData ,
 }
-/*  Not a pure module */
+/* cachedWeatherData Not a pure module */
