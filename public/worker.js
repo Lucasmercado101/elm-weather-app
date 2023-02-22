@@ -1,9 +1,5 @@
 const cacheName = "weatherMate-v1";
-const contentToCache = [
-  "/public/index.html",
-  "/public/main.js",
-  "/public/elm.js"
-];
+const contentToCache = ["./index.html", "./main.js", "./elm.js"];
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.registration?.navigationPreload.enable());

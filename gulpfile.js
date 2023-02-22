@@ -31,4 +31,14 @@ const copyAssets = () => src("public/assets/*").pipe(dest("dist/assets"));
 
 const uglifyJs = () => src("public/**/*.js").pipe(uglify()).pipe(dest("dist"));
 
-exports.default = parallel(elmToJs, html, css, copyAssets, uglifyJs);
+const copyWebManifest = () =>
+  src("public/manifest.webmanifest").pipe(dest("dist"));
+
+exports.default = parallel(
+  elmToJs,
+  html,
+  css,
+  copyAssets,
+  uglifyJs,
+  copyWebManifest
+);
