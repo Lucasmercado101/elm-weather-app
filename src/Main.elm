@@ -752,7 +752,7 @@ mainScreen model =
             [ width fill
             , height fill
             ]
-            [ row [ centerY, width fill, paddingBottom 15 ]
+            [ row [ width fill, paddingBottom 15 ]
                 [ button
                     [ padding 15
                     , Font.color black
