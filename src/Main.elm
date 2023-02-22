@@ -800,95 +800,92 @@ mainScreen model =
 
                 _ ->
                     none
-            , column
+            , -- State cards
+              el
+                [ padding 15
+                , width fill
+                ]
+                (row
+                    [ Font.color white
+                    , Background.color black
+                    , width fill
+                    , padding 30
+                    , Border.rounded 12
+                    , spaceEvenly
+                    ]
+                    [ statCard model.primaryColor
+                        Icons.air
+                        (case apiData.hourly of
+                            x :: xs ->
+                                (timeClosestToMine zone currentTime x xs
+                                    |> .windSpeed
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    |> Maybe.withDefault 0
+                                    |> round
+                                    |> String.fromInt
+                                )
+                                    ++ "km/h"
+
+                            _ ->
+                                -- NOTE: in theory it will never reach here
+                                -- as there will always be one item in the list
+                                -- either way it's handled as "--" in all 3 stat cards
+                                "--"
+                        )
+                        "Wind"
+                    , statCard model.primaryColor
+                        Outlined.water_drop
+                        (case apiData.hourly of
+                            x :: xs ->
+                                (timeClosestToMine zone currentTime x xs
+                                    |> .relativeHumidity
+                                    |> String.fromInt
+                                )
+                                    ++ "%"
+
+                            _ ->
+                                "--"
+                        )
+                        "Humidity"
+                    , statCard model.primaryColor
+                        Outlined.visibility
+                        (case apiData.hourly of
+                            x :: xs ->
+                                (timeClosestToMine zone currentTime x xs
+                                    |> .visibility
+                                    |> toKm
+                                    |> round
+                                    |> String.fromInt
+                                )
+                                    ++ "km"
+
+                            _ ->
+                                "--"
+                        )
+                        "Visibility"
+                    ]
+                )
+            , -- Weekly Forecast
+              el
+                [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
+                , Font.heavy
+                ]
+                (text "Weekly Forecast")
+            , el
                 [ width fill
                 ]
-                [ el
+                (row
                     [ padding 15
+                    , spacing 18
                     , width fill
+                    , scrollbarX
                     ]
-                    (row
-                        [ Font.color white
-                        , Background.color black
-                        , width fill
-                        , padding 30
-                        , Border.rounded 12
-                        , spaceEvenly
-                        ]
-                        [ statCard model.primaryColor
-                            Icons.air
-                            (case apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone currentTime x xs
-                                        |> .windSpeed
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        |> Maybe.withDefault 0
-                                        |> round
-                                        |> String.fromInt
-                                    )
-                                        ++ "km/h"
+                    (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
+                )
 
-                                _ ->
-                                    -- NOTE: in theory it will never reach here
-                                    -- as there will always be one item in the list
-                                    -- either way it's handled as "--" in all 3 stat cards
-                                    "--"
-                            )
-                            "Wind"
-                        , statCard model.primaryColor
-                            Outlined.water_drop
-                            (case apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone currentTime x xs
-                                        |> .relativeHumidity
-                                        |> String.fromInt
-                                    )
-                                        ++ "%"
-
-                                _ ->
-                                    "--"
-                            )
-                            "Humidity"
-                        , statCard model.primaryColor
-                            Outlined.visibility
-                            (case apiData.hourly of
-                                x :: xs ->
-                                    (timeClosestToMine zone currentTime x xs
-                                        |> .visibility
-                                        |> toKm
-                                        |> round
-                                        |> String.fromInt
-                                    )
-                                        ++ "km"
-
-                                _ ->
-                                    "--"
-                            )
-                            "Visibility"
-                        ]
-                    )
-                , -- Weekly Forecast
-                  el
-                    [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
-                    , Font.heavy
-                    ]
-                    (text "Weekly Forecast")
-                , el
-                    [ width fill
-                    ]
-                    (row
-                        [ padding 15
-                        , spacing 18
-                        , width fill
-                        , scrollbarX
-                        ]
-                        (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
-                    )
-
-                -- Attribution
-                , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]
-                ]
+            -- Attribution
+            , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]
             ]
         )
 
