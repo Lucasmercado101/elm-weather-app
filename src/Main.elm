@@ -884,6 +884,8 @@ mainScreen model =
                     , width fill
                     , scrollbarX
                     ]
+                    -- NOTE: daily could be made into an Nonempty list
+                    -- don't know if it would be worth it
                     (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
                 )
 
