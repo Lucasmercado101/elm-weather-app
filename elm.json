@@ -21,12 +21,14 @@
             "justinmimbs/time-extra": "1.1.1",
             "mdgriffith/elm-animator": "1.1.1",
             "mdgriffith/elm-ui": "1.1.8",
+            "mgold/elm-nonempty-list": "4.2.0",
             "rtfeldman/elm-iso8601-date-strings": "1.1.4"
         },
         "indirect": {
             "elm/bytes": "1.0.8",
             "elm/file": "1.0.5",
             "elm/parser": "1.1.0",
+            "elm/random": "1.0.0",
             "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.3",
             "ianmackenzie/elm-units": "2.9.0",

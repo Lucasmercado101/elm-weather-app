@@ -14,6 +14,7 @@ import Html.Attributes
 import Html.Events
 import Http
 import Json.Decode as JD
+import List.Nonempty as NEList exposing (Nonempty(..))
 import MIcons exposing (..)
 import Material.Icons as Icons
 import Material.Icons.Outlined as Outlined
@@ -596,96 +597,87 @@ mainScreen model =
 
         dailySummary : Element MainScreenMsg
         dailySummary =
-            column []
-                [ el
-                    [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
-                    , Font.heavy
-                    ]
-                    (text "Daily summary")
-                , case apiData.hourly of
-                    x :: xs ->
-                        let
-                            closestHourly : Hourly
-                            closestHourly =
-                                timeClosestToMine zone currentTime x xs
+            case hourlyDataOfToday zone currentTime apiData.hourly |> NEList.fromList of
+                Just todayHourlyData ->
+                    column []
+                        [ el
+                            [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
+                            , Font.heavy
+                            ]
+                            (text "Daily summary")
+                        , case apiData.hourly of
+                            x :: xs ->
+                                let
+                                    closestHourly : Hourly
+                                    closestHourly =
+                                        timeClosestToMine zone currentTime x xs
 
-                            actualTemp : String
-                            actualTemp =
-                                case closestHourly.temperature of
-                                    Just val ->
-                                        val |> numberWithSign
+                                    actualTemp : String
+                                    actualTemp =
+                                        case closestHourly.temperature of
+                                            Just val ->
+                                                val |> numberWithSign
 
-                                    Nothing ->
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        "--"
+                                            Nothing ->
+                                                -- NOTE: in theory this will never happen
+                                                -- as we know what temperature it is "right now"
+                                                "--"
 
-                            perceivedTemp : String
-                            perceivedTemp =
-                                case closestHourly.apparentTemperature of
-                                    Just val ->
-                                        val |> numberWithSign
+                                    perceivedTemp : String
+                                    perceivedTemp =
+                                        case closestHourly.apparentTemperature of
+                                            Just val ->
+                                                val |> numberWithSign
 
-                                    Nothing ->
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know what temperature it is "right now"
-                                        "--"
+                                            Nothing ->
+                                                -- NOTE: in theory this will never happen
+                                                -- as we know what temperature it is "right now"
+                                                "--"
 
-                            todayHourlyData : List Hourly
-                            todayHourlyData =
-                                hourlyDataOfToday zone currentTime apiData.hourly
-
-                            lowestTempOfToday : Maybe Float
-                            lowestTempOfToday =
-                                todayHourlyData
-                                    |> List.map .temperature
-                                    |> (\l ->
-                                            case l of
-                                                first :: rest ->
+                                    lowestTempOfToday : Maybe Float
+                                    lowestTempOfToday =
+                                        todayHourlyData
+                                            |> NEList.map .temperature
+                                            |> (\(Nonempty first rest) ->
                                                     first |> Maybe.map (\num -> foldrMaybeListWithDefault num rest min)
+                                               )
 
-                                                [] ->
-                                                    Nothing
-                                       )
-
-                            highestTempOfToday : Maybe Float
-                            highestTempOfToday =
-                                todayHourlyData
-                                    |> List.map .temperature
-                                    |> (\l ->
-                                            case l of
-                                                first :: rest ->
+                                    highestTempOfToday : Maybe Float
+                                    highestTempOfToday =
+                                        todayHourlyData
+                                            |> NEList.map .temperature
+                                            |> (\(Nonempty first rest) ->
                                                     first |> Maybe.map (\num -> foldrMaybeListWithDefault num rest max)
+                                               )
+                                in
+                                paragraph
+                                    [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
+                                    , Font.bold
+                                    , Font.size 16
+                                    , width fill
+                                    ]
+                                    [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
+                                    , br
+                                    , case ( lowestTempOfToday, highestTempOfToday ) of
+                                        ( Just lowest, Just highest ) ->
+                                            text ("Today, the temperature is felt in the range from " ++ (lowest |> String.fromFloat) ++ "° to " ++ (highest |> String.fromFloat) ++ "°")
 
-                                                [] ->
-                                                    Nothing
-                                       )
-                        in
-                        paragraph
-                            [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
-                            , Font.bold
-                            , Font.size 16
-                            , width fill
-                            ]
-                            [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
-                            , br
-                            , case ( lowestTempOfToday, highestTempOfToday ) of
-                                ( Just lowest, Just highest ) ->
-                                    text ("Today, the temperature is felt in the range from " ++ (lowest |> String.fromFloat) ++ "° to " ++ (highest |> String.fromFloat) ++ "°")
+                                        ( Just lowest, Nothing ) ->
+                                            text ("Today, the temperature lowest temperature is " ++ (lowest |> String.fromFloat) ++ "°")
 
-                                ( Just lowest, Nothing ) ->
-                                    text ("Today, the temperature lowest temperature is " ++ (lowest |> String.fromFloat) ++ "°")
+                                        ( Nothing, Just highest ) ->
+                                            text ("Today, the temperature highest temperature is " ++ (highest |> String.fromFloat) ++ "°")
 
-                                ( Nothing, Just highest ) ->
-                                    text ("Today, the temperature highest temperature is " ++ (highest |> String.fromFloat) ++ "°")
+                                        ( Nothing, Nothing ) ->
+                                            none
+                                    ]
 
-                                ( Nothing, Nothing ) ->
-                                    none
-                            ]
+                            _ ->
+                                none
+                        ]
 
-                    _ ->
-                        none
-                ]
+                _ ->
+                    none
     in
     el
         [ width fill
@@ -1139,6 +1131,21 @@ roundToPlaces places number =
             toFloat (10 ^ places)
     in
     toFloat (round (number * multiplier)) / multiplier
+
+
+neFoldrMaybeListWithDefault : number -> Nonempty (Maybe number) -> (number -> number -> number) -> number
+neFoldrMaybeListWithDefault num rest fn =
+    NEList.foldl
+        (\next acc ->
+            case next of
+                Just val ->
+                    fn acc val
+
+                Nothing ->
+                    acc
+        )
+        num
+        rest
 
 
 foldrMaybeListWithDefault : number -> List (Maybe number) -> (number -> number -> number) -> number
