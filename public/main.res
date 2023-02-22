@@ -1,12 +1,16 @@
 type localStorage = LocalStorage 
 
 external localStorage: {
-  "getItem": (. string) => option<string>,
+  "getItem": (. string) => Js.nullable<string>,
   "setItem": (. string, string) => unit,
   "removeItem": (. string) => unit,
-  "key": (. int) => option<string>,
+  "key": (. int) => Js.nullable<string>,
   "clear": (. unit) => unit,
 } = "localStorage"
+
+@scope("JSON") @val
+external parse: string => 'a = "parse"
+
 
 
 // if ("serviceWorker" in navigator) {
@@ -73,9 +77,24 @@ const startAppWFlags = (flags) =>
   });
 `)
 
+try {
+  let a = 1
+  switch (Js.Nullable.toOption(cachedWeatherData), Js.Nullable.toOption(cachedAddressData)) {
+  | (Some(cachedWeatherData), Some(cachedAddressData)) => {
+      let parsedWeatherData = parse(cachedWeatherData)
+      let parsedAddressData = parse(cachedAddressData)
+    }
+
+  | (Some(cachedWeatherData), None) => ()
+  | (None, Some(cachedAddressData)) => ()
+  | (None, None) => ()
+  }
+} catch {
+| _ => ()
+}
+
+
 %%raw(`
-
-
 try {
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);

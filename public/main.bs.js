@@ -29,6 +29,17 @@ const startAppWFlags = (flags) =>
 ;
 
 try {
+  if (!(cachedWeatherData == null) && !(cachedAddressData == null)) {
+    JSON.parse(cachedWeatherData);
+    JSON.parse(cachedAddressData);
+  }
+  
+}
+catch (exn){
+  
+}
+
+try {
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
     const parsedAddressData = JSON.parse(cachedAddressData);
