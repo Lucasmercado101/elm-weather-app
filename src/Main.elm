@@ -236,8 +236,7 @@ init val =
         Err err ->
             Debug.log (Debug.toString err) <|
                 -- NOTE: this will not happen unless i screw up the flags
-                -- if i want to handle it: I will need to call Time.now in welcome to get the current time
-                ( WelcomeScreen (Welcome.welcomeScreenInit 0)
+                ( WelcomeScreen Welcome.welcomeScreenInit
                 , Cmd.none
                 )
 

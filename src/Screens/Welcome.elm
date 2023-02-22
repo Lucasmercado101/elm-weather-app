@@ -17,9 +17,6 @@ type alias WelcomeScreenModel =
     , manualLocation : ( String, String )
     , manualLocationErr : String
 
-    -- It's only to pass it along to the next step/screen
-    , currentTime : Posix
-
     -- parent will intercept to check this
     , receivedLocation : Maybe { latitude : Float, longitude : Float }
     }
@@ -45,11 +42,10 @@ welcomeScreenSubscriptions _ =
         ]
 
 
-welcomeScreenInit : Int -> WelcomeScreenModel
-welcomeScreenInit posixTimeNow =
+welcomeScreenInit : WelcomeScreenModel
+welcomeScreenInit =
     { geoLocationApiError = ""
     , receivedLocation = Nothing
-    , currentTime = Time.millisToPosix posixTimeNow
 
     --
     , manualLocation = ( "", "" )
