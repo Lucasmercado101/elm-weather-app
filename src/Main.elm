@@ -555,6 +555,11 @@ loadingScreenView ( state, _ ) =
         )
 
 
+
+-- NOTE: currently showing data for the most recent hour
+-- i.e: Current temperature, wind, humidity, visibilty, etc.
+
+
 mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen model =
     let
