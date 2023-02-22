@@ -670,6 +670,40 @@ mainScreen model =
                 _ ->
                     none
 
+        bigCurrentTemperature : Element MainScreenMsg
+        bigCurrentTemperature =
+            case hourlyDataOfToday zone currentTime apiData.hourly |> NEList.fromList of
+                Just (Nonempty firstHourly restHourly) ->
+                    let
+                        closestHourly : Hourly
+                        closestHourly =
+                            timeClosestToMine zone currentTime firstHourly restHourly
+
+                        actualTemp : String
+                        actualTemp =
+                            case closestHourly.temperature of
+                                Just val ->
+                                    val |> round |> String.fromInt
+
+                                Nothing ->
+                                    -- NOTE: it can come as null in the JSON
+                                    "--"
+                    in
+                    column [ width fill ]
+                        [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
+                            -- NOTE: weatherCode can come as null in the JSON
+                            (text
+                                (closestHourly.weatherCode
+                                    |> Maybe.map wmoCodeToString
+                                    |> Maybe.withDefault ""
+                                )
+                            )
+                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
+                        ]
+
+                Nothing ->
+                    el [ width fill, Font.center, Font.size 182, Font.medium ] (text "--")
+
         statCards : Element MainScreenMsg
         statCards =
             let
@@ -828,40 +862,7 @@ mainScreen model =
                     { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
                 ]
             , currentDateChip
-            , case apiData.hourly of
-                x :: xs ->
-                    let
-                        closestHourly : Hourly
-                        closestHourly =
-                            timeClosestToMine zone currentTime x xs
-
-                        actualTemp : String
-                        actualTemp =
-                            case closestHourly.temperature of
-                                Just val ->
-                                    val |> round |> String.fromInt
-
-                                Nothing ->
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    "--"
-                    in
-                    column [ width fill ]
-                        [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
-                            (text
-                                (wmoCodeToString
-                                    (closestHourly.weatherCode
-                                        -- NOTE: in theory this will never happen
-                                        -- as we know the weather code it is "right now"
-                                        |> Maybe.withDefault Api.ClearSky
-                                    )
-                                )
-                            )
-                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
-                        ]
-
-                _ ->
-                    text "--"
+            , bigCurrentTemperature
             , dailySummary
             , statCards
             , -- Weekly Forecast
