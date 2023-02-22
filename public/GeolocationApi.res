@@ -43,6 +43,11 @@ type geoLocationPositionError = {
 type positionCallback = (. geoLocationPosition) => unit
 type positionErrorCallback = (. geoLocationPositionError) => unit
 
+type getCurrentPosition = (positionCallback, positionErrorCallback, positionOptions) => unit
+
+type watchId = int
+type watchPosition = (positionCallback, positionErrorCallback, positionOptions) => watchId
+
 type geoLocation = {
   getCurrentPosition: (positionErrorCallback, positionErrorCallback, positionOptions) => unit,
 }
