@@ -695,27 +695,33 @@ mainScreen model =
                     , spaceEvenly
                     ]
                     (case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
-                        Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
+                        Just (Nonempty firstHourly restHourly) ->
+                            let
+                                hourlyClosestToMine =
+                                    timeClosestToMine zone currentTime firstHourly restHourly
+                            in
                             [ windCard
-                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                (hourlyClosestToMine
                                     |> .windSpeed
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    |> Maybe.withDefault 0
-                                    |> round
-                                    |> String.fromInt
-                                 )
-                                    ++ "km/h"
+                                    -- NOTE: it can come as null in the JSON
+                                    |> Maybe.map
+                                        (\l ->
+                                            l
+                                                |> round
+                                                |> String.fromInt
+                                                |> (\s -> s ++ "km/h")
+                                        )
+                                    |> Maybe.withDefault "--"
                                 )
                             , humidityCard
-                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                ((hourlyClosestToMine
                                     |> .relativeHumidity
                                     |> String.fromInt
                                  )
                                     ++ "%"
                                 )
                             , visibilityCard
-                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                ((hourlyClosestToMine
                                     |> .visibility
                                     |> toKm
                                     |> round
