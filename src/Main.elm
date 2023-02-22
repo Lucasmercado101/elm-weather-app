@@ -214,8 +214,8 @@ init val =
                     in
                     ( MainScreen
                         { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                        , currentRefetchingStatus = NotRefetching
-                        , currentRefetchingAnim = Animator.init NotRefetching
+                        , currentRefetchingStatus = Refetching
+                        , currentRefetchingAnim = Animator.init Refetching
                         , location = { latitude = latitude, longitude = longitude }
                         , primaryColor = primary
                         , isOptionMenuOpen = False
