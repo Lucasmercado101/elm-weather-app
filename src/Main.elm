@@ -616,18 +616,21 @@ mainScreen model =
                                 -- current user time, at most, and returns a Maybe Hourly instead
                                 timeClosestToMine zone currentTime firstHourly restHourly
 
-                            lowestTempOfToday : Maybe Float
-                            lowestTempOfToday =
+                            allTemperaturesOfToday : Nonempty (Maybe Float)
+                            allTemperaturesOfToday =
                                 todayHourlyData
                                     |> NEList.map .temperature
+
+                            lowestTempOfToday : Maybe Float
+                            lowestTempOfToday =
+                                allTemperaturesOfToday
                                     |> (\(Nonempty first rest) ->
                                             first |> Maybe.map (\num -> foldrMaybeListWithDefault num rest min)
                                        )
 
                             highestTempOfToday : Maybe Float
                             highestTempOfToday =
-                                todayHourlyData
-                                    |> NEList.map .temperature
+                                allTemperaturesOfToday
                                     |> (\(Nonempty first rest) ->
                                             first |> Maybe.map (\num -> foldrMaybeListWithDefault num rest max)
                                        )
