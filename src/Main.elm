@@ -85,7 +85,7 @@ type alias MainScreenModel =
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
     -- but when I get the data and to do things at the time I fetched it
-    , apiData : Maybe ( ResponseData, Posix )
+    , apiData : ( ResponseData, Posix )
 
     -- NOTE: could be made into a Loading | Loaded | Error type union
     -- can't be bothered though
@@ -212,7 +212,7 @@ init val =
                             cachedWeatherData
                     in
                     ( MainScreen
-                        { apiData = Just ( cachedWeatherData, Time.millisToPosix posixTimeNow )
+                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                         , currentRefetchingStatus = NotRefetching
                         , currentRefetchingAnim = Animator.init NotRefetching
                         , location = { latitude = latitude, longitude = longitude }
@@ -272,7 +272,7 @@ update topMsg topModel =
                     case result of
                         Ok ( data, currentTime, zone ) ->
                             ( MainScreen
-                                { apiData = Just ( data, currentTime )
+                                { apiData = ( data, currentTime )
                                 , currentRefetchingStatus = NotRefetching
                                 , currentRefetchingAnim = Animator.init NotRefetching
                                 , location = { latitude = data.latitude, longitude = data.longitude }
@@ -367,7 +367,7 @@ update topMsg topModel =
                     (case result of
                         Ok ( data, posix, zone ) ->
                             { model
-                                | apiData = Just ( data, posix )
+                                | apiData = ( data, posix )
                                 , currentRefetchingAnim =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately NotRefetching
@@ -560,39 +560,37 @@ mainScreen model =
         zone =
             Maybe.withDefault Time.utc model.zone
 
+        ( apiData, currentTime ) =
+            model.apiData
+
         currentDateChip : Element MainScreenMsg
         currentDateChip =
-            case model.apiData of
-                Just ( _, currentTime ) ->
-                    el
-                        [ centerX
-                        , Background.color black
-                        , paddingXY 16 8
-                        , Border.rounded 200
-                        ]
-                        (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
-                            [ text
-                                (currentTime
-                                    |> Time.toWeekday zone
-                                    |> dayToString
-                                )
-                            , text ", "
-                            , text
-                                (currentTime
-                                    |> Time.toDay zone
-                                    |> String.fromInt
-                                )
-                            , text " "
-                            , text
-                                (currentTime
-                                    |> Time.toMonth zone
-                                    |> monthToString
-                                )
-                            ]
+            el
+                [ centerX
+                , Background.color black
+                , paddingXY 16 8
+                , Border.rounded 200
+                ]
+                (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
+                    [ text
+                        (currentTime
+                            |> Time.toWeekday zone
+                            |> dayToString
                         )
-
-                Nothing ->
-                    none
+                    , text ", "
+                    , text
+                        (currentTime
+                            |> Time.toDay zone
+                            |> String.fromInt
+                        )
+                    , text " "
+                    , text
+                        (currentTime
+                            |> Time.toMonth zone
+                            |> monthToString
+                        )
+                    ]
+                )
     in
     el
         [ width fill
@@ -680,44 +678,39 @@ mainScreen model =
                     { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
                 ]
             , currentDateChip
-            , case model.apiData of
-                Just ( apiData, currentTime ) ->
-                    case apiData.hourly of
-                        x :: xs ->
-                            let
-                                closestHourly : Hourly
-                                closestHourly =
-                                    timeClosestToMine zone currentTime x xs
+            , case apiData.hourly of
+                x :: xs ->
+                    let
+                        closestHourly : Hourly
+                        closestHourly =
+                            timeClosestToMine zone currentTime x xs
 
-                                actualTemp : String
-                                actualTemp =
-                                    case closestHourly.temperature of
-                                        Just val ->
-                                            val |> round |> String.fromInt
+                        actualTemp : String
+                        actualTemp =
+                            case closestHourly.temperature of
+                                Just val ->
+                                    val |> round |> String.fromInt
 
-                                        Nothing ->
-                                            -- NOTE: in theory this will never happen
-                                            -- as we know what temperature it is "right now"
-                                            "--"
-                            in
-                            column [ width fill ]
-                                [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
-                                    (text
-                                        (wmoCodeToString
-                                            (closestHourly.weatherCode
-                                                -- NOTE: in theory this will never happen
-                                                -- as we know the weather code it is "right now"
-                                                |> Maybe.withDefault Api.ClearSky
-                                            )
-                                        )
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
+                    in
+                    column [ width fill ]
+                        [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
+                            (text
+                                (wmoCodeToString
+                                    (closestHourly.weatherCode
+                                        -- NOTE: in theory this will never happen
+                                        -- as we know the weather code it is "right now"
+                                        |> Maybe.withDefault Api.ClearSky
                                     )
-                                , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
-                                ]
+                                )
+                            )
+                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
+                        ]
 
-                        _ ->
-                            text "--"
-
-                Nothing ->
+                _ ->
                     text "--"
             , -- Daily summary
               el
@@ -725,90 +718,85 @@ mainScreen model =
                 , Font.heavy
                 ]
                 (text "Daily summary")
-            , case model.apiData of
-                Just ( apiData, currentTime ) ->
-                    case apiData.hourly of
-                        x :: xs ->
-                            let
-                                closestHourly : Hourly
-                                closestHourly =
-                                    timeClosestToMine zone currentTime x xs
+            , case apiData.hourly of
+                x :: xs ->
+                    let
+                        closestHourly : Hourly
+                        closestHourly =
+                            timeClosestToMine zone currentTime x xs
 
-                                actualTemp : String
-                                actualTemp =
-                                    case closestHourly.temperature of
-                                        Just val ->
-                                            val |> numberWithSign
+                        actualTemp : String
+                        actualTemp =
+                            case closestHourly.temperature of
+                                Just val ->
+                                    val |> numberWithSign
 
-                                        Nothing ->
-                                            -- NOTE: in theory this will never happen
-                                            -- as we know what temperature it is "right now"
-                                            "--"
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
 
-                                perceivedTemp : String
-                                perceivedTemp =
-                                    case closestHourly.apparentTemperature of
-                                        Just val ->
-                                            val |> numberWithSign
+                        perceivedTemp : String
+                        perceivedTemp =
+                            case closestHourly.apparentTemperature of
+                                Just val ->
+                                    val |> numberWithSign
 
-                                        Nothing ->
-                                            -- NOTE: in theory this will never happen
-                                            -- as we know what temperature it is "right now"
-                                            "--"
+                                Nothing ->
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    "--"
 
-                                todayHourlyData : List Hourly
-                                todayHourlyData =
-                                    hourlyDataOfToday zone currentTime apiData.hourly
+                        todayHourlyData : List Hourly
+                        todayHourlyData =
+                            hourlyDataOfToday zone currentTime apiData.hourly
 
-                                lowestTempOfToday : String
-                                lowestTempOfToday =
-                                    todayHourlyData
-                                        |> List.map .temperature
-                                        |> List.foldr
-                                            (\l ->
-                                                case l of
-                                                    Just val ->
-                                                        Maybe.map (min val)
+                        lowestTempOfToday : String
+                        lowestTempOfToday =
+                            todayHourlyData
+                                |> List.map .temperature
+                                |> List.foldr
+                                    (\l ->
+                                        case l of
+                                            Just val ->
+                                                Maybe.map (min val)
 
-                                                    Nothing ->
-                                                        Maybe.map (min 0)
-                                            )
-                                            (Just 999)
-                                        |> Maybe.withDefault 0
-                                        |> numberWithSign
+                                            Nothing ->
+                                                Maybe.map (min 0)
+                                    )
+                                    (Just 999)
+                                |> Maybe.withDefault 0
+                                |> numberWithSign
 
-                                highestTempOfToday : String
-                                highestTempOfToday =
-                                    todayHourlyData
-                                        |> List.map .temperature
-                                        |> List.foldr
-                                            (\l ->
-                                                case l of
-                                                    Just val ->
-                                                        Maybe.map (max val)
+                        highestTempOfToday : String
+                        highestTempOfToday =
+                            todayHourlyData
+                                |> List.map .temperature
+                                |> List.foldr
+                                    (\l ->
+                                        case l of
+                                            Just val ->
+                                                Maybe.map (max val)
 
-                                                    Nothing ->
-                                                        Maybe.map (max 0)
-                                            )
-                                            (Just 0)
-                                        |> Maybe.withDefault 0
-                                        |> numberWithSign
-                            in
-                            paragraph
-                                [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
-                                , Font.bold
-                                , Font.size 16
-                                , width fill
-                                ]
-                                [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
-                                , br
-                                , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
-                                ]
+                                            Nothing ->
+                                                Maybe.map (max 0)
+                                    )
+                                    (Just 0)
+                                |> Maybe.withDefault 0
+                                |> numberWithSign
+                    in
+                    paragraph
+                        [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
+                        , Font.bold
+                        , Font.size 16
+                        , width fill
+                        ]
+                        [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
+                        , br
+                        , text ("Today, the temperature is felt in the range from " ++ lowestTempOfToday ++ "° to " ++ highestTempOfToday ++ "°")
+                        ]
 
-                        _ ->
-                            none
-
-                Nothing ->
+                _ ->
                     none
             , column
                 [ width fill
@@ -827,27 +815,19 @@ mainScreen model =
                         ]
                         [ statCard model.primaryColor
                             Icons.air
-                            (case model.apiData of
-                                Just ( apiData, currentTime ) ->
-                                    case apiData.hourly of
-                                        x :: xs ->
-                                            (timeClosestToMine zone currentTime x xs
-                                                |> .windSpeed
-                                                -- NOTE: in theory this will never happen
-                                                -- as we know what temperature it is "right now"
-                                                |> Maybe.withDefault 0
-                                                |> round
-                                                |> String.fromInt
-                                            )
-                                                ++ "km/h"
+                            (case apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone currentTime x xs
+                                        |> .windSpeed
+                                        -- NOTE: in theory this will never happen
+                                        -- as we know what temperature it is "right now"
+                                        |> Maybe.withDefault 0
+                                        |> round
+                                        |> String.fromInt
+                                    )
+                                        ++ "km/h"
 
-                                        _ ->
-                                            -- NOTE: in theory it will never reach here
-                                            -- as there will always be one item in the list
-                                            -- either way it's handled as "--" in all 3 stat cards
-                                            "--"
-
-                                Nothing ->
+                                _ ->
                                     -- NOTE: in theory it will never reach here
                                     -- as there will always be one item in the list
                                     -- either way it's handled as "--" in all 3 stat cards
@@ -856,41 +836,31 @@ mainScreen model =
                             "Wind"
                         , statCard model.primaryColor
                             Outlined.water_drop
-                            (case model.apiData of
-                                Just ( apiData, currentTime ) ->
-                                    case apiData.hourly of
-                                        x :: xs ->
-                                            (timeClosestToMine zone currentTime x xs
-                                                |> .relativeHumidity
-                                                |> String.fromInt
-                                            )
-                                                ++ "%"
+                            (case apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone currentTime x xs
+                                        |> .relativeHumidity
+                                        |> String.fromInt
+                                    )
+                                        ++ "%"
 
-                                        _ ->
-                                            "--"
-
-                                Nothing ->
+                                _ ->
                                     "--"
                             )
                             "Humidity"
                         , statCard model.primaryColor
                             Outlined.visibility
-                            (case model.apiData of
-                                Just ( apiData, currentTime ) ->
-                                    case apiData.hourly of
-                                        x :: xs ->
-                                            (timeClosestToMine zone currentTime x xs
-                                                |> .visibility
-                                                |> toKm
-                                                |> round
-                                                |> String.fromInt
-                                            )
-                                                ++ "km"
+                            (case apiData.hourly of
+                                x :: xs ->
+                                    (timeClosestToMine zone currentTime x xs
+                                        |> .visibility
+                                        |> toKm
+                                        |> round
+                                        |> String.fromInt
+                                    )
+                                        ++ "km"
 
-                                        _ ->
-                                            "--"
-
-                                Nothing ->
+                                _ ->
                                     "--"
                             )
                             "Visibility"
@@ -902,23 +872,17 @@ mainScreen model =
                     , Font.heavy
                     ]
                     (text "Weekly Forecast")
-                , case model.apiData of
-                    Just ( apiData, _ ) ->
-                        el
-                            [ width fill
-                            ]
-                            (row
-                                [ padding 15
-                                , spacing 18
-                                , width fill
-                                , scrollbarX
-                                ]
-                                (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
-                            )
-
-                    -- TODO:
-                    Nothing ->
-                        none
+                , el
+                    [ width fill
+                    ]
+                    (row
+                        [ padding 15
+                        , spacing 18
+                        , width fill
+                        , scrollbarX
+                        ]
+                        (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
+                    )
 
                 -- Attribution
                 , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ] [ text "Weather data by ", link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" } ]
