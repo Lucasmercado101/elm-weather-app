@@ -612,28 +612,6 @@ mainScreen model =
                                     closestHourly =
                                         timeClosestToMine zone currentTime x xs
 
-                                    actualTemp : String
-                                    actualTemp =
-                                        case closestHourly.temperature of
-                                            Just val ->
-                                                val |> numberWithSign
-
-                                            Nothing ->
-                                                -- NOTE: in theory this will never happen
-                                                -- as we know what temperature it is "right now"
-                                                "--"
-
-                                    perceivedTemp : String
-                                    perceivedTemp =
-                                        case closestHourly.apparentTemperature of
-                                            Just val ->
-                                                val |> numberWithSign
-
-                                            Nothing ->
-                                                -- NOTE: in theory this will never happen
-                                                -- as we know what temperature it is "right now"
-                                                "--"
-
                                     lowestTempOfToday : Maybe Float
                                     lowestTempOfToday =
                                         todayHourlyData
@@ -656,7 +634,19 @@ mainScreen model =
                                     , Font.size 16
                                     , width fill
                                     ]
-                                    [ text ("Now it feels like " ++ perceivedTemp ++ "°, it's actually " ++ actualTemp ++ "°")
+                                    [ case ( closestHourly.apparentTemperature, closestHourly.temperature ) of
+                                        ( Just apparent, Just actual ) ->
+                                            text ("Now it feels like " ++ (apparent |> String.fromFloat) ++ "°, it's actually " ++ (actual |> String.fromFloat) ++ "°")
+
+                                        ( Just apparent, Nothing ) ->
+                                            text ("Now it feels like " ++ (apparent |> String.fromFloat) ++ "°")
+
+                                        ( Nothing, Just actual ) ->
+                                            text ("Now it's " ++ (actual |> String.fromFloat) ++ "°")
+
+                                        ( Nothing, Nothing ) ->
+                                            -- NOTE: in theory should never happen
+                                            none
                                     , br
                                     , case ( lowestTempOfToday, highestTempOfToday ) of
                                         ( Just lowest, Just highest ) ->
