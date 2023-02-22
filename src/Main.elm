@@ -791,7 +791,8 @@ mainScreen model =
             , height fill
             ]
             [ row [ width fill, paddingBottom 15 ]
-                [ button
+                [ -- Refresh Button
+                  button
                     [ padding 15
                     , Font.color black
                     , Font.heavy
@@ -829,6 +830,8 @@ mainScreen model =
                             )
                     , onPress = Just RefetchWeatherOnBackground
                     }
+
+                -- Country and state
                 , column
                     [ width fill
                     , spacing 6
@@ -857,6 +860,8 @@ mainScreen model =
                         ]
                         [ text model.state ]
                     ]
+
+                -- Menu button
                 , button
                     [ padding 15
                     , Font.color black
