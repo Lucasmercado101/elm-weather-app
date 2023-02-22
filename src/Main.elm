@@ -558,8 +558,12 @@ loadingScreenView ( state, _ ) =
 mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen model =
     let
+        hasHourlyDataOfToday =
+            apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList
+
         -- NOTE: this is just accounting for the brief moment
         -- if and when I don't have the user's time zone
+        -- TODO: could be made better by cache through flags
         zone =
             Maybe.withDefault Time.utc model.zone
 
@@ -600,7 +604,7 @@ mainScreen model =
             -- NOTE: could be even more strict and only a custom list type with 24
             -- list items, i.e the hours in a day, each being an Hourly,
             -- definitely overkill.
-            case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
+            case hasHourlyDataOfToday of
                 Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
                     column []
                         [ el
@@ -672,7 +676,7 @@ mainScreen model =
 
         bigCurrentTemperature : Element MainScreenMsg
         bigCurrentTemperature =
-            case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
+            case hasHourlyDataOfToday of
                 Just (Nonempty firstHourly restHourly) ->
                     let
                         closestHourly : Hourly
@@ -728,7 +732,7 @@ mainScreen model =
                     , Border.rounded 12
                     , spaceEvenly
                     ]
-                    (case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
+                    (case hasHourlyDataOfToday of
                         Just (Nonempty firstHourly restHourly) ->
                             let
                                 hourlyClosestToMine =
