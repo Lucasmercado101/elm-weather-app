@@ -17,7 +17,6 @@ import Json.Decode as JD
 import List.Nonempty as NEList exposing (Nonempty(..))
 import MIcons exposing (..)
 import Material.Icons as Icons
-import Material.Icons.Outlined as Outlined
 import Material.Icons.Types exposing (Coloring(..), Icon)
 import ParseInt
 import Regex
@@ -80,9 +79,6 @@ type alias MainScreenModel =
     , isOptionMenuOpen : Bool
     , zone : Maybe Zone
 
-    -- NOTE: could be fetched before on the loading screen
-    -- but if the user is mainly on the MainScreen + caching then it's
-    -- unnecessary overhead and logic that's not worth it
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
     -- but when I get the data and to do things at the time I fetched it
