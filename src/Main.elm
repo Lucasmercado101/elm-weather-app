@@ -611,9 +611,6 @@ mainScreen model =
                         , let
                             closestHourly : Hourly
                             closestHourly =
-                                -- NOTE: could be made even more bulletproof and use a
-                                -- function that checks that it's a few hours before
-                                -- current user time, at most, and returns a Maybe Hourly instead
                                 timeClosestToMine zone currentTime firstHourly restHourly
 
                             allTemperaturesOfToday : Nonempty (Maybe Float)
@@ -672,6 +669,72 @@ mainScreen model =
 
                 _ ->
                     none
+
+        statCards : Element MainScreenMsg
+        statCards =
+            let
+                windCard v =
+                    statCard model.primaryColor Icons.air "Wind" v
+
+                humidityCard v =
+                    statCard model.primaryColor Icons.water_drop "Humidity" v
+
+                visibilityCard v =
+                    statCard model.primaryColor Icons.visibility "Visibility" v
+            in
+            el
+                [ padding 15
+                , width fill
+                ]
+                (row
+                    [ Font.color white
+                    , Background.color black
+                    , width fill
+                    , padding 30
+                    , Border.rounded 12
+                    , spaceEvenly
+                    ]
+                    (case apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList of
+                        Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
+                            [ windCard
+                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                    |> .windSpeed
+                                    -- NOTE: in theory this will never happen
+                                    -- as we know what temperature it is "right now"
+                                    |> Maybe.withDefault 0
+                                    |> round
+                                    |> String.fromInt
+                                 )
+                                    ++ "km/h"
+                                )
+                            , humidityCard
+                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                    |> .relativeHumidity
+                                    |> String.fromInt
+                                 )
+                                    ++ "%"
+                                )
+                            , visibilityCard
+                                ((timeClosestToMine zone currentTime firstHourly restHourly
+                                    |> .visibility
+                                    |> toKm
+                                    |> round
+                                    |> String.fromInt
+                                 )
+                                    ++ "km"
+                                )
+                            ]
+
+                        Nothing ->
+                            [ -- NOTE: in theory it will never reach here
+                              -- as there will always be one item in the list
+                              -- either way it's handled as "--" in all 3 stat cards
+                              windCard "--"
+                            , humidityCard "--"
+                            , visibilityCard "--"
+                            ]
+                    )
+                )
     in
     el
         [ width fill
@@ -794,72 +857,7 @@ mainScreen model =
                 _ ->
                     text "--"
             , dailySummary
-            , -- State cards
-              el
-                [ padding 15
-                , width fill
-                ]
-                (row
-                    [ Font.color white
-                    , Background.color black
-                    , width fill
-                    , padding 30
-                    , Border.rounded 12
-                    , spaceEvenly
-                    ]
-                    [ statCard model.primaryColor
-                        Icons.air
-                        (case apiData.hourly of
-                            x :: xs ->
-                                (timeClosestToMine zone currentTime x xs
-                                    |> .windSpeed
-                                    -- NOTE: in theory this will never happen
-                                    -- as we know what temperature it is "right now"
-                                    |> Maybe.withDefault 0
-                                    |> round
-                                    |> String.fromInt
-                                )
-                                    ++ "km/h"
-
-                            _ ->
-                                -- NOTE: in theory it will never reach here
-                                -- as there will always be one item in the list
-                                -- either way it's handled as "--" in all 3 stat cards
-                                "--"
-                        )
-                        "Wind"
-                    , statCard model.primaryColor
-                        Outlined.water_drop
-                        (case apiData.hourly of
-                            x :: xs ->
-                                (timeClosestToMine zone currentTime x xs
-                                    |> .relativeHumidity
-                                    |> String.fromInt
-                                )
-                                    ++ "%"
-
-                            _ ->
-                                "--"
-                        )
-                        "Humidity"
-                    , statCard model.primaryColor
-                        Outlined.visibility
-                        (case apiData.hourly of
-                            x :: xs ->
-                                (timeClosestToMine zone currentTime x xs
-                                    |> .visibility
-                                    |> toKm
-                                    |> round
-                                    |> String.fromInt
-                                )
-                                    ++ "km"
-
-                            _ ->
-                                "--"
-                        )
-                        "Visibility"
-                    ]
-                )
+            , statCards
             , -- Weekly Forecast
               el
                 [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
@@ -925,7 +923,7 @@ weeklyForecastCard date max code =
 
 
 statCard : Color -> Icon msg -> String -> String -> Element msg
-statCard primaryColor icon value title =
+statCard primaryColor icon title value =
     column
         [ spacing 12
         , Font.color primaryColor
@@ -983,6 +981,9 @@ numberWithSign n =
 
 timeClosestToMine : Zone -> Posix -> { a | time : Posix } -> List { a | time : Posix } -> { a | time : Posix }
 timeClosestToMine zone time firstItem list =
+    -- NOTE: could be made even more bulletproof and use a
+    -- function that checks that it's a few hours before
+    -- the user time, at most, and returns a Maybe Hourly instead
     let
         year =
             Time.toYear zone time
