@@ -979,7 +979,7 @@ numberWithSign n =
         String.fromFloat n
 
 
-timeClosestToMine : Zone -> Posix -> { a | time : Posix } -> List { a | time : Posix } -> { a | time : Posix }
+timeClosestToMine : Zone -> Posix -> Hourly -> List Hourly -> Hourly
 timeClosestToMine zone time firstItem list =
     -- NOTE: could be made even more bulletproof and use a
     -- function that checks that it's a few hours before
