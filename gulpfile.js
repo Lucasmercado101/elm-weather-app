@@ -3,6 +3,7 @@ const elm = require("gulp-elm");
 const uglify = require("gulp-uglify");
 const htmlmin = require("gulp-htmlmin");
 const cleanCss = require("gulp-clean-css");
+const jsonminify = require("gulp-jsonminify");
 
 const elmToJs = () =>
   src("src/Main.elm")
@@ -32,7 +33,7 @@ const copyAssets = () => src("public/assets/*").pipe(dest("dist/assets"));
 const uglifyJs = () => src("public/**/*.js").pipe(uglify()).pipe(dest("dist"));
 
 const copyWebManifest = () =>
-  src("public/manifest.webmanifest").pipe(dest("dist"));
+  src("public/manifest.webmanifest").pipe(jsonminify()).pipe(dest("dist"));
 
 exports.default = parallel(
   elmToJs,
