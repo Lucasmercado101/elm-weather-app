@@ -223,6 +223,8 @@ init val =
                         , countryAndStateVisibility = Animator.init False
 
                         -- TODO: handle zone, when refreshing there's no good initial value
+                        -- TODO: send zone when I have it and cache it
+                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
                         , zone = Just Time.utc
                         }
                     , Cmd.batch
