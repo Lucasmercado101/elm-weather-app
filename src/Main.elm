@@ -234,11 +234,8 @@ init val =
                     )
 
         Err err ->
-            Debug.log (Debug.toString err) <|
-                -- NOTE: this will not happen unless i screw up the flags
-                ( WelcomeScreen Welcome.welcomeScreenInit
-                , Cmd.none
-                )
+            -- NOTE: this will not happen unless i screw up the flags
+            WelcomeScreen Welcome.welcomeScreenInit |> pure
 
 
 
