@@ -134,22 +134,8 @@ type Msg
 
 
 type Flags
-    = GeoLocationCoords Coordinates
-    | CachedWeatherData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData }
+    = CachedWeatherData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData }
     | CachedWeatherAndAddressData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData, country : String, state : String }
-
-
-geoLocationsCoordsFlagDecoder : JD.Decoder Flags
-geoLocationsCoordsFlagDecoder =
-    JD.map2
-        (\latitude longitude ->
-            GeoLocationCoords
-                { latitude = latitude
-                , longitude = longitude
-                }
-        )
-        (JD.field "latitude" JD.float)
-        (JD.field "longitude" JD.float)
 
 
 cachedWeatherDataFlagDecoder : JD.Decoder Flags
@@ -188,7 +174,6 @@ flagsDecoders value =
         (JD.oneOf
             [ cachedWeatherAndAddressDataDecoder
             , cachedWeatherDataFlagDecoder
-            , geoLocationsCoordsFlagDecoder
             ]
         )
         value
@@ -214,14 +199,6 @@ init val =
     case flagsDecoders val of
         Ok flags ->
             case flags of
-                -- NOTE: Rare: realistically the data would've already
-                -- been fetched as soon as coordinates were given
-                GeoLocationCoords coords ->
-                    ( LoadingScreen ( Loading, coords )
-                    , Api.getWeatherData coords
-                        |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
-                    )
-
                 CachedWeatherData { cachedWeatherData, posixTimeNow } ->
                     let
                         { latitude, longitude } =
