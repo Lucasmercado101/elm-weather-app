@@ -233,7 +233,7 @@ init val =
                         ]
                     )
 
-        Err err ->
+        Err _ ->
             -- NOTE: this will not happen unless i screw up the flags
             WelcomeScreen Welcome.welcomeScreenInit |> pure
 
