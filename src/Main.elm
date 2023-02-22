@@ -793,8 +793,7 @@ mainScreen model =
 
                 _ ->
                     text "--"
-            , -- Daily summary
-              dailySummary
+            , dailySummary
             , -- State cards
               el
                 [ padding 15
