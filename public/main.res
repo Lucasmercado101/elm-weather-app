@@ -1,4 +1,4 @@
-type localStorage = LocalStorage 
+type localStorage = LocalStorage
 
 external localStorage: {
   "getItem": (. string) => Js.nullable<string>,
@@ -11,7 +11,34 @@ external localStorage: {
 @scope("JSON") @val
 external parse: string => 'a = "parse"
 
+@scope("document") @val
+external getElementById: (. string) => Dom.element = "getElementById"
 
+type elmInit<'a> = {
+  node: Dom.element,
+  flags: 'a,
+}
+
+// NOTE: 1 to 1 mapping to elm flags
+type cachedWeatherDataFlag<'a> = {posixTimeNow: float, cachedWeatherData: 'a}
+type cachedWeatherAndAddressDataFlag<'a> = {
+  posixTimeNow: float,
+  cachedWeatherData: 'a,
+  country: string,
+  state: string,
+}
+// ------------------------------
+
+@scope(("Elm", "Main")) @val
+external elmInitWithCachedWeatherAndAddressDataFlag: elmInit<
+  cachedWeatherAndAddressDataFlag<'a>,
+> => 'b = "init"
+external elmInitWithCachedWeatherDataFlag: elmInit<cachedWeatherDataFlag<'a>> => 'b = "init"
+
+// Elm.Main.init({
+//   node: document.getElementById("root"),
+//   flags: flags
+// });
 
 // if ("serviceWorker" in navigator) {
 //   navigator.serviceWorker
@@ -37,37 +64,8 @@ external parse: string => 'a = "parse"
 //   });
 // }
 
-type cachedWeatherDataFlag<'a> = {
-  posixTimeNow: float,
-  cachedWeatherData: 'a
-};
-
-
-type cachedWeatherAndAddressDataFlag<'a> = {
-  posixTimeNow: float,
-  cachedWeatherData: 'a,
-  country : string,
-  state: string
-};
-
-// NOTE: 1 to 1 mapping to elm flags
-let cachedWeatherDataFlag: {"weatherData": 'a} => cachedWeatherDataFlag<'a> = cachedWeatherData => {
-  posixTimeNow: Js.Date.now(),
-  cachedWeatherData: cachedWeatherData["weatherData"],
-}
-
-let cachedWeatherAndAddressDataFlag: {"country": string, "state": string, "weatherData": 'a } => cachedWeatherAndAddressDataFlag<'a> = cachedWeatherData => {
-  posixTimeNow: Js.Date.now(),
-  cachedWeatherData: cachedWeatherData["weatherData"],
-  country : cachedWeatherData["country"],
-  state: cachedWeatherData["state"]
-}
-// ------------------------------
-
-
 let cachedWeatherData = localStorage["getItem"](. "weatherData")
-let cachedAddressData = localStorage["getItem"](. "address");
-
+let cachedAddressData = localStorage["getItem"](. "address")
 
 %%raw(`
 const startAppWFlags = (flags) =>
@@ -83,6 +81,16 @@ try {
   | (Some(cachedWeatherData), Some(cachedAddressData)) => {
       let parsedWeatherData = parse(cachedWeatherData)
       let parsedAddressData = parse(cachedAddressData)
+
+      elmInitWithCachedWeatherAndAddressDataFlag({
+        node: getElementById(. "root"),
+        flags: {
+          posixTimeNow: Js.Date.now(),
+          cachedWeatherData: parsedWeatherData,
+          country: parsedAddressData["address"]["country"],
+          state: parsedAddressData["address"]["state"],
+        },
+      })
     }
 
   | (Some(cachedWeatherData), None) => ()
@@ -136,3 +144,4 @@ function main(app) {
   });
 }
 `)
+
