@@ -136,6 +136,7 @@ type Msg
 type Flags
     = GeoLocationCoords Coordinates
     | CachedWeatherData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData }
+    | CachedWeatherAndAddressData { posixTimeNow : Int, cachedWeatherData : Api.ResponseData, country : String, state : String }
 
 
 geoLocationsCoordsFlagDecoder : JD.Decoder Flags
@@ -164,11 +165,29 @@ cachedWeatherDataFlagDecoder =
         (JD.field "cachedWeatherData" Api.responseDataDecoder)
 
 
+cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
+cachedWeatherAndAddressDataDecoder =
+    JD.map4
+        (\time weatherData country state ->
+            CachedWeatherAndAddressData
+                { posixTimeNow = time
+                , cachedWeatherData = weatherData
+                , country = country
+                , state = state
+                }
+        )
+        (JD.field "posixTimeNow" JD.int)
+        (JD.field "cachedWeatherData" Api.responseDataDecoder)
+        (JD.field "country" JD.string)
+        (JD.field "state" JD.string)
+
+
 flagsDecoders : JD.Value -> Result JD.Error Flags
 flagsDecoders value =
     JD.decodeValue
         (JD.oneOf
-            [ cachedWeatherDataFlagDecoder
+            [ cachedWeatherAndAddressDataDecoder
+            , cachedWeatherDataFlagDecoder
             , geoLocationsCoordsFlagDecoder
             ]
         )
@@ -218,6 +237,35 @@ init val =
                         , country = ""
                         , state = ""
                         , countryAndStateVisibility = Animator.init False
+
+                        -- TODO: handle zone, when refreshing there's no good initial value
+                        -- TODO: send zone when I have it and cache it
+                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
+                        , zone = Just Time.utc
+                        }
+                    , Cmd.batch
+                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
+                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
+                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            |> Cmd.map OnMainScreenMsg
+                        ]
+                    )
+
+                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state } ->
+                    let
+                        { latitude, longitude } =
+                            cachedWeatherData
+                    in
+                    ( MainScreen
+                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
+                        , currentRefetchingStatus = Refetching
+                        , currentRefetchingAnim = Animator.init Refetching
+                        , location = { latitude = latitude, longitude = longitude }
+                        , primaryColor = primary
+                        , isOptionMenuOpen = False
+                        , country = country
+                        , state = state
+                        , countryAndStateVisibility = Animator.init True
 
                         -- TODO: handle zone, when refreshing there's no good initial value
                         -- TODO: send zone when I have it and cache it

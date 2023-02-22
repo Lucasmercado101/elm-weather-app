@@ -24,6 +24,8 @@ self.addEventListener("fetch", (e) => {
         const client = await clients.get(e.clientId);
         if (url.hostname.includes("meteo")) {
           client.postMessage({ type: "meteo", data: text });
+        } else {
+          client.postMessage({ type: "address", data: text });
         }
 
         return response;
