@@ -962,13 +962,13 @@ hourlyDataOfToday myZone currTime list =
         (\hourly ->
             let
                 hourlyYear =
-                    Time.toYear Time.utc hourly.time
+                    Time.toYear myZone hourly.time
 
                 hourlyMonth =
-                    Time.toMonth Time.utc hourly.time |> monthToInt
+                    Time.toMonth myZone hourly.time |> monthToInt
 
                 hourlyDay =
-                    Time.toDay Time.utc hourly.time
+                    Time.toDay myZone hourly.time
             in
             year == hourlyYear && month == hourlyMonth && day == hourlyDay
         )
