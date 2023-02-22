@@ -597,6 +597,9 @@ mainScreen model =
 
         dailySummary : Element MainScreenMsg
         dailySummary =
+            -- NOTE: could be even more strict and only a custom list type with 24
+            -- list items, i.e the hours in a day, each being an Hourly,
+            -- definitely overkill.
             case hourlyDataOfToday zone currentTime apiData.hourly |> NEList.fromList of
                 Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
                     column []
@@ -608,6 +611,9 @@ mainScreen model =
                         , let
                             closestHourly : Hourly
                             closestHourly =
+                                -- NOTE: could be made even more bulletproof and use a
+                                -- function that checks that it's a few hours before
+                                -- current user time, at most, and returns a Maybe Hourly instead
                                 timeClosestToMine zone currentTime firstHourly restHourly
 
                             lowestTempOfToday : Maybe Float
