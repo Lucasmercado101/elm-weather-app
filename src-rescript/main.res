@@ -45,18 +45,22 @@ type elmInit<'a> = {
   flags: 'a,
 }
 
-// NOTE: 1 to 1 mapping to elm flags
+// NOTE: 1 to 1 mapping to elm flags and ports
+// ports
 type subscriptionPort<'incoming> = {subscribe: (. 'incoming => unit) => unit}
+
+type messageSenderPort<'a> = {send: (. 'a) => unit}
 
 type elmPorts = {
   requestLocationPerms: subscriptionPort<unit>,
-  errorObtainingCurrentPosition: (. int) => unit,
-  noGeoLocationApiAvailableReceiver: (. unit) => unit,
-  locationReceiver: (. {"latitude": float, "longitude": float}) => unit,
+  errorObtainingCurrentPosition: messageSenderPort<int>,
+  noGeoLocationApiAvailableReceiver: messageSenderPort<unit>,
+  locationReceiver: messageSenderPort<{"latitude": float, "longitude": float}>,
 }
 
-type elmApp<'a> = {ports: elmPorts}
+type elmApp = {ports: elmPorts}
 
+// flags
 type cachedWeatherDataFlag<'a> = {posixTimeNow: float, cachedWeatherData: 'a}
 type cachedWeatherAndAddressDataFlag<'a> = {
   posixTimeNow: float,
@@ -68,13 +72,13 @@ type cachedWeatherAndAddressDataFlag<'a> = {
 @scope(("Elm", "Main")) @val
 external elmInitWithCachedWeatherAndAddressDataFlag: elmInit<
   cachedWeatherAndAddressDataFlag<'a>,
-> => elmApp<'b> = "init"
+> => elmApp = "init"
 
 @scope(("Elm", "Main")) @val
-external elmInitWithCachedWeatherDataFlag: elmInit<cachedWeatherDataFlag<'a>> => elmApp<'b> = "init"
+external elmInitWithCachedWeatherDataFlag: elmInit<cachedWeatherDataFlag<'a>> => elmApp = "init"
 
 @scope(("Elm", "Main")) @val
-external elmInitNoFlags: elmInit<unit> => elmApp<'b> = "init"
+external elmInitNoFlags: elmInit<unit> => elmApp = "init"
 
 // ------------------------------
 
@@ -83,37 +87,25 @@ let rootElement: Dom.element = getElementById(. "root")
 let cachedWeatherData = localStorage["getItem"](. "weatherData")
 let cachedAddressData = localStorage["getItem"](. "address")
 
-let main = (app: elmApp<'b>) => {
+let main = (app: elmApp) => {
   app.ports.requestLocationPerms.subscribe(.() => {
     switch navigator["geoLocation"] {
-    | Some(geolocation) => {
-        geolocation->getCurrentPosition((. pos) => {
-          Js.log("a")
-        })
-        ()
-      }
+    | Some(geolocation) =>
+      geolocation->getCurrentPosition2(
+        (. position) => {
+          app.ports.locationReceiver.send(. {
+            "latitude": position.coords.latitude,
+            "longitude": position.coords.longitude,
+          })
+        },
+        (. error) => {
+          app.ports.errorObtainingCurrentPosition.send(. error.code)
+        },
+      )
 
-    // geolocation.getCurrentPosition(.position => {
-    //   Js.log(position)
-    //   ()
-    //   // app.ports.locationReceiver.send(position.coords)
-    // })
-
-    | None => Js.log("a")
+    | None => app.ports.noGeoLocationApiAvailableReceiver.send(. ())
     }
-    ()
   })
-
-  // app.ports.requestLocationPerms.subscribe(() => {
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition(
-  //         (position) => app.ports.locationReceiver.send(position.coords),
-  //         (error) => app.ports.errorObtainingCurrentPosition.send(error.code)
-  //       );
-  //     } else {
-  //       app.ports.noGeoLocationApiAvailableReceiver.send();
-  //     }
-  //   });
 }
 
 try {

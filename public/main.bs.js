@@ -571,10 +571,17 @@ var cachedAddressData = localStorage.getItem("address");
 function main(app) {
     app.ports.requestLocationPerms.subscribe(function(param) {
         var geolocation = navigator.geoLocation;
-        if (geolocation !== undefined) _camlOptionJs.valFromOption(geolocation).getCurrentPosition(function(pos) {
-            console.log("a");
-        });
-        else console.log("a");
+        if (geolocation !== undefined) {
+            _camlOptionJs.valFromOption(geolocation).getCurrentPosition(function(position) {
+                app.ports.locationReceiver.send({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+            }, function(error) {
+                app.ports.errorObtainingCurrentPosition.send(error.code);
+            });
+            return;
+        } else return app.ports.noGeoLocationApiAvailableReceiver.send(undefined);
     });
 }
 var tmp;
