@@ -242,6 +242,11 @@ init val =
 -- UPDATE
 
 
+mapToMainScreen : ( MainScreenModel, Cmd MainScreenMsg ) -> ( Model, Cmd Msg )
+mapToMainScreen ( a, b ) =
+    ( MainScreen a, Cmd.map OnMainScreenMsg b )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update topMsg topModel =
     case ( topMsg, topModel ) of
@@ -294,99 +299,95 @@ update topMsg topModel =
         ( OnMainScreenMsg msg, MainScreen model ) ->
             case msg of
                 Tick newTime ->
-                    ( model
-                        |> Animator.update newTime animator
-                    , Cmd.none
-                    )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
+                    (model |> Animator.update newTime animator)
+                        |> pure
+                        |> mapToMainScreen
 
                 ChangedPrimaryColor hexColor ->
-                    ( { model | primaryColor = hexColor |> hexToColor |> Result.withDefault model.primaryColor }, Cmd.none )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
+                    { model | primaryColor = hexColor |> hexToColor |> Result.withDefault model.primaryColor }
+                        |> pure
+                        |> mapToMainScreen
 
                 OpenOptionsMenu ->
-                    ( { model | isOptionMenuOpen = True }, Cmd.none )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
+                    { model | isOptionMenuOpen = True }
+                        |> pure
+                        |> mapToMainScreen
 
                 CloseOptionsMenu ->
-                    ( { model | isOptionMenuOpen = False }, Cmd.none )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
+                    { model | isOptionMenuOpen = False }
+                        |> pure
+                        |> mapToMainScreen
 
                 GotCountryAndStateMainScreen countryAndState ->
                     case countryAndState of
                         Ok { address } ->
-                            ( MainScreen
-                                { model
-                                    | country = address.country
-                                    , state = address.state
-                                    , countryAndStateVisibility =
-                                        model.countryAndStateVisibility
-                                            |> Animator.go Animator.slowly True
-                                }
-                            , Cmd.none
-                            )
+                            { model
+                                | country = address.country
+                                , state = address.state
+                                , countryAndStateVisibility =
+                                    model.countryAndStateVisibility
+                                        |> Animator.go Animator.slowly True
+                            }
+                                |> pure
+                                |> mapToMainScreen
 
                         Err _ ->
                             -- NOTE: not handling error on purpose
-                            ( MainScreen
-                                { model
-                                    | country = ""
-                                    , state = ""
-                                    , countryAndStateVisibility =
-                                        model.countryAndStateVisibility
-                                            |> Animator.go Animator.slowly False
-                                }
-                            , Cmd.none
-                            )
+                            { model
+                                | country = ""
+                                , state = ""
+                                , countryAndStateVisibility =
+                                    model.countryAndStateVisibility
+                                        |> Animator.go Animator.slowly False
+                            }
+                                |> pure
+                                |> mapToMainScreen
 
                 RefetchWeatherOnBackground ->
-                    ( MainScreen
-                        { model
-                            | currentRefetchingAnim =
-                                model.currentRefetchingAnim
-                                    |> Animator.go Animator.immediately Refetching
-                            , currentRefetchingStatus = Refetching
-                        }
+                    ( { model
+                        | currentRefetchingAnim =
+                            model.currentRefetchingAnim
+                                |> Animator.go Animator.immediately Refetching
+                        , currentRefetchingStatus = Refetching
+                      }
                     , Cmd.batch
-                        [ Api.getReverseGeocoding model.location (\l -> OnMainScreenMsg (GotCountryAndStateMainScreen l))
+                        [ Api.getReverseGeocoding model.location (\l -> GotCountryAndStateMainScreen l)
 
                         --  TODO: currently refetching using given coordinates,
                         --  but it should be the coordinates given if no locations perms allowed
                         --  otherwise get current location and fetch using that, also add option to change
                         --  location on menu
                         , Api.getWeatherData model.location
-                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
+                            |> Task.attempt (\l -> GotRefetchingWeatherResp l)
                         ]
                     )
+                        |> mapToMainScreen
 
                 GotRefetchingWeatherResp result ->
                     (case result of
                         Ok ( data, posix, zone ) ->
-                            ( { model
+                            { model
                                 | apiData = Just ( data, posix )
                                 , currentRefetchingAnim =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately NotRefetching
                                 , currentRefetchingStatus = NotRefetching
                                 , zone = Just zone
-                              }
-                            , Cmd.none
-                            )
+                            }
 
                         Err err ->
-                            ( { model
+                            { model
                                 | currentRefetchingAnim =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately (Error err)
                                 , currentRefetchingStatus = Error err
-                              }
-                            , Cmd.none
-                            )
+                            }
                     )
-                        |> (\( a, b ) -> ( MainScreen a, Cmd.map OnMainScreenMsg b ))
+                        |> pure
+                        |> mapToMainScreen
 
-        ( _, model ) ->
-            ( model, Cmd.none )
+        ( _, _ ) ->
+            topModel |> pure
 
 
 
