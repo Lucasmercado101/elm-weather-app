@@ -5,3 +5,4 @@ public/elm.js
 dist
 notes.txt
 lib
+src-rescript/*.bs.js

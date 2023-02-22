@@ -3,14 +3,16 @@
     "dev": "elm-watch hot",
     "parcel-build": "parcel build public/index.html",
     "res:build": "rescript",
-    "res:dev": "rescript build -w"
+    "res:dev": "rescript build -w",
+    "dev:res": "npx parcel src-rescript/main.bs.js --dist-dir public/main.js"
   },
   "devDependencies": {
     "@parcel/transformer-elm": "^2.8.3",
     "@types/gulp": "^4.0.10",
     "elm": "^0.19.1-5",
     "elm-watch": "^1.1.2",
-    "gulp": "^4.0.2"
+    "gulp": "^4.0.2",
+    "parcel": "^2.8.3"
   },
   "dependencies": {
     "gulp-clean-css": "^4.3.0",
@@ -18,7 +20,6 @@
     "gulp-htmlmin": "^5.0.1",
     "gulp-jsonminify": "^1.1.0",
     "gulp-uglify": "^3.0.2",
-    "parcel": "^2.8.3",
     "rescript": "^10.1.2"
   }
 }

@@ -48,6 +48,11 @@ type getCurrentPosition = (positionCallback, positionErrorCallback, positionOpti
 type watchId = int
 type watchPosition = (positionCallback, positionErrorCallback, positionOptions) => watchId
 
-type geoLocation = {
-  getCurrentPosition: (positionErrorCallback, positionErrorCallback, positionOptions) => unit,
-}
+type geoLocation
+
+@send external getCurrentPosition: (geoLocation, positionCallback) => unit = "getCurrentPosition"
+
+// let a = navigator->getCurrentPosition((. x) => Js.log(x.coords.latitude))
+// type geoLocation = {
+//   getCurrentPosition: (positionErrorCallback, positionErrorCallback, positionOptions) => unit,
+// }
