@@ -1,3 +1,4 @@
+type geoLocation
 // translated from https://w3c.github.io/geolocation-api/#geolocation_interface
 
 type positionOptions = {
@@ -24,18 +25,12 @@ type geoLocationPosition = {
 }
 
 // https://w3c.github.io/geolocation-api/#dom-geolocationpositionerror
-type permissionDenied = [#1]
-type positionUnavailable = [#2]
-type timeout = [#3]
-
-type code = [
-  | permissionDenied
-  | positionUnavailable
-  | timeout
-]
+// PERMISSION_DENIED = 1;
+// POSITION_UNAVAILABLE = 2;
+// TIMEOUT = 3;
 
 type geoLocationPositionError = {
-  code: code,
+  code: int,
   message: string,
 }
 
@@ -43,16 +38,23 @@ type geoLocationPositionError = {
 type positionCallback = (. geoLocationPosition) => unit
 type positionErrorCallback = (. geoLocationPositionError) => unit
 
-type getCurrentPosition = (positionCallback, positionErrorCallback, positionOptions) => unit
-
 type watchId = int
-type watchPosition = (positionCallback, positionErrorCallback, positionOptions) => watchId
-
-type geoLocation
 
 @send external getCurrentPosition: (geoLocation, positionCallback) => unit = "getCurrentPosition"
+@send
+external getCurrentPosition2: (geoLocation, positionCallback, positionErrorCallback) => unit =
+  "getCurrentPosition"
 
-// let a = navigator->getCurrentPosition((. x) => Js.log(x.coords.latitude))
-// type geoLocation = {
-//   getCurrentPosition: (positionErrorCallback, positionErrorCallback, positionOptions) => unit,
-// }
+@send
+external getCurrentPosition3: (
+  geoLocation,
+  positionCallback,
+  positionErrorCallback,
+  positionOptions,
+) => unit = "getCurrentPosition"
+
+@send external watchPosition: (geoLocation, positionCallback) => watchId = "watchPosition"
+@send external watchPosition2: (geoLocation, positionCallback) => watchId = "watchPosition"
+@send
+external watchPosition3: (geoLocation, positionCallback, positionOptions) => watchId =
+  "watchPosition"
