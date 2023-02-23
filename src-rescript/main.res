@@ -1,5 +1,5 @@
 open GeoLocationApi
-type navigator = {"geoLocation": option<geoLocation>}
+type navigator = {"geolocation": option<geoLocation>}
 @val external navigator: navigator = "navigator"
 
 // if ("serviceWorker" in navigator) {
@@ -89,9 +89,9 @@ let cachedAddressData = localStorage["getItem"](. "address")
 
 let main = (app: elmApp) => {
   app.ports.requestLocationPerms.subscribe(.() => {
-    switch navigator["geoLocation"] {
-    | Some(geolocation) =>
-      geolocation->getCurrentPosition2(
+    switch navigator["geolocation"] {
+    | Some(geoLocation) =>
+      geoLocation->getCurrentPosition2(
         (. position) => {
           app.ports.locationReceiver.send(. {
             "latitude": position.coords.latitude,

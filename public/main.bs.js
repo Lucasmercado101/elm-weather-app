@@ -570,9 +570,9 @@ var cachedWeatherData = localStorage.getItem("weatherData");
 var cachedAddressData = localStorage.getItem("address");
 function main(app) {
     app.ports.requestLocationPerms.subscribe(function(param) {
-        var geolocation = navigator.geoLocation;
-        if (geolocation !== undefined) {
-            _camlOptionJs.valFromOption(geolocation).getCurrentPosition(function(position) {
+        var geoLocation = navigator.geolocation;
+        if (geoLocation !== undefined) {
+            _camlOptionJs.valFromOption(geoLocation).getCurrentPosition(function(position) {
                 app.ports.locationReceiver.send({
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
