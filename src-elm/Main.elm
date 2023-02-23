@@ -94,8 +94,7 @@ type alias MainScreenModel =
 
     -- NOTE: could be made into a Loading | Loaded | Error type union
     -- can't be bothered though
-    , country : String
-    , state : String
+    , currentAddress : Maybe Api.Address
     , countryAndStateVisibility : Animator.Timeline Bool
     }
 
@@ -155,7 +154,8 @@ type Flags
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
         , country : String
-        , state : String
+        , state : Maybe String
+        , city : String
         , usingGeoLocation : Bool
         }
 
@@ -177,20 +177,22 @@ cachedWeatherDataFlagDecoder =
 
 cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
 cachedWeatherAndAddressDataDecoder =
-    JD.map5
-        (\time weatherData country state usingGeo ->
+    JD.map6
+        (\time weatherData country state city usingGeo ->
             CachedWeatherAndAddressData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
                 , country = country
                 , state = state
                 , usingGeoLocation = usingGeo
+                , city = city
                 }
         )
         (JD.field "posixTimeNow" JD.int)
         (JD.field "cachedWeatherData" Api.responseDataDecoder)
         (JD.field "country" JD.string)
-        (JD.field "state" JD.string)
+        (JD.maybe (JD.field "state" JD.string))
+        (JD.field "city" JD.string)
         (JD.field "usingGeoLocation" JD.bool)
 
 
@@ -242,8 +244,7 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                         , primaryColor = primary
                         , isOptionMenuOpen = False
-                        , country = ""
-                        , state = ""
+                        , currentAddress = Nothing
                         , countryAndStateVisibility = Animator.init False
 
                         -- TODO: handle zone, when refreshing there's no good initial value
@@ -259,7 +260,7 @@ init val =
                         ]
                     )
 
-                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, usingGeoLocation } ->
+                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -276,8 +277,7 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                         , primaryColor = primary
                         , isOptionMenuOpen = False
-                        , country = country
-                        , state = state
+                        , currentAddress = Just { city = Just city, state = state, country = country }
                         , countryAndStateVisibility = Animator.init True
 
                         -- TODO: handle zone, when refreshing there's no good initial value
@@ -346,8 +346,7 @@ update topMsg topModel =
                                 , zone = Just zone
                                 , primaryColor = primary
                                 , isOptionMenuOpen = False
-                                , country = ""
-                                , state = ""
+                                , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
                                 }
                             , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
@@ -391,8 +390,7 @@ update topMsg topModel =
                     case countryAndState of
                         Ok { address } ->
                             { model
-                                | country = address.country
-                                , state = address.state
+                                | currentAddress = Just address
                                 , countryAndStateVisibility =
                                     model.countryAndStateVisibility
                                         |> Animator.go Animator.slowly True
@@ -403,8 +401,7 @@ update topMsg topModel =
                         Err _ ->
                             -- NOTE: not doing something with the error on purpose
                             { model
-                                | country = ""
-                                , state = ""
+                                | currentAddress = Nothing
                                 , countryAndStateVisibility =
                                     model.countryAndStateVisibility
                                         |> Animator.go Animator.slowly False
@@ -910,7 +907,7 @@ mainScreen model =
                     , onPress = Just RefetchDataOnBackground
                     }
 
-                -- Country and state
+                -- current country / state / city
                 , column
                     [ width fill
                     , spacing 6
@@ -924,21 +921,46 @@ mainScreen model =
                                     Animator.at 0
                         )
                     ]
-                    [ paragraph
-                        [ centerX
-                        , centerY
-                        , Font.heavy
-                        , Font.size 28
-                        , Font.center
-                        ]
-                        [ text model.country ]
-                    , paragraph
-                        [ centerX
-                        , centerY
-                        , Font.center
-                        ]
-                        [ text model.state ]
-                    ]
+                    (case model.currentAddress of
+                        Just address ->
+                            let
+                                title val =
+                                    paragraph
+                                        [ centerX
+                                        , centerY
+                                        , Font.heavy
+                                        , Font.size 28
+                                        , Font.center
+                                        ]
+                                        [ text val ]
+
+                                subtitle val =
+                                    paragraph
+                                        [ centerX
+                                        , centerY
+                                        , Font.center
+                                        ]
+                                        [ text val ]
+                            in
+                            case address.state of
+                                Just state ->
+                                    [ title address.country
+                                    , subtitle state
+                                    ]
+
+                                Nothing ->
+                                    case address.city of
+                                        Just city ->
+                                            [ title address.country
+                                            , subtitle city
+                                            ]
+
+                                        Nothing ->
+                                            [ title address.country ]
+
+                        Nothing ->
+                            [ none ]
+                    )
 
                 -- Menu button
                 , button

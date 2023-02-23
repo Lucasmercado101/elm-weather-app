@@ -1,4 +1,5 @@
 "use strict";
+var _a, _b;
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
         .register("worker.js")
@@ -34,12 +35,14 @@ try {
         const parsedAddressData = JSON.parse(cachedAddressData);
         if (navigator.permissions) {
             navigator.permissions.query({ name: "geolocation" }).then((result) => {
+                var _a, _b, _c, _d;
                 if (result.state === "granted") {
                     main(startAppWFlags({
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedWeatherData,
                         country: parsedAddressData.address.country,
-                        state: parsedAddressData.address.state,
+                        city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
+                        state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
                         usingGeoLocation: true
                     }));
                 }
@@ -48,7 +51,8 @@ try {
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedWeatherData,
                         country: parsedAddressData.address.country,
-                        state: parsedAddressData.address.state,
+                        city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
+                        state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null,
                         usingGeoLocation: false
                     }));
                 }
@@ -59,7 +63,8 @@ try {
                 posixTimeNow: Date.now(),
                 cachedWeatherData: parsedWeatherData,
                 country: parsedAddressData.address.country,
-                state: parsedAddressData.address.state,
+                city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
+                state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
                 usingGeoLocation: false
             }));
         }
@@ -96,7 +101,7 @@ try {
         main(freshAppStart());
     }
 }
-catch (_a) {
+catch (_c) {
     main(freshAppStart());
 }
 function main(app) {

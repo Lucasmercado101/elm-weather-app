@@ -33,7 +33,8 @@ type alias ReverseGeocodingResponse =
 
 type alias Address =
     { country : String
-    , state : String
+    , state : Maybe String
+    , city : Maybe String
     }
 
 
@@ -45,9 +46,30 @@ reverseGeocodingDecoder =
 
 addressDecoder : Decoder Address
 addressDecoder =
-    map2 Address
+    map3
+        (\country maybeState maybeCity ->
+            let
+                ifEmptyThenNone v =
+                    if v == "" then
+                        Nothing
+
+                    else
+                        Just v
+
+                state =
+                    maybeState |> Maybe.andThen ifEmptyThenNone
+
+                city =
+                    maybeCity |> Maybe.andThen ifEmptyThenNone
+            in
+            { country = country
+            , state = state
+            , city = city
+            }
+        )
         (field "country" string)
-        (field "state" string)
+        (maybe (field "state" string))
+        (maybe (field "city" string))
 
 
 getReverseGeocoding : Coordinates -> (Result Http.Error ReverseGeocodingResponse -> msg) -> Cmd msg
@@ -171,37 +193,6 @@ getWeatherData { latitude, longitude } =
                     , timeout = Just 10000
                     }
             )
-
-
-
--- getDataAsTask : Task Http.Error ResponseData
--- getDataAsTask =
---     Http.task
---         { method = "GET"
---         , headers = []
---         , url = "a"
---         , body = Http.emptyBody
---         , resolver =
---             Http.stringResolver
---                 (\response ->
---                     case response of
---                         Http.BadUrl_ url ->
---                             Err (Http.BadUrl url)
---                         Http.Timeout_ ->
---                             Err Http.Timeout
---                         Http.NetworkError_ ->
---                             Err Http.NetworkError
---                         Http.BadStatus_ metadata body ->
---                             Err (Http.BadStatus metadata.statusCode)
---                         Http.GoodStatus_ metadata body ->
---                             case decodeString responseDataDecoder body of
---                                 Ok value ->
---                                     Ok value
---                                 Err err ->
---                                     Err (Http.BadBody (Json.Decode.errorToString err))
---                 )
---         , timeout = Just 10000
---         }
 
 
 type alias ResponseData =

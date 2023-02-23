@@ -52,7 +52,8 @@ try {
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedWeatherData,
               country: parsedAddressData.address.country,
-              state: parsedAddressData.address.state,
+              city: parsedAddressData.address.city ?? null,
+              state: parsedAddressData.address.state ?? null,
               usingGeoLocation: true
             })
           );
@@ -62,7 +63,8 @@ try {
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedWeatherData,
               country: parsedAddressData.address.country,
-              state: parsedAddressData.address.state,
+              city: parsedAddressData.address.city ?? null,
+              state: parsedAddressData.address.state ?? null,
               usingGeoLocation: false
             })
           );
@@ -74,7 +76,8 @@ try {
           posixTimeNow: Date.now(),
           cachedWeatherData: parsedWeatherData,
           country: parsedAddressData.address.country,
-          state: parsedAddressData.address.state,
+          city: parsedAddressData.address.city ?? null,
+          state: parsedAddressData.address.state ?? null,
           // NOTE: I'm asumming here
           usingGeoLocation: false
         })
