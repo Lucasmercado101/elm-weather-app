@@ -18,6 +18,7 @@ self.addEventListener("fetch", (e) => {
         const clone = response.clone();
         const text = await clone.text();
         const client = await clients.get(e.clientId);
+
         if (url.hostname.includes("meteo")) {
           client.postMessage({ type: "meteo", data: text });
         } else {
@@ -31,11 +32,10 @@ self.addEventListener("fetch", (e) => {
 
       const response = await fetch(e.request);
       const cache = await caches.open(cacheName);
-      try {
-        cache.put(e.request, response.clone());
-      } catch {
+
+      cache.put(e.request, response.clone()).catch((e) => {
         // don't care if it fails
-      }
+      });
       return response;
     })()
   );
@@ -45,11 +45,9 @@ self.addEventListener("install", (e) => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(cacheName);
-      try {
-        await cache.addAll(contentToCache);
-      } catch {
+      await cache.addAll(contentToCache).catch((e) => {
         // don't care if it fails
-      }
+      });
     })()
   );
 });
