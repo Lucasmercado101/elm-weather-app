@@ -246,66 +246,70 @@ init val =
                         { latitude, longitude } =
                             cachedWeatherData
                     in
-                    ( MainScreen
-                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                        , currentRefetchingStatus = Refetching
-                        , currentRefetchingAnim = Animator.init Refetching
-                        , location =
+                    ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
+                      , currentRefetchingStatus = Refetching
+                      , currentRefetchingAnim = Animator.init Refetching
+                      , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-                        , primaryColor = primary
-                        , isOptionMenuOpen = False
-                        , currentAddress = Just { city = city, state = state, country = country }
-                        , countryAndStateVisibility = Animator.init True
+                      , primaryColor = primary
+                      , isOptionMenuOpen = False
+                      , currentAddress = Just { city = city, state = state, country = country }
+                      , countryAndStateVisibility = Animator.init True
 
-                        -- TODO: handle zone, when refreshing there's no good initial value
-                        -- TODO: send zone when I have it and cache it
-                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                        , zone = Just Time.utc
-                        }
-                    , Cmd.batch
-                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
-                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
-                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            |> Cmd.map OnMainScreenMsg
-                        ]
+                      -- TODO: handle zone, when refreshing there's no good initial value
+                      -- TODO: send zone when I have it and cache it
+                      -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
+                      , zone = Just Time.utc
+                      }
+                    , if usingGeoLocation == True then
+                        Ports.requestLoc
+
+                      else
+                        Cmd.batch
+                            [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            , Api.getWeatherData { latitude = latitude, longitude = longitude } |> Task.attempt GotRefetchingWeatherResp
+                            ]
                     )
+                        |> mapToMainScreen
 
                 CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
                     in
-                    ( MainScreen
-                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                        , currentRefetchingStatus = Refetching
-                        , currentRefetchingAnim = Animator.init Refetching
-                        , location =
+                    ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
+                      , currentRefetchingStatus = Refetching
+                      , currentRefetchingAnim = Animator.init Refetching
+                      , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-                        , primaryColor = primary
-                        , isOptionMenuOpen = False
-                        , currentAddress = Nothing
-                        , countryAndStateVisibility = Animator.init False
+                      , primaryColor = primary
+                      , isOptionMenuOpen = False
+                      , currentAddress = Nothing
+                      , countryAndStateVisibility = Animator.init False
 
-                        -- TODO: handle zone, when refreshing there's no good initial value
-                        -- TODO: send zone when I have it and cache it
-                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                        , zone = Just Time.utc
-                        }
-                    , Cmd.batch
-                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
-                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
-                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            |> Cmd.map OnMainScreenMsg
-                        ]
+                      -- TODO: handle zone, when refreshing there's no good initial value
+                      -- TODO: send zone when I have it and cache it
+                      -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
+                      , zone = Just Time.utc
+                      }
+                    , if usingGeoLocation == True then
+                        Ports.requestLoc
+
+                      else
+                        Cmd.batch
+                            [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            , Api.getWeatherData { latitude = latitude, longitude = longitude } |> Task.attempt GotRefetchingWeatherResp
+                            ]
                     )
+                        |> mapToMainScreen
 
         Err _ ->
             -- NOTE: this will not happen unless i screw up the flags
