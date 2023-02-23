@@ -8,9 +8,6 @@ if ("serviceWorker" in navigator) {
         .catch((err) => {
         console.log("Error registering: Not on HTTPS");
     });
-    navigator.serviceWorker.ready.then((registration) => {
-        registration.active.postMessage("Hi service worker");
-    });
     navigator.serviceWorker.addEventListener("message", (event) => {
         const data = event.data;
         if (data.type === "meteo")

@@ -10,10 +10,6 @@ if ("serviceWorker" in navigator) {
       console.log("Error registering: Not on HTTPS");
     });
 
-  navigator.serviceWorker.ready.then((registration) => {
-    registration.active!.postMessage("Hi service worker");
-  });
-
   navigator.serviceWorker.addEventListener("message", (event) => {
     // NOTE: instead of adding it to cache on SW
     // i'm passing it to here and storing it in localStorage
