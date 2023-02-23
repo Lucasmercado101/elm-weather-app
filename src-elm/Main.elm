@@ -918,7 +918,16 @@ mainScreen model =
                                     Icons.sync_problem 28 Inherit
                                         |> Element.html
                             )
-                    , onPress = Just RefetchDataOnBackground
+                    , onPress =
+                        case model.currentRefetchingStatus of
+                            NotRefetching ->
+                                Just RefetchDataOnBackground
+
+                            Refetching ->
+                                Nothing
+
+                            Error _ ->
+                                Just RefetchDataOnBackground
                     }
 
                 -- current country / state / city
