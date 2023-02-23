@@ -330,7 +330,7 @@ update topMsg topModel =
     case ( topMsg, topModel ) of
         ( OnWelcomeScreenMsg ms, WelcomeScreen md ) ->
             Welcome.welcomeScreenUpdate ms md
-                |> (\( welcomeScreenModel, _ ) ->
+                |> (\( welcomeScreenModel, welcomeScreenMessage ) ->
                         case welcomeScreenModel.receivedLocation of
                             Just coords ->
                                 ( LoadingScreen { fetchingStatus = Loading, coordinates = coords, isUsingGeoLocation = welcomeScreenModel.usingGeoLocation }
@@ -341,7 +341,7 @@ update topMsg topModel =
                                 )
 
                             Nothing ->
-                                ( WelcomeScreen welcomeScreenModel, Cmd.map OnWelcomeScreenMsg b )
+                                ( WelcomeScreen welcomeScreenModel, Cmd.map OnWelcomeScreenMsg welcomeScreenMessage )
                    )
 
         ( OnLoadingScreenMsg msg, LoadingScreen model ) ->
