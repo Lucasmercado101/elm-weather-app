@@ -115,7 +115,7 @@ type MainScreenMsg
     = ChangedPrimaryColor String
     | OpenOptionsMenu
     | CloseOptionsMenu
-    | RefetchWeatherOnBackground
+    | RefetchDataOnBackground
     | GotRefetchingWeatherResp (Result Http.Error ( ResponseData, Posix, Zone ))
     | Tick Time.Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
@@ -360,7 +360,7 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                         Err _ ->
-                            -- NOTE: not handling error on purpose
+                            -- NOTE: not doing something with the error on purpose
                             { model
                                 | country = ""
                                 , state = ""
@@ -371,7 +371,7 @@ update topMsg topModel =
                                 |> pure
                                 |> mapToMainScreen
 
-                RefetchWeatherOnBackground ->
+                RefetchDataOnBackground ->
                     ( { model
                         | currentRefetchingAnim =
                             model.currentRefetchingAnim
@@ -858,7 +858,7 @@ mainScreen model =
                                     Icons.sync_problem 28 Inherit
                                         |> Element.html
                             )
-                    , onPress = Just RefetchWeatherOnBackground
+                    , onPress = Just RefetchDataOnBackground
                     }
 
                 -- Country and state
