@@ -227,39 +227,6 @@ init val =
     case flagsDecoders val of
         Ok flags ->
             case flags of
-                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation } ->
-                    let
-                        { latitude, longitude } =
-                            cachedWeatherData
-                    in
-                    ( MainScreen
-                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                        , currentRefetchingStatus = Refetching
-                        , currentRefetchingAnim = Animator.init Refetching
-                        , location =
-                            if usingGeoLocation == True then
-                                UsingGeoLocation
-
-                            else
-                                FixedCoordinates { latitude = latitude, longitude = longitude }
-                        , primaryColor = primary
-                        , isOptionMenuOpen = False
-                        , currentAddress = Nothing
-                        , countryAndStateVisibility = Animator.init False
-
-                        -- TODO: handle zone, when refreshing there's no good initial value
-                        -- TODO: send zone when I have it and cache it
-                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                        , zone = Just Time.utc
-                        }
-                    , Cmd.batch
-                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
-                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
-                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            |> Cmd.map OnMainScreenMsg
-                        ]
-                    )
-
                 CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation } ->
                     let
                         { latitude, longitude } =
@@ -279,6 +246,39 @@ init val =
                         , isOptionMenuOpen = False
                         , currentAddress = Just { city = Just city, state = state, country = country }
                         , countryAndStateVisibility = Animator.init True
+
+                        -- TODO: handle zone, when refreshing there's no good initial value
+                        -- TODO: send zone when I have it and cache it
+                        -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
+                        , zone = Just Time.utc
+                        }
+                    , Cmd.batch
+                        [ Api.getWeatherData { latitude = cachedWeatherData.latitude, longitude = cachedWeatherData.longitude }
+                            |> Task.attempt (\l -> OnMainScreenMsg (GotRefetchingWeatherResp l))
+                        , Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            |> Cmd.map OnMainScreenMsg
+                        ]
+                    )
+
+                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation } ->
+                    let
+                        { latitude, longitude } =
+                            cachedWeatherData
+                    in
+                    ( MainScreen
+                        { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
+                        , currentRefetchingStatus = Refetching
+                        , currentRefetchingAnim = Animator.init Refetching
+                        , location =
+                            if usingGeoLocation == True then
+                                UsingGeoLocation
+
+                            else
+                                FixedCoordinates { latitude = latitude, longitude = longitude }
+                        , primaryColor = primary
+                        , isOptionMenuOpen = False
+                        , currentAddress = Nothing
+                        , countryAndStateVisibility = Animator.init False
 
                         -- TODO: handle zone, when refreshing there's no good initial value
                         -- TODO: send zone when I have it and cache it
