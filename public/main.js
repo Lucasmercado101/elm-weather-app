@@ -1,5 +1,4 @@
 "use strict";
-/// <reference path="main.d.ts" />
 ("use strict");
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -14,9 +13,6 @@ if ("serviceWorker" in navigator) {
         registration.active.postMessage("Hi service worker");
     });
     navigator.serviceWorker.addEventListener("message", (event) => {
-        // NOTE: instead of adding it to cache on SW
-        // i'm passing it to here and storing it in localStorage
-        // as It's about 9-10~ times faster than using cache.match
         const data = event.data;
         if (data.type === "meteo")
             localStorage.setItem("weatherData", data.data);
@@ -57,9 +53,6 @@ try {
     }
 }
 catch (_a) {
-    // NOTE: this is in case there's
-    // an error on JSON.parse or accessing parsed data
-    // i.e: undefined.country
     app = startApp();
 }
 app.ports.requestLocationPerms.subscribe(() => {
