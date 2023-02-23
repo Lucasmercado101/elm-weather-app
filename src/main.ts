@@ -1,5 +1,4 @@
 /// <reference path="main.d.ts" />
-("use strict");
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
