@@ -155,7 +155,7 @@ type Flags
         , cachedWeatherData : Api.ResponseData
         , country : String
         , state : Maybe String
-        , city : String
+        , city : Maybe String
         , usingGeoLocation : Bool
         }
 
@@ -178,7 +178,21 @@ cachedWeatherDataFlagDecoder =
 cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
 cachedWeatherAndAddressDataDecoder =
     JD.map6
-        (\time weatherData country state city usingGeo ->
+        (\time weatherData country maybeState maybeCity usingGeo ->
+            let
+                ifEmptyThenNone v =
+                    if v == "" then
+                        Nothing
+
+                    else
+                        Just v
+
+                state =
+                    maybeState |> Maybe.andThen ifEmptyThenNone
+
+                city =
+                    maybeCity |> Maybe.andThen ifEmptyThenNone
+            in
             CachedWeatherAndAddressData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
@@ -192,7 +206,7 @@ cachedWeatherAndAddressDataDecoder =
         (JD.field "cachedWeatherData" Api.responseDataDecoder)
         (JD.field "country" JD.string)
         (JD.maybe (JD.field "state" JD.string))
-        (JD.field "city" JD.string)
+        (JD.maybe (JD.field "city" JD.string))
         (JD.field "usingGeoLocation" JD.bool)
 
 
@@ -244,7 +258,7 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                         , primaryColor = primary
                         , isOptionMenuOpen = False
-                        , currentAddress = Just { city = Just city, state = state, country = country }
+                        , currentAddress = Just { city = city, state = state, country = country }
                         , countryAndStateVisibility = Animator.init True
 
                         -- TODO: handle zone, when refreshing there's no good initial value
