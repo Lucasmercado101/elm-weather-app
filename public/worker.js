@@ -17,13 +17,19 @@ self.addEventListener("fetch", (e) => {
         const response = await fetch(e.request);
         const clone = response.clone();
         const text = await clone.text();
-        const client = await clients.get(e.clientId);
 
-        if (url.hostname.includes("meteo")) {
-          client.postMessage({ type: "meteo", data: text });
-        } else {
-          client.postMessage({ type: "address", data: text });
-        }
+        await clients
+          .get(e.clientId)
+          .then((client) => {
+            if (url.hostname.includes("meteo")) {
+              client.postMessage({ type: "meteo", data: text });
+            } else {
+              client.postMessage({ type: "address", data: text });
+            }
+          })
+          .catch((e) => {
+            // don't care if it fails
+          });
 
         return response;
       }
