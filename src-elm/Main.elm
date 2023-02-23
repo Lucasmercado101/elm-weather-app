@@ -328,12 +328,12 @@ mapToMainScreen ( a, b ) =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update topMsg topModel =
     case ( topMsg, topModel ) of
-        ( OnWelcomeScreenMsg msg, WelcomeScreen model ) ->
-            Welcome.welcomeScreenUpdate msg model
-                |> (\( a, b ) ->
-                        case a.receivedLocation of
+        ( OnWelcomeScreenMsg ms, WelcomeScreen md ) ->
+            Welcome.welcomeScreenUpdate ms md
+                |> (\( welcomeScreenModel, _ ) ->
+                        case welcomeScreenModel.receivedLocation of
                             Just coords ->
-                                ( LoadingScreen { fetchingStatus = Loading, coordinates = coords, isUsingGeoLocation = model.usingGeoLocation }
+                                ( LoadingScreen { fetchingStatus = Loading, coordinates = coords, isUsingGeoLocation = welcomeScreenModel.usingGeoLocation }
                                 , Api.getWeatherData coords
                                     |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
                                   -- NOTE: Api.getReverseGeocoding could be called here
@@ -341,7 +341,7 @@ update topMsg topModel =
                                 )
 
                             Nothing ->
-                                ( WelcomeScreen a, Cmd.map OnWelcomeScreenMsg b )
+                                ( WelcomeScreen welcomeScreenModel, Cmd.map OnWelcomeScreenMsg b )
                    )
 
         ( OnLoadingScreenMsg msg, LoadingScreen model ) ->
