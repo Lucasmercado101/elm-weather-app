@@ -151,6 +151,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                       else
                         Font.bold
                     ]
+                    -- NOTE: no good way to show "fetching location" message
                     { label = text "Enable Location Permission", onPress = Just RequestLocationPerms }
                 )
             , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
