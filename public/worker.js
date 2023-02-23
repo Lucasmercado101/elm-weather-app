@@ -27,29 +27,29 @@ self.addEventListener("fetch", (e) => {
         return response;
       }
       const r = await caches.match(e.request);
-      // console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
-      if (r) {
-        return r;
-      }
+      if (r) return r;
+
       const response = await fetch(e.request);
       const cache = await caches.open(cacheName);
-      // console.log(`[Service Worker] Caching new resource: ${e.request.url}`);
-      cache.put(e.request, response.clone()).catch((e) => {
-        // console.log("error caching", e);
-      });
+      try {
+        cache.put(e.request, response.clone());
+      } catch {
+        // don't care if it fails
+      }
       return response;
     })()
   );
 });
 
 self.addEventListener("install", (e) => {
-  // console.log("[Service Worker] Install");
   e.waitUntil(
     (async () => {
       const cache = await caches.open(cacheName);
-      // console.log("[Service Worker] Caching all: app shell and content");
-      // TODO: this can fail, try catch
-      await cache.addAll(contentToCache);
+      try {
+        await cache.addAll(contentToCache);
+      } catch {
+        // don't care if it fails
+      }
     })()
   );
 });
