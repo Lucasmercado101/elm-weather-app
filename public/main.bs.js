@@ -581,7 +581,7 @@ function main(app) {
                 app.ports.errorObtainingCurrentPosition.send(error.code);
             });
             return;
-        } else return app.ports.noGeoLocationApiAvailableReceiver.send(undefined);
+        } else return app.ports.noGeoLocationApiAvailableReceiver.send(null);
     });
 }
 var tmp;

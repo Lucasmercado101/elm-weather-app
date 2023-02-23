@@ -50,11 +50,12 @@ type elmInit<'a> = {
 type subscriptionPort<'incoming> = {subscribe: (. 'incoming => unit) => unit}
 
 type messageSenderPort<'a> = {send: (. 'a) => unit}
+type emptyMessageSenderPort = messageSenderPort<Js.Null_undefined.t<unit>>
 
 type elmPorts = {
   requestLocationPerms: subscriptionPort<unit>,
   errorObtainingCurrentPosition: messageSenderPort<int>,
-  noGeoLocationApiAvailableReceiver: messageSenderPort<unit>,
+  noGeoLocationApiAvailableReceiver: emptyMessageSenderPort,
   locationReceiver: messageSenderPort<{"latitude": float, "longitude": float}>,
 }
 
@@ -103,7 +104,7 @@ let main = (app: elmApp) => {
         },
       )
 
-    | None => app.ports.noGeoLocationApiAvailableReceiver.send(. ())
+    | None => app.ports.noGeoLocationApiAvailableReceiver.send(. Js.Null_undefined.null)
     }
   })
 }
