@@ -1,3 +1,10 @@
+const enum localStorageKeys {
+  WEATHER_DATA = "WEATHER_DATA",
+  ADDRESS_DATA = "ADDRESS_DATA"
+}
+
+// -----------------
+// ELM
 // NOTE: 1 to 1 mapping to elm flags
 type CachedWeatherDataFlag = {
   posixTimeNow: number;

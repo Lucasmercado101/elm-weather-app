@@ -11,9 +11,9 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", (event) => {
         const data = event.data;
         if (data.type === "meteo")
-            localStorage.setItem("weatherData", data.data);
+            localStorage.setItem("WEATHER_DATA", data.data);
         if (data.type === "address")
-            localStorage.setItem("address", data.data);
+            localStorage.setItem("ADDRESS_DATA", data.data);
     });
 }
 const startAppWFlags = (flags) => Elm.Main.init({
@@ -24,8 +24,8 @@ const startApp = () => Elm.Main.init({
     node: document.getElementById("root")
 });
 let app;
-const cachedWeatherData = localStorage.getItem("weatherData");
-const cachedAddressData = localStorage.getItem("address");
+const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
+const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
 try {
     if (cachedWeatherData && cachedAddressData) {
         const parsedWeatherData = JSON.parse(cachedWeatherData);

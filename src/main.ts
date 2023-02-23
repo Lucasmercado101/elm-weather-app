@@ -15,8 +15,10 @@ if ("serviceWorker" in navigator) {
     // i'm passing it to here and storing it in localStorage
     // as It's about 9-10~ times faster than using cache.match
     const data = event.data;
-    if (data.type === "meteo") localStorage.setItem("weatherData", data.data);
-    if (data.type === "address") localStorage.setItem("address", data.data);
+    if (data.type === "meteo")
+      localStorage.setItem(localStorageKeys.WEATHER_DATA, data.data);
+    if (data.type === "address")
+      localStorage.setItem(localStorageKeys.ADDRESS_DATA, data.data);
   });
 }
 
@@ -33,8 +35,9 @@ const startApp = () =>
 
 let app: ElmApp;
 
-const cachedWeatherData = localStorage.getItem("weatherData");
-const cachedAddressData = localStorage.getItem("address");
+const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
+const cachedAddressData = localStorage.getItem(localStorageKeys.ADDRESS_DATA);
+
 try {
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
