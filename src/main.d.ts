@@ -9,11 +9,13 @@ const enum localStorageKeys {
 type CachedWeatherDataFlag = {
   posixTimeNow: number;
   cachedWeatherData: any;
+  usingGeoLocation: boolean;
 };
 
 interface CachedWeatherAndAddressDataFlag {
   posixTimeNow: number;
   cachedWeatherData: any;
+  usingGeoLocation: boolean;
   country: string;
   state: string;
 }
@@ -25,7 +27,7 @@ type DataSenderPort<T> = { send: (data: T) => void };
 
 interface ElmApp {
   ports: {
-    requestLocationPerms: { subscribe(cb: () => void) };
+    requestLocation: { subscribe(cb: () => void) };
     locationReceiver: DataSenderPort<GeolocationCoordinates>;
     errorObtainingCurrentPosition: DataSenderPort<
       errorObtainingCurrentPosition["code"]

@@ -19,6 +19,7 @@ type alias WelcomeScreenModel =
 
     -- parent will intercept to check this
     , receivedLocation : Maybe { latitude : Float, longitude : Float }
+    , usingGeoLocation : Bool
     }
 
 
@@ -26,7 +27,7 @@ type WelcomeScreenMsg
     = RequestLocationPerms
     | RequestLocationPermsApiError Int
     | NoGeoLocationApi ()
-    | ReceivedLocation { latitude : Float, longitude : Float }
+    | ReceivedGeoLocation { latitude : Float, longitude : Float }
       -- manually entering location
     | OnChangeLatitude String
     | OnChangeLongitude String
@@ -37,7 +38,7 @@ welcomeScreenSubscriptions : WelcomeScreenModel -> Sub WelcomeScreenMsg
 welcomeScreenSubscriptions _ =
     Sub.batch
         [ errorObtainingCurrentPosition RequestLocationPermsApiError
-        , locationReceiver ReceivedLocation
+        , locationReceiver ReceivedGeoLocation
         , noGeoLocationApiAvailableReceiver NoGeoLocationApi
         ]
 
@@ -46,6 +47,7 @@ welcomeScreenInit : WelcomeScreenModel
 welcomeScreenInit =
     { geoLocationApiError = ""
     , receivedLocation = Nothing
+    , usingGeoLocation = False
 
     --
     , manualLocation = ( "", "" )
@@ -60,21 +62,21 @@ welcomeScreenUpdate msg model =
             model.manualLocation
 
         -- NOTE: parent will intercept this and move on to the next screen
-        exitScreen : { latitude : Float, longitude : Float } -> WelcomeScreenModel
-        exitScreen val =
-            { model | receivedLocation = Just val }
+        exitScreen : { latitude : Float, longitude : Float } -> Bool -> WelcomeScreenModel
+        exitScreen val usingGeo =
+            { model | receivedLocation = Just val, usingGeoLocation = usingGeo }
 
         setManualLocationError : String -> WelcomeScreenModel
         setManualLocationError errStr =
             { model | manualLocationErr = errStr }
     in
     case msg of
-        ReceivedLocation coords ->
-            exitScreen coords |> pure
+        ReceivedGeoLocation coords ->
+            exitScreen coords True |> pure
 
         --------
         RequestLocationPerms ->
-            ( { model | geoLocationApiError = "" }, requestLocPerms )
+            ( { model | geoLocationApiError = "" }, requestLoc )
 
         RequestLocationPermsApiError err ->
             { model
@@ -109,7 +111,7 @@ welcomeScreenUpdate msg model =
                                     setManualLocationError "Longitude must be between -180 and 180"
 
                                 else
-                                    exitScreen { latitude = latFloat, longitude = lonFloat }
+                                    exitScreen { latitude = latFloat, longitude = lonFloat } False
 
                             Nothing ->
                                 setManualLocationError "Longitude must be a valid number"

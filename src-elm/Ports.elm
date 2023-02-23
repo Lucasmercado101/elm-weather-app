@@ -1,14 +1,14 @@
-port module Ports exposing (errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLocPerms)
+port module Ports exposing (errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc)
 
 
-port requestLocationPerms : () -> Cmd nothing
+port requestLocation : () -> Cmd nothing
 
 
 {-| convenience fn
 -}
-requestLocPerms : Cmd nothing
-requestLocPerms =
-    requestLocationPerms ()
+requestLoc : Cmd nothing
+requestLoc =
+    requestLocation ()
 
 
 port errorObtainingCurrentPosition : (Int -> msg) -> Sub msg
