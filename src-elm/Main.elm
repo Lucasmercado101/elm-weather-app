@@ -425,6 +425,9 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 NoGeoLocationApi _ ->
+                    -- NOTE: prevent the user from changing the
+                    -- Geolocation perms in the future as they
+                    -- don't have a Geolocation api?
                     model
                         |> pure
                         |> mapToMainScreen
