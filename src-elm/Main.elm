@@ -1612,7 +1612,10 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             ]
         , divider
         , column [ width fill, height fill, scrollbarY ]
-            [ demoCard (rgb255 42 45 52) (rgb255 48 197 255)
+            [ demoCard defaultPrimary black
+            , demoCard (rgb255 66 198 255) black
+            , demoCard (rgb255 255 101 212) black
+            , demoCard (rgb255 42 45 52) (rgb255 48 197 255)
             , demoCard (rgb255 120 1 22) (rgb255 247 181 56)
             , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
             ]
