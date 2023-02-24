@@ -649,3 +649,91 @@ wmoCodeToString code =
 
         HeavyThunderstormWithHail ->
             "Heavy thunderstorm with hail"
+
+
+esWmoCodeToString : WMOCode -> String
+esWmoCodeToString code =
+    case code of
+        ClearSky ->
+            "Cielo despejado"
+
+        MainlyClear ->
+            "Mayormente despejado"
+
+        PartlyCloudy ->
+            "Parcialmente nublado"
+
+        Overcast ->
+            "Nublado"
+
+        Fog ->
+            "Niebla"
+
+        RimeFog ->
+            "Niebla helada"
+
+        LightDrizzle ->
+            "Llovizna ligera"
+
+        ModerateDrizzle ->
+            "Llovizna moderada"
+
+        DenseDrizzle ->
+            "Llovizna densa"
+
+        LightFreezingDrizzle ->
+            "Llovizna ligera helada"
+
+        DenseFreezingDrizzle ->
+            "Llovizna densa helada"
+
+        SlightRain ->
+            "Lluvia ligera"
+
+        ModerateRain ->
+            "Lluvia moderada"
+
+        HeavyRain ->
+            "Lluvia intensa"
+
+        LightFreezingRain ->
+            "Lluvia ligera helada"
+
+        HeavyFreezingRain ->
+            "Lluvia intensa helada"
+
+        SlightSnowFall ->
+            "Nevada ligera"
+
+        ModerateSnowFall ->
+            "Nevada moderada"
+
+        HeavySnowFall ->
+            "Nevada intensa"
+
+        SnowGrains ->
+            "Copos de nieve"
+
+        SlightRainShowers ->
+            "Lluvia ligera con chubascos"
+
+        ModerateRainShowers ->
+            "Lluvia moderada con chubascos"
+
+        ViolentRainShowers ->
+            "Lluvia intensa con chubascos"
+
+        SlightSnowShowers ->
+            "Nevada ligera con chubascos"
+
+        HeavySnowShowers ->
+            "Nevada intensa con chubascos"
+
+        SlightOrModerateThunderstorm ->
+            "Tormenta ligera o moderada"
+
+        SlightThunderstormWithHail ->
+            "Tormenta ligera con granizo"
+
+        HeavyThunderstormWithHail ->
+            "Tormenta intensa con granizo"

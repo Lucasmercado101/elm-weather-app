@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Animator
-import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, wmoCodeToIcon, wmoCodeToString)
+import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
 import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
@@ -1224,7 +1224,15 @@ mainScreen model =
                             -- NOTE: weatherCode can come as null in the JSON
                             (text
                                 (closestHourly.weatherCode
-                                    |> Maybe.map wmoCodeToString
+                                    |> Maybe.map
+                                        (\l ->
+                                            case model.language of
+                                                English ->
+                                                    l |> wmoCodeToString
+
+                                                Spanish ->
+                                                    l |> esWmoCodeToString
+                                        )
                                     |> Maybe.withDefault ""
                                 )
                             )
