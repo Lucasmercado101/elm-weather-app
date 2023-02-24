@@ -231,11 +231,6 @@ main =
         }
 
 
-
--- TODO: remove from cache when location perms are revoked
--- otherwise i have an old locations
-
-
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
     case flagsDecoders val of
