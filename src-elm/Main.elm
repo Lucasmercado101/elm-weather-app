@@ -4,7 +4,7 @@ import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
+import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1581,7 +1581,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                     ]
                 )
     in
-    column [ width fill, Background.color black ]
+    column [ width fill, Background.color black, height fill ]
         [ row
             [ width fill
             , height (px 52)
@@ -1601,7 +1601,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , el [ Font.color modelPrimaryColor, Font.bold ] (text "Theme")
             ]
         , divider
-        , column [ width fill ]
+        , column [ width fill, height fill, scrollbarY ]
             [ demoCard "2A2D34" "30C5FF"
             , demoCard "780116" "F7B538"
             , demoCard "9bbc0f" "0f380f"
@@ -1610,7 +1610,6 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , demoCard "9bbc0f" "0f380f"
             , demoCard "9bbc0f" "0f380f"
             ]
-        , divider
         ]
 
 
