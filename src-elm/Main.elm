@@ -856,7 +856,7 @@ view model =
                                                 none
 
                                             --   Latitude and Longitude form
-                                            , column
+                                            , row
                                                 [ paddingEach
                                                     { top = 0
                                                     , bottom = 15
