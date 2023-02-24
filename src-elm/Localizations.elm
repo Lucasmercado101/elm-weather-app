@@ -228,14 +228,14 @@ coordinates language =
             "Coordenadas"
 
 
-primaryColor : Language -> String
-primaryColor language =
+theme : Language -> String
+theme language =
     case language of
         English ->
-            "Primary Color"
+            "Theme"
 
         Spanish ->
-            "Color Primario"
+            "Tema"
 
 
 languagePicker : Language -> String

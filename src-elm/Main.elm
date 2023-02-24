@@ -760,45 +760,25 @@ view model =
                                 [ width fill
                                 , Background.color black
                                 ]
-                                [ row
-                                    [ width fill
-                                    , height (px 52)
-                                    , paddingX 15
-                                    ]
-                                    [ el
-                                        [ width fill
-                                        , Font.color modelData.primaryColor
-                                        , Font.heavy
-                                        ]
-                                        (text (Localizations.primaryColor modelData.language))
-                                    , Html.input
-                                        [ Html.Attributes.type_ "color"
-                                        , Html.Attributes.style "border" "transparent"
-                                        , Html.Attributes.style "background" "transparent"
-                                        , Html.Attributes.style "height" "35px"
-
-                                        -- TODO: prevent color from being too dark
-                                        , Html.Attributes.value
-                                            (toRgb modelData.primaryColor
-                                                |> (\{ blue, green, red } ->
-                                                        List.map toHex
-                                                            [ round (red * 255)
-                                                            , round (green * 255)
-                                                            , round (blue * 255)
-
-                                                            -- don't know how to do alpha so i'm just omitting it here
-                                                            -- , round (alpha * 255)
-                                                            ]
-                                                            |> (::) "#"
-                                                            |> String.join ""
-                                                   )
-                                            )
-                                        , Html.Attributes.style "width" "35px"
-                                        , Html.Events.onInput ChangedPrimaryColor
-                                        ]
-                                        []
-                                        |> Element.html
-                                    ]
+                                [ button [ width fill ]
+                                    { label =
+                                        row
+                                            [ width fill
+                                            , height (px 52)
+                                            , paddingX 15
+                                            ]
+                                            [ el
+                                                [ width fill
+                                                , Font.color modelData.primaryColor
+                                                , Font.heavy
+                                                ]
+                                                (text (Localizations.theme modelData.language))
+                                            , el
+                                                [ Font.color modelData.primaryColor ]
+                                                (Icons.chevron_right 40 Inherit |> Element.html)
+                                            ]
+                                    , onPress = Nothing
+                                    }
                                 , divider
 
                                 -- Geo location
