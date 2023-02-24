@@ -8,7 +8,7 @@ import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fi
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
-import Element.Input exposing (button)
+import Element.Input as Input exposing (button)
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (usLocale)
 import Html exposing (Html)
@@ -86,6 +86,7 @@ type Location
 type alias EnteringManualCoordinates =
     { latitude : String
     , longitude : String
+    , error : String
     }
 
 
@@ -150,6 +151,9 @@ type MainScreenMsg
     | RequestLocationPermsApiError Int
     | NoGeoLocationApi ()
     | ShowManualCoordinatesForm
+    | OnChangeLatitude String
+    | OnChangeLongitude String
+    | SubmitManualLocationForm
 
 
 type Msg
@@ -419,17 +423,120 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 ShowManualCoordinatesForm ->
-                    { model
-                        | optionMenu =
-                            Open
-                                (Just
-                                    { latitude = ""
-                                    , longitude = ""
+                    case model.location of
+                        UsingGeoLocation coords ->
+                            { model
+                                | optionMenu =
+                                    Open
+                                        (Just
+                                            { latitude = coords.latitude |> String.fromFloat
+                                            , longitude = coords.longitude |> String.fromFloat
+                                            , error = ""
+                                            }
+                                        )
+                            }
+                                |> pure
+                                |> mapToMainScreen
+
+                        FixedCoordinates coords ->
+                            { model
+                                | optionMenu =
+                                    Open
+                                        (Just
+                                            { latitude = coords.latitude |> String.fromFloat
+                                            , longitude = coords.longitude |> String.fromFloat
+                                            , error = ""
+                                            }
+                                        )
+                            }
+                                |> pure
+                                |> mapToMainScreen
+
+                OnChangeLatitude newLatitude ->
+                    case model.optionMenu of
+                        Open (Just isEditingCoordinatesManually) ->
+                            { model
+                                | optionMenu =
+                                    Open
+                                        (Just
+                                            { isEditingCoordinatesManually
+                                                | latitude = newLatitude
+                                            }
+                                        )
+                            }
+                                |> pure
+                                |> mapToMainScreen
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                OnChangeLongitude newLongitude ->
+                    case model.optionMenu of
+                        Open (Just isEditingCoordinatesManually) ->
+                            { model
+                                | optionMenu =
+                                    Open
+                                        (Just
+                                            { isEditingCoordinatesManually
+                                                | longitude = newLongitude
+                                            }
+                                        )
+                            }
+                                |> pure
+                                |> mapToMainScreen
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                SubmitManualLocationForm ->
+                    case model.optionMenu of
+                        Open (Just manualCoordinates) ->
+                            let
+                                { latitude, longitude } =
+                                    manualCoordinates
+
+                                setManualLocationError error =
+                                    { model
+                                        | optionMenu =
+                                            Open
+                                                (Just
+                                                    { manualCoordinates
+                                                        | error = error
+                                                    }
+                                                )
                                     }
-                                )
-                    }
-                        |> pure
-                        |> mapToMainScreen
+                                        |> pure
+                                        |> mapToMainScreen
+                            in
+                            case String.toFloat latitude of
+                                Just latFloat ->
+                                    if latFloat < -90 || latFloat > 90 then
+                                        setManualLocationError "Latitude must be between -90 and 90"
+
+                                    else
+                                        case String.toFloat longitude of
+                                            Just lonFloat ->
+                                                if lonFloat < -180 || lonFloat > 180 then
+                                                    setManualLocationError "Longitude must be between -180 and 180"
+
+                                                else
+                                                    Debug.todo "success"
+
+                                            -- exitScreen { latitude = latFloat, longitude = lonFloat } False
+                                            Nothing ->
+                                                setManualLocationError "Longitude must be a valid number"
+
+                                Nothing ->
+                                    setManualLocationError "Latitude must be a valid number"
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
 
                 -- NOTE: only changing if:
                 -- location allowed and no geo api errors
@@ -689,8 +796,82 @@ view model =
                                             el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
                                     ]
                                 , case isEnteringManualCoordinates of
-                                    Just val ->
-                                        el [ Font.color modelData.primaryColor, Font.heavy ] (text "Entering manual coordinates")
+                                    Just manualCoordinates ->
+                                        column
+                                            [ centerX
+                                            , Background.color black
+                                            , width fill
+                                            ]
+                                            [ --  Error message
+                                              if manualCoordinates.error /= "" then
+                                                column [ width fill ]
+                                                    [ paragraph
+                                                        [ paddingXY 24 12
+                                                        , Font.center
+                                                        , spacing 8
+                                                        , Font.color primary
+                                                        ]
+                                                        [ el
+                                                            [ centerX
+                                                            , Font.heavy
+                                                            , Font.underline
+                                                            , Font.size 22
+                                                            ]
+                                                            (text "Error")
+                                                        , br
+                                                        , el
+                                                            [ centerX
+                                                            , Font.light
+                                                            , Font.size 18
+                                                            ]
+                                                            (text manualCoordinates.error)
+                                                        ]
+                                                    , el [ width fill, height (px 1), Background.color primary ] none
+                                                    ]
+
+                                              else
+                                                none
+
+                                            --   Latitude and Longitude form
+                                            , column
+                                                [ paddingEach
+                                                    { top = 0
+                                                    , bottom = 15
+                                                    , left = 15
+                                                    , right = 15
+                                                    }
+                                                , width fill
+                                                , spacing 24
+                                                ]
+                                                [ Input.text
+                                                    [ width fill
+                                                    , Background.color primary
+                                                    ]
+                                                    { onChange = OnChangeLatitude
+                                                    , text = manualCoordinates.latitude
+                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.latitude)))
+                                                    , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
+                                                    }
+                                                , Input.text
+                                                    [ width fill
+                                                    , Background.color primary
+                                                    ]
+                                                    { onChange = OnChangeLongitude
+                                                    , text = manualCoordinates.longitude
+                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.longitude)))
+                                                    , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
+                                                    }
+                                                ]
+                                            , divider
+                                            , button
+                                                [ paddingXY 24 12
+                                                , centerX
+                                                , Font.color primary
+                                                , Font.bold
+                                                , Font.size 22
+                                                ]
+                                                { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
+                                            ]
 
                                     Nothing ->
                                         none
