@@ -1637,6 +1637,10 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , demoCard (rgb255 240 238 237) (rgb255 51 44 57)
             , demoCard (rgb255 88 101 242) black
             , demoCard (rgb255 49 51 56) white
+            , demoCard (rgb255 29 155 240) white
+            , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
+            , demoCard (rgb255 59 89 153) (rgb255 248 248 248)
+            , demoCard (rgb255 1 127 1) (rgb255 22 22 22)
             ]
         ]
 
