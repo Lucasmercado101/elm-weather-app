@@ -1609,8 +1609,8 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                 , Font.color modelPrimaryColor
                 , Font.heavy
                 ]
-                (Icons.chevron_left 52 Inherit |> Element.html)
-            , el [ Font.color modelPrimaryColor, Font.bold ] (text "Theme")
+                (Icons.chevron_left 40 Inherit |> Element.html)
+            , el [ Font.color modelPrimaryColor, Font.bold ] (text (Localizations.theme language))
             ]
         , divider
         , column [ width fill, height fill, scrollbarY ]
