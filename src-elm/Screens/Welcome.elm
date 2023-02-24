@@ -133,7 +133,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
     el
         [ width fill
         , height fill
-        , Background.color primary
+        , Background.color defaultPrimary
         ]
         (column [ width fill, centerX, centerY ]
             [ paragraph [ Font.center, Font.size 52, Font.semiBold ]
@@ -144,8 +144,8 @@ welcomeScreenView { manualLocationErr, manualLocation } =
             , el [ paddingTop 18, centerX ]
                 (button
                     [ centerX
-                    , Background.color black
-                    , Font.color primary
+                    , Background.color defaultSecondary
+                    , Font.color defaultPrimary
                     , Font.bold
                     , paddingXY 24 12
                     , Font.size 22
@@ -161,7 +161,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
             , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
             , column
                 [ centerX
-                , Background.color black
+                , Background.color defaultSecondary
                 ]
                 [ -- Error message
                   if manualLocationErr /= "" then
@@ -170,7 +170,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                             [ paddingXY 24 12
                             , Font.center
                             , spacing 8
-                            , Font.color primary
+                            , Font.color defaultPrimary
                             ]
                             [ el
                                 [ centerX
@@ -187,7 +187,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                                 ]
                                 (text manualLocationErr)
                             ]
-                        , el [ width fill, height (px 1), Background.color primary ] none
+                        , el [ width fill, height (px 1), Background.color defaultPrimary ] none
                         ]
 
                   else
@@ -201,28 +201,28 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                     ]
                     [ Input.text
                         [ width fill
-                        , Background.color primary
+                        , Background.color defaultPrimary
                         ]
                         { onChange = \l -> OnChangeLatitude l
                         , text = lat
-                        , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text "-150.58")))
-                        , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "-150.58")))
+                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Latitude:")
                         }
                     , Input.text
                         [ width fill
-                        , Background.color primary
+                        , Background.color defaultPrimary
                         ]
                         { onChange = \l -> OnChangeLongitude l
                         , text = lon
-                        , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text "75.88")))
-                        , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
+                        , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "75.88")))
+                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Longitude:")
                         }
                     ]
                 , divider
                 , button
                     [ paddingXY 24 12
                     , centerX
-                    , Font.color primary
+                    , Font.color defaultPrimary
                     , Font.bold
                     , Font.size 22
                     ]
@@ -234,7 +234,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
 
 divider : Element msg
 divider =
-    el [ width fill, height (px 1), Background.color primary ] none
+    el [ width fill, height (px 1), Background.color defaultPrimary ] none
 
 
 noGeoApiAvailableErrStr : String

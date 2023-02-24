@@ -40,9 +40,14 @@ br =
     Element.html <| Html.br [] []
 
 
-primary : Color
-primary =
+defaultPrimary : Color
+defaultPrimary =
     Element.rgb255 254 225 66
+
+
+defaultSecondary : Color
+defaultSecondary =
+    black
 
 
 black : Color

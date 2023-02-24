@@ -101,6 +101,7 @@ type alias MainScreenModel =
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , location : Location
     , primaryColor : Color
+    , secondaryColor : Color
     , optionMenu : OptionMenu
     , zone : Maybe Zone
     , language : Language
@@ -314,7 +315,10 @@ init val =
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-                      , primaryColor = primary
+
+                      -- TODO: get from cache
+                      , primaryColor = defaultPrimary
+                      , secondaryColor = defaultSecondary
                       , optionMenu = Closed
                       , currentAddress = Just { city = city, state = state, country = country }
                       , countryAndStateVisibility = Animator.init True
@@ -351,7 +355,10 @@ init val =
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-                      , primaryColor = primary
+
+                      -- TODO: get from cache
+                      , primaryColor = defaultPrimary
+                      , secondaryColor = defaultSecondary
                       , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
@@ -434,7 +441,10 @@ update topMsg topModel =
                                         FixedCoordinates model.coordinates
                                 , isOnThemePage = False
                                 , zone = Just zone
-                                , primaryColor = primary
+
+                                -- TODO: get from cache
+                                , primaryColor = defaultPrimary
+                                , secondaryColor = defaultSecondary
                                 , optionMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
@@ -770,7 +780,7 @@ view model =
                         Open isEnteringManualCoordinates ->
                             column
                                 [ width fill
-                                , Background.color black
+                                , Background.color modelData.secondaryColor
                                 ]
                                 [ button [ width fill ]
                                     { label =
@@ -889,7 +899,7 @@ view model =
                                     Just manualCoordinates ->
                                         column
                                             [ centerX
-                                            , Background.color black
+                                            , Background.color modelData.secondaryColor
                                             , width fill
                                             ]
                                             [ --  Error message
@@ -900,7 +910,7 @@ view model =
                                                             [ paddingXY 24 12
                                                             , Font.center
                                                             , spacing 8
-                                                            , Font.color primary
+                                                            , Font.color modelData.primaryColor
                                                             ]
                                                             [ el
                                                                 [ centerX
@@ -917,7 +927,7 @@ view model =
                                                                 ]
                                                                 (text (Localizations.manualLatitudeAndLongitudeError modelData.language err))
                                                             ]
-                                                        , el [ width fill, height (px 1), Background.color primary ] none
+                                                        , el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
                                                         ]
 
                                                 Nothing ->
@@ -940,7 +950,7 @@ view model =
                                                     ]
                                                     { onChange = OnChangeLatitude
                                                     , text = manualCoordinates.latitude
-                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.latitude)))
+                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.latitude)))
                                                     , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.latitude modelData.language ++ ":"))
                                                     }
                                                 , Input.text
@@ -949,7 +959,7 @@ view model =
                                                     ]
                                                     { onChange = OnChangeLongitude
                                                     , text = manualCoordinates.longitude
-                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.longitude)))
+                                                    , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.longitude)))
                                                     , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.longitude modelData.language ++ ":"))
                                                     }
                                                 ]
@@ -1065,8 +1075,8 @@ view model =
                 WelcomeScreen noLocationDataModel ->
                     if noLocationDataModel.geoLocationApiError /= "" then
                         paragraph
-                            [ Background.color black
-                            , Font.color primary
+                            [ Background.color defaultSecondary
+                            , Font.color defaultPrimary
                             , Font.bold
                             , paddingXY 24 12
                             , Font.size 22
@@ -1087,7 +1097,7 @@ view model =
 
             MainScreen m ->
                 if m.isOnThemePage then
-                    themeSelectorScreen m.language m.primaryColor black
+                    themeSelectorScreen m.language m.primaryColor m.secondaryColor
 
                 else
                     mainScreen m |> Element.map OnMainScreenMsg
@@ -1103,7 +1113,7 @@ loadingScreenView { fetchingStatus } =
         (el
             [ width fill
             , height fill
-            , Background.color primary
+            , Background.color defaultPrimary
             , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
             ]
             (case fetchingStatus of
@@ -1136,7 +1146,7 @@ loadingScreenView { fetchingStatus } =
                         , el [ paddingTop 18, centerX ]
                             (button
                                 [ centerX
-                                , Background.color black
+                                , Background.color defaultSecondary
                                 , Font.color white
                                 , Font.bold
                                 , paddingXY 24 12
@@ -1173,7 +1183,7 @@ mainScreen model =
         currentDateChip =
             el
                 [ centerX
-                , Background.color black
+                , Background.color model.secondaryColor
                 , paddingXY 16 8
                 , Border.rounded 200
                 ]
@@ -1325,7 +1335,7 @@ mainScreen model =
                 ]
                 (row
                     [ Font.color white
-                    , Background.color black
+                    , Background.color model.secondaryColor
                     , width fill
                     , padding 30
                     , Border.rounded 12
@@ -1393,7 +1403,7 @@ mainScreen model =
                 [ -- Refresh Button
                   button
                     [ padding 15
-                    , Font.color black
+                    , Font.color model.secondaryColor
                     , Font.heavy
                     , Font.center
                     ]
@@ -1497,7 +1507,7 @@ mainScreen model =
                 -- Menu button
                 , button
                     [ padding 15
-                    , Font.color black
+                    , Font.color model.secondaryColor
                     , Font.heavy
                     , Font.center
                     ]
@@ -1554,34 +1564,36 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                     hexToColor secondaryColor |> Result.withDefault modelSecondaryColor
             in
             el [ padding 8, width fill ]
-                (row
-                    [ width fill
-                    , Background.color primary
-                    , padding 15
-                    , spacing 8
-                    , Font.color secondary
-                    , Border.width 1
-                    , Border.color black
-                    , Border.rounded 8
-                    ]
-                    [ column
-                        [ width fill ]
-                        [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
-                        , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
-                        , paragraph [ Font.size 16, width fill ]
-                            [ text "Now it feels like 33.4°, it's actually 31.9°"
-                            ]
+                (column []
+                    [ row
+                        [ width fill
+                        , Background.color primary
+                        , padding 15
+                        , spacing 8
+                        , Font.color secondary
+                        , Border.width 1
+                        , Border.color modelSecondaryColor
+                        , Border.rounded 8
                         ]
-                    , el [ Background.color secondary, Border.rounded 12, padding 12 ]
-                        (statCard primary
-                            Icons.visibility
-                            (Localizations.visibility language)
-                            "25km/h"
-                        )
+                        [ column
+                            [ width fill ]
+                            [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
+                            , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
+                            , paragraph [ Font.size 16, width fill ]
+                                [ text "Now it feels like 33.4°, it's actually 31.9°"
+                                ]
+                            ]
+                        , el [ Background.color secondary, Border.rounded 12, padding 12 ]
+                            (statCard primary
+                                Icons.visibility
+                                (Localizations.visibility language)
+                                "25km/h"
+                            )
+                        ]
                     ]
                 )
     in
-    column [ width fill, Background.color black, height fill ]
+    column [ width fill, Background.color modelSecondaryColor, height fill ]
         [ row
             [ width fill
             , height (px 52)
@@ -1604,10 +1616,6 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
         , column [ width fill, height fill, scrollbarY ]
             [ demoCard "2A2D34" "30C5FF"
             , demoCard "780116" "F7B538"
-            , demoCard "9bbc0f" "0f380f"
-            , demoCard "9bbc0f" "0f380f"
-            , demoCard "9bbc0f" "0f380f"
-            , demoCard "9bbc0f" "0f380f"
             , demoCard "9bbc0f" "0f380f"
             ]
         ]
@@ -1639,7 +1647,7 @@ weeklyForecastCard date max code =
             Time.toDay Time.utc date |> String.fromInt
     in
     column
-        [ Border.color black
+        [ Border.color defaultSecondary
         , rounded 14
         , Border.solid
         , Border.width 3
