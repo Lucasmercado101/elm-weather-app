@@ -1588,6 +1588,10 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
 
         demoCard : Color -> Color -> Element Msg
         demoCard primaryColor secondaryColor =
+            let
+                verticalDivider =
+                    el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
+            in
             el [ padding 8, width fill ]
                 (column []
                     [ column
@@ -1617,10 +1621,19 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                                 )
                             ]
                         , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                            [ button [] { label = el [ padding 8, Font.size 22 ] (text "apply"), onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor)) }
-                            , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
-                            , el [ padding 8, Font.size 22 ] (text "edit")
-                            , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
+                            [ el
+                                [ paddingY 12
+                                , Font.size 22
+                                , width fill
+                                , Font.center
+                                , height fill
+                                ]
+                                (text "edit")
+                            , verticalDivider
+                            , button [ width fill, height fill ]
+                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
+                                , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
+                                }
                             ]
                         ]
                     ]
