@@ -79,3 +79,43 @@ temperatureRange language lowestTemp highestTemp =
 
         ( Nothing, Nothing ) ->
             none
+
+
+wind : Language -> String
+wind language =
+    case language of
+        English ->
+            "Wind"
+
+        Spanish ->
+            "Viento"
+
+
+humidity : Language -> String
+humidity language =
+    case language of
+        English ->
+            "Humidity"
+
+        Spanish ->
+            "Humedad"
+
+
+visibility : Language -> String
+visibility language =
+    case language of
+        English ->
+            "Visibility"
+
+        Spanish ->
+            "Visibilidad"
+
+
+weeklyForecast : Language -> String
+weeklyForecast language =
+    case language of
+        English ->
+            "Weekly Forecast"
+
+        Spanish ->
+            "Pronóstico Semanal"

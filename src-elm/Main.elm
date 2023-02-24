@@ -1228,13 +1228,22 @@ mainScreen model =
         statCards =
             let
                 windCard v =
-                    statCard model.primaryColor Icons.air "Wind" v
+                    statCard model.primaryColor
+                        Icons.air
+                        (Localizations.wind model.language)
+                        v
 
                 humidityCard v =
-                    statCard model.primaryColor Icons.water_drop "Humidity" v
+                    statCard model.primaryColor
+                        Icons.water_drop
+                        (Localizations.humidity model.language)
+                        v
 
                 visibilityCard v =
-                    statCard model.primaryColor Icons.visibility "Visibility" v
+                    statCard model.primaryColor
+                        Icons.visibility
+                        (Localizations.visibility model.language)
+                        v
             in
             el
                 [ padding 15
@@ -1429,7 +1438,7 @@ mainScreen model =
                 [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
                 , Font.heavy
                 ]
-                (text "Weekly Forecast")
+                (text (Localizations.weeklyForecast model.language))
             , el
                 [ width fill
                 ]
