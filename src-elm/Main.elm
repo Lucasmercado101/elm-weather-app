@@ -4,7 +4,7 @@ import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
+import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1063,7 +1063,74 @@ view model =
                                 ]
 
                         Closed ->
-                            none
+                            let
+                                demoCard primaryColor secondaryColor =
+                                    let
+                                        primary =
+                                            hexToColor primaryColor |> Result.withDefault modelData.primaryColor
+
+                                        secondary =
+                                            hexToColor secondaryColor |> Result.withDefault modelData.primaryColor
+                                    in
+                                    el [ padding 8, width fill ]
+                                        (row
+                                            [ width fill
+                                            , Background.color primary
+                                            , padding 15
+                                            , spacing 8
+                                            , Font.color secondary
+                                            , Border.width 1
+                                            , Border.color black
+                                            , Border.rounded 8
+                                            ]
+                                            [ column
+                                                [ width fill ]
+                                                [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
+                                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
+                                                , paragraph [ Font.size 16, width fill ]
+                                                    [ text "Now it feels like 33.4°, it's actually 31.9°"
+                                                    ]
+                                                ]
+                                            , el [ Background.color secondary, Border.rounded 12, padding 12 ]
+                                                (statCard primary
+                                                    Icons.visibility
+                                                    (Localizations.visibility modelData.language)
+                                                    "25km/h"
+                                                )
+                                            ]
+                                        )
+                            in
+                            column [ width fill, Background.color black ]
+                                [ row
+                                    [ width fill
+                                    , height (px 52)
+                                    , paddingEach
+                                        { top = 0
+                                        , bottom = 0
+                                        , left = 8
+                                        , right = 15
+                                        }
+                                    ]
+                                    [ el
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , Font.heavy
+                                        ]
+                                        (Icons.chevron_left 52 Inherit |> Element.html)
+                                    , el [ Font.color modelData.primaryColor, Font.bold ] (text "Theme")
+                                    ]
+                                , divider
+                                , column [ width fill ]
+                                    [ demoCard "2A2D34" "30C5FF"
+                                    , demoCard "780116" "F7B538"
+                                    , demoCard "9bbc0f" "0f380f"
+                                    , demoCard "9bbc0f" "0f380f"
+                                    , demoCard "9bbc0f" "0f380f"
+                                    , demoCard "9bbc0f" "0f380f"
+                                    , demoCard "9bbc0f" "0f380f"
+                                    ]
+                                , divider
+                                ]
                     )
                         |> Element.map OnMainScreenMsg
 
@@ -1155,7 +1222,7 @@ loadingScreenView { fetchingStatus } =
 
 
 -- NOTE: currently showing data for the most recent hour
--- i.e: Current temperature, wind, humidity, visibilty, etc.
+-- i.e: Current temperature, wind, humidity, visibility, etc.
 
 
 mainScreen : MainScreenModel -> Element MainScreenMsg
@@ -1584,12 +1651,12 @@ weeklyForecastCard date max code =
 
 
 statCard : Color -> Icon msg -> String -> String -> Element msg
-statCard primaryColor icon title value =
+statCard color icon title value =
     column
         [ spacing 12
-        , Font.color primaryColor
+        , Font.color color
         ]
-        [ el [ centerX, paddingBottom 8 ] (icon 52 Inherit |> Element.html)
+        [ el [ centerX, paddingBottom 8, Font.color color ] (icon 52 Inherit |> Element.html)
         , el [ Font.regular, Font.size 24, centerX ] (text value)
         , el [ centerX, Font.size 14, Font.light ] (text title)
         ]
