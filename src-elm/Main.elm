@@ -1612,10 +1612,11 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                     ]
                 )
     in
-    column [ width fill, Background.color modelSecondaryColor, height fill ]
+    column [ width fill, height fill ]
         [ row
             [ width fill
             , height (px 52)
+            , Background.color modelSecondaryColor
             ]
             [ button
                 [ height fill
@@ -1628,7 +1629,12 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , el [ width fill, Font.alignRight, Font.color modelPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
             ]
         , divider
-        , column [ width fill, height fill, scrollbarY ]
+        , column
+            [ width fill
+            , height fill
+            , scrollbarY
+            , Background.color modelPrimaryColor
+            ]
             [ -- Dark
               demoCard (rgb255 25 20 20) (rgb255 29 185 84)
             , demoCard (rgb255 32 38 46) (rgb255 205 88 136)
