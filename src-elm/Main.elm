@@ -632,13 +632,24 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 ReceivedGeoLocation coords ->
-                    ( { model | location = UsingGeoLocation coords }
-                    , Cmd.batch
-                        [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                        , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
-                        ]
-                    )
-                        |> mapToMainScreen
+                    case model.optionMenu of
+                        Open (Just _) ->
+                            ( { model | optionMenu = Open Nothing, location = UsingGeoLocation coords }
+                            , Cmd.batch
+                                [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
+                                , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
+                                ]
+                            )
+                                |> mapToMainScreen
+
+                        _ ->
+                            ( { model | location = UsingGeoLocation coords }
+                            , Cmd.batch
+                                [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
+                                , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
+                                ]
+                            )
+                                |> mapToMainScreen
 
                 GotRefetchingWeatherResp result ->
                     (case result of
