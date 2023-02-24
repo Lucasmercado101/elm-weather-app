@@ -25,6 +25,16 @@ paddingTop n =
     Element.paddingEach { top = n, left = 0, right = 0, bottom = 0 }
 
 
+paddingX : Int -> Element.Attribute msg
+paddingX n =
+    Element.paddingEach { top = 0, left = n, right = n, bottom = 0 }
+
+
+paddingY : Int -> Element.Attribute msg
+paddingY n =
+    Element.paddingEach { top = n, left = 0, right = 0, bottom = n }
+
+
 br : Element msg
 br =
     Element.html <| Html.br [] []
