@@ -16,6 +16,7 @@ type CachedWeatherDataFlag = {
   cachedWeatherData: any;
   usingGeoLocation: boolean;
   language: string;
+  theme: any;
 };
 
 interface CachedWeatherAndAddressDataFlag {
@@ -26,6 +27,7 @@ interface CachedWeatherAndAddressDataFlag {
   state?: string;
   city?: string;
   language: string;
+  theme: any;
 }
 
 type ElmFlags =

@@ -190,6 +190,7 @@ type Flags
         , cachedWeatherData : Api.ResponseData
         , usingGeoLocation : Bool
         , language : String
+        , theme : Maybe ( Color, Color )
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
@@ -199,7 +200,25 @@ type Flags
         , city : Maybe String
         , usingGeoLocation : Bool
         , language : String
+        , theme : Maybe ( Color, Color )
         }
+
+
+colorDecoder : JD.Decoder Color
+colorDecoder =
+    JD.map3
+        (\r g b -> Element.rgb r g b)
+        (JD.field "r" JD.float)
+        (JD.field "g" JD.float)
+        (JD.field "b" JD.float)
+
+
+themeColorsDecoder : JD.Decoder ( Color, Color )
+themeColorsDecoder =
+    JD.map2
+        Tuple.pair
+        (JD.field "primary" colorDecoder)
+        (JD.field "secondary" colorDecoder)
 
 
 languageFlagDecoder : JD.Decoder Flags
@@ -215,25 +234,27 @@ languageFlagDecoder =
 
 cachedWeatherDataFlagDecoder : JD.Decoder Flags
 cachedWeatherDataFlagDecoder =
-    JD.map4
-        (\time weatherData usingGeo language ->
+    JD.map5
+        (\time weatherData usingGeo language theme ->
             CachedWeatherData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
                 , usingGeoLocation = usingGeo
                 , language = language
+                , theme = theme
                 }
         )
         (JD.field "posixTimeNow" JD.int)
         (JD.field "cachedWeatherData" Api.responseDataDecoder)
         (JD.field "usingGeoLocation" JD.bool)
         (JD.field "language" JD.string)
+        (JD.maybe (JD.field "theme" themeColorsDecoder))
 
 
 cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
 cachedWeatherAndAddressDataDecoder =
-    JD.map7
-        (\time weatherData country maybeState maybeCity usingGeo language ->
+    JD.map8
+        (\time weatherData country maybeState maybeCity usingGeo language theme ->
             let
                 ifEmptyThenNone v =
                     if v == "" then
@@ -256,6 +277,7 @@ cachedWeatherAndAddressDataDecoder =
                 , usingGeoLocation = usingGeo
                 , city = city
                 , language = language
+                , theme = theme
                 }
         )
         (JD.field "posixTimeNow" JD.int)
@@ -265,6 +287,7 @@ cachedWeatherAndAddressDataDecoder =
         (JD.maybe (JD.field "city" JD.string))
         (JD.field "usingGeoLocation" JD.bool)
         (JD.field "language" JD.string)
+        (JD.maybe (JD.field "theme" themeColorsDecoder))
 
 
 flagsDecoders : JD.Value -> Result JD.Error Flags
@@ -302,7 +325,7 @@ init val =
     case flagsDecoders val of
         Ok flags ->
             case flags of
-                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language } ->
+                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language, theme } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -320,8 +343,8 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
 
                       -- TODO: get from cache
-                      , primaryColor = defaultPrimary
-                      , secondaryColor = defaultSecondary
+                      , primaryColor = theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
+                      , secondaryColor = theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                       , optionMenu = Closed
                       , currentAddress = Just { city = city, state = state, country = country }
                       , countryAndStateVisibility = Animator.init True
@@ -342,7 +365,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language } ->
+                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -360,8 +383,8 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
 
                       -- TODO: get from cache
-                      , primaryColor = defaultPrimary
-                      , secondaryColor = defaultSecondary
+                      , primaryColor = theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
+                      , secondaryColor = theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                       , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False

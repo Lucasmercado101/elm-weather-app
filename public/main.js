@@ -35,10 +35,17 @@ const freshAppStart = () => Elm.Main.init({
 });
 const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
-function report(state) {
-    console.log(`Permission ${state}`);
-}
+const theme = localStorage.getItem("THEME");
+let parsedTheme = null;
 try {
+    if (theme) {
+        parsedTheme = JSON.parse(theme);
+        const red = parsedTheme.primary.r * 255;
+        const blue = parsedTheme.primary.g * 255;
+        const green = parsedTheme.primary.b * 255;
+        console.log(`rgb(${red}, ${blue}, ${green})`);
+        document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
+    }
     if (cachedWeatherData && cachedAddressData) {
         const parsedWeatherData = JSON.parse(cachedWeatherData);
         const parsedAddressData = JSON.parse(cachedAddressData);
@@ -53,7 +60,8 @@ try {
                         city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
                         state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
                         usingGeoLocation: true,
-                        language: navigator.language || navigator.userLanguage
+                        language: navigator.language || navigator.userLanguage,
+                        theme: parsedTheme
                     }));
                 }
                 else {
@@ -64,7 +72,8 @@ try {
                         city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
                         state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null,
                         usingGeoLocation: false,
-                        language: navigator.language || navigator.userLanguage
+                        language: navigator.language || navigator.userLanguage,
+                        theme: parsedTheme
                     }));
                 }
             });
@@ -77,7 +86,8 @@ try {
                 city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
                 state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
                 usingGeoLocation: false,
-                language: navigator.language || navigator.userLanguage
+                language: navigator.language || navigator.userLanguage,
+                theme: parsedTheme
             }));
         }
     }
@@ -90,7 +100,8 @@ try {
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedData,
                         usingGeoLocation: true,
-                        language: navigator.language || navigator.userLanguage
+                        language: navigator.language || navigator.userLanguage,
+                        theme: parsedTheme
                     }));
                 }
                 else {
@@ -98,7 +109,8 @@ try {
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedData,
                         usingGeoLocation: false,
-                        language: navigator.language || navigator.userLanguage
+                        language: navigator.language || navigator.userLanguage,
+                        theme: parsedTheme
                     }));
                 }
             });
@@ -108,7 +120,8 @@ try {
                 posixTimeNow: Date.now(),
                 cachedWeatherData: parsedData,
                 usingGeoLocation: false,
-                language: navigator.language || navigator.userLanguage
+                language: navigator.language || navigator.userLanguage,
+                theme: parsedTheme
             }));
         }
     }

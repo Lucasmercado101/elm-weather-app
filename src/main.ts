@@ -43,12 +43,20 @@ const freshAppStart = () =>
 
 const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
 const cachedAddressData = localStorage.getItem(localStorageKeys.ADDRESS_DATA);
+const theme = localStorage.getItem(localStorageKeys.THEME);
 
-function report(state: any) {
-  console.log(`Permission ${state}`);
-}
+let parsedTheme: any = null;
 
 try {
+  if (theme) {
+    parsedTheme = JSON.parse(theme);
+    const red = parsedTheme.primary.r * 255;
+    const blue = parsedTheme.primary.g * 255;
+    const green = parsedTheme.primary.b * 255;
+    console.log(`rgb(${red}, ${blue}, ${green})`);
+    document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
+  }
+
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
     const parsedAddressData = JSON.parse(cachedAddressData);
@@ -63,7 +71,8 @@ try {
               city: parsedAddressData.address.city ?? null,
               state: parsedAddressData.address.state ?? null,
               usingGeoLocation: true,
-              language: navigator.language || (navigator as any).userLanguage
+              language: navigator.language || (navigator as any).userLanguage,
+              theme: parsedTheme
             })
           );
         } else {
@@ -75,7 +84,8 @@ try {
               city: parsedAddressData.address.city ?? null,
               state: parsedAddressData.address.state ?? null,
               usingGeoLocation: false,
-              language: navigator.language || (navigator as any).userLanguage
+              language: navigator.language || (navigator as any).userLanguage,
+              theme: parsedTheme
             })
           );
         }
@@ -90,7 +100,8 @@ try {
           state: parsedAddressData.address.state ?? null,
           // NOTE: I'm asumming here
           usingGeoLocation: false,
-          language: navigator.language || (navigator as any).userLanguage
+          language: navigator.language || (navigator as any).userLanguage,
+          theme: parsedTheme
         })
       );
     }
@@ -104,7 +115,8 @@ try {
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedData,
               usingGeoLocation: true,
-              language: navigator.language || (navigator as any).userLanguage
+              language: navigator.language || (navigator as any).userLanguage,
+              theme: parsedTheme
             })
           );
         } else {
@@ -113,7 +125,8 @@ try {
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedData,
               usingGeoLocation: false,
-              language: navigator.language || (navigator as any).userLanguage
+              language: navigator.language || (navigator as any).userLanguage,
+              theme: parsedTheme
             })
           );
         }
@@ -124,7 +137,8 @@ try {
           posixTimeNow: Date.now(),
           cachedWeatherData: parsedData,
           usingGeoLocation: false,
-          language: navigator.language || (navigator as any).userLanguage
+          language: navigator.language || (navigator as any).userLanguage,
+          theme: parsedTheme
         })
       );
     }
