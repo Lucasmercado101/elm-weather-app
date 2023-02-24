@@ -163,7 +163,9 @@ type MainScreenMsg
     | SubmitManualLocationForm
     | CancelManualForm
     | ToggleLanguage
+      -- Theme selection screen
     | GoToThemeSelectionPage
+    | CloseThemeSelectorScreen
 
 
 type Msg
@@ -466,6 +468,12 @@ update topMsg topModel =
             case msg of
                 Tick newTime ->
                     (model |> Animator.update newTime animator)
+                        |> pure
+                        |> mapToMainScreen
+
+                -- Theme screen
+                CloseThemeSelectorScreen ->
+                    { model | isOnThemePage = False }
                         |> pure
                         |> mapToMainScreen
 
@@ -1549,7 +1557,7 @@ mainScreen model =
         )
 
 
-themeSelectorScreen : Language -> Color -> Color -> Element msg
+themeSelectorScreen : Language -> Color -> Color -> Element Msg
 themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
     let
         divider =
@@ -1597,20 +1605,16 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
         [ row
             [ width fill
             , height (px 52)
-            , paddingEach
-                { top = 0
-                , bottom = 0
-                , left = 8
-                , right = 15
-                }
             ]
-            [ el
-                [ width fill
+            [ button
+                [ height fill
                 , Font.color modelPrimaryColor
-                , Font.heavy
+                , paddingX 8
                 ]
-                (Icons.chevron_left 40 Inherit |> Element.html)
-            , el [ Font.color modelPrimaryColor, Font.bold ] (text (Localizations.theme language))
+                { label = el [ centerX, centerY ] (Icons.chevron_left 40 Inherit |> Element.html)
+                , onPress = Just (OnMainScreenMsg CloseThemeSelectorScreen)
+                }
+            , el [ width fill, Font.alignRight, Font.color modelPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
             ]
         , divider
         , column [ width fill, height fill, scrollbarY ]
