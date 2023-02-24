@@ -236,3 +236,13 @@ primaryColor language =
 
         Spanish ->
             "Color Primario"
+
+
+languagePicker : Language -> String
+languagePicker lang =
+    case lang of
+        English ->
+            "Language"
+
+        Spanish ->
+            "Idioma"

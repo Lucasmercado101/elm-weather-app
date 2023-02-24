@@ -997,7 +997,7 @@ view model =
                                         , Font.color modelData.primaryColor
                                         , Font.heavy
                                         ]
-                                        (text (Localizations.geolocation modelData.language))
+                                        (text (Localizations.languagePicker modelData.language))
                                     , button
                                         []
                                         (case modelData.language of
