@@ -87,7 +87,7 @@ type Location
 type alias EnteringManualCoordinates =
     { latitude : String
     , longitude : String
-    , error : String
+    , error : Maybe Localizations.LatAndLongManualError
     }
 
 
@@ -490,7 +490,7 @@ update topMsg topModel =
                                         (Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
-                                            , error = ""
+                                            , error = Nothing
                                             }
                                         )
                             }
@@ -504,7 +504,7 @@ update topMsg topModel =
                                         (Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
-                                            , error = ""
+                                            , error = Nothing
                                             }
                                         )
                             }
@@ -586,13 +586,13 @@ update topMsg topModel =
                             case String.toFloat latitude of
                                 Just latFloat ->
                                     if latFloat < -90 || latFloat > 90 then
-                                        setManualLocationError "Latitude must be between -90 and 90"
+                                        setManualLocationError (Just Localizations.OutOfRangeLatitude)
 
                                     else
                                         case String.toFloat longitude of
                                             Just lonFloat ->
                                                 if lonFloat < -180 || lonFloat > 180 then
-                                                    setManualLocationError "Longitude must be between -180 and 180"
+                                                    setManualLocationError (Just Localizations.OutOfRangeLongitude)
 
                                                 else
                                                     ( { model
@@ -609,10 +609,10 @@ update topMsg topModel =
                                                         |> mapToMainScreen
 
                                             Nothing ->
-                                                setManualLocationError "Longitude must be a valid number"
+                                                setManualLocationError (Just Localizations.InvalidLongitude)
 
                                 Nothing ->
-                                    setManualLocationError "Latitude must be a valid number"
+                                    setManualLocationError (Just Localizations.InvalidLatitude)
 
                         _ ->
                             model
@@ -901,34 +901,35 @@ view model =
                                             , width fill
                                             ]
                                             [ --  Error message
-                                              if manualCoordinates.error /= "" then
-                                                column [ width fill ]
-                                                    [ paragraph
-                                                        [ paddingXY 24 12
-                                                        , Font.center
-                                                        , spacing 8
-                                                        , Font.color primary
-                                                        ]
-                                                        [ el
-                                                            [ centerX
-                                                            , Font.heavy
-                                                            , Font.underline
-                                                            , Font.size 22
+                                              case manualCoordinates.error of
+                                                Just err ->
+                                                    column [ width fill ]
+                                                        [ paragraph
+                                                            [ paddingXY 24 12
+                                                            , Font.center
+                                                            , spacing 8
+                                                            , Font.color primary
                                                             ]
-                                                            (text "Error")
-                                                        , br
-                                                        , el
-                                                            [ centerX
-                                                            , Font.light
-                                                            , Font.size 18
+                                                            [ el
+                                                                [ centerX
+                                                                , Font.heavy
+                                                                , Font.underline
+                                                                , Font.size 22
+                                                                ]
+                                                                (text "Error")
+                                                            , br
+                                                            , el
+                                                                [ centerX
+                                                                , Font.light
+                                                                , Font.size 18
+                                                                ]
+                                                                (text (Localizations.manualLatitudeAndLongitudeError modelData.language err))
                                                             ]
-                                                            (text manualCoordinates.error)
+                                                        , el [ width fill, height (px 1), Background.color primary ] none
                                                         ]
-                                                    , el [ width fill, height (px 1), Background.color primary ] none
-                                                    ]
 
-                                              else
-                                                none
+                                                Nothing ->
+                                                    none
 
                                             --   Latitude and Longitude form
                                             , row

@@ -286,3 +286,42 @@ longitude lang =
 
         Spanish ->
             "Longitud"
+
+
+type LatAndLongManualError
+    = InvalidLatitude
+    | InvalidLongitude
+    | OutOfRangeLatitude
+    | OutOfRangeLongitude
+
+
+manualLatitudeAndLongitudeError : Language -> LatAndLongManualError -> String
+manualLatitudeAndLongitudeError lang errType =
+    case lang of
+        English ->
+            case errType of
+                InvalidLatitude ->
+                    "Latitude must be a valid number"
+
+                InvalidLongitude ->
+                    "Longitude must be a valid number"
+
+                OutOfRangeLatitude ->
+                    "Latitude must be between -90 and 90"
+
+                OutOfRangeLongitude ->
+                    "Longitude must be between -180 and 180"
+
+        Spanish ->
+            case errType of
+                InvalidLatitude ->
+                    "Latitud debe ser un número válido"
+
+                InvalidLongitude ->
+                    "Longitud debe ser un número válido"
+
+                OutOfRangeLatitude ->
+                    "Latitud debe estar entre -90 y 90"
+
+                OutOfRangeLongitude ->
+                    "Longitud debe estar entre -180 y 180"
