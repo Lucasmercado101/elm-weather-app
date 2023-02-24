@@ -823,7 +823,13 @@ view model =
                                                 , paddingXY 5 5
                                                 ]
                                                 { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
-                                                , onPress = Just ShowManualCoordinatesForm
+                                                , onPress =
+                                                    case modelData.optionMenu of
+                                                        Open (Just _) ->
+                                                            Nothing
+
+                                                        _ ->
+                                                            Just ShowManualCoordinatesForm
                                                 }
 
                                         UsingGeoLocation coordinates ->
