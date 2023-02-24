@@ -4,7 +4,7 @@ import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
+import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rgb255, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1563,22 +1563,16 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
         divider =
             el [ width fill, height (px 1), Background.color modelPrimaryColor ] none
 
+        demoCard : Color -> Color -> Element msg
         demoCard primaryColor secondaryColor =
-            let
-                primary =
-                    hexToColor primaryColor |> Result.withDefault modelPrimaryColor
-
-                secondary =
-                    hexToColor secondaryColor |> Result.withDefault modelSecondaryColor
-            in
             el [ padding 8, width fill ]
                 (column []
                     [ row
                         [ width fill
-                        , Background.color primary
+                        , Background.color primaryColor
                         , padding 15
                         , spacing 8
-                        , Font.color secondary
+                        , Font.color secondaryColor
                         , Border.width 1
                         , Border.color modelSecondaryColor
                         , Border.rounded 8
@@ -1591,8 +1585,8 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                                 [ text "Now it feels like 33.4°, it's actually 31.9°"
                                 ]
                             ]
-                        , el [ Background.color secondary, Border.rounded 12, padding 12 ]
-                            (statCard primary
+                        , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
+                            (statCard primaryColor
                                 Icons.visibility
                                 (Localizations.visibility language)
                                 "25km/h"
@@ -1618,9 +1612,9 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             ]
         , divider
         , column [ width fill, height fill, scrollbarY ]
-            [ demoCard "2A2D34" "30C5FF"
-            , demoCard "780116" "F7B538"
-            , demoCard "9bbc0f" "0f380f"
+            [ demoCard (rgb255 42 45 52) (rgb255 48 197 255)
+            , demoCard (rgb255 120 1 22) (rgb255 247 181 56)
+            , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
             ]
         ]
 
