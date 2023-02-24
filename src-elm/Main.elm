@@ -154,6 +154,7 @@ type MainScreenMsg
     | OnChangeLatitude String
     | OnChangeLongitude String
     | SubmitManualLocationForm
+    | CancelManualForm
 
 
 type Msg
@@ -492,6 +493,18 @@ update topMsg topModel =
                                 |> pure
                                 |> mapToMainScreen
 
+                CancelManualForm ->
+                    case model.optionMenu of
+                        Open (Just _) ->
+                            { model | optionMenu = Open Nothing }
+                                |> pure
+                                |> mapToMainScreen
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
                 SubmitManualLocationForm ->
                     case model.optionMenu of
                         Open (Just manualCoordinates) ->
@@ -524,9 +537,19 @@ update topMsg topModel =
                                                     setManualLocationError "Longitude must be between -180 and 180"
 
                                                 else
-                                                    Debug.todo "success"
+                                                    ( { model
+                                                        | location = FixedCoordinates { latitude = latFloat, longitude = lonFloat }
+                                                        , currentRefetchingStatus = Refetching
+                                                        , currentRefetchingAnim = Animator.init Refetching
+                                                        , optionMenu = Open Nothing
+                                                      }
+                                                    , Cmd.batch
+                                                        [ Api.getReverseGeocoding { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
+                                                        , Api.getWeatherData { latitude = latFloat, longitude = lonFloat } |> Task.attempt GotRefetchingWeatherResp
+                                                        ]
+                                                    )
+                                                        |> mapToMainScreen
 
-                                            -- exitScreen { latitude = latFloat, longitude = lonFloat } False
                                             Nothing ->
                                                 setManualLocationError "Longitude must be a valid number"
 
@@ -863,14 +886,27 @@ view model =
                                                     }
                                                 ]
                                             , divider
-                                            , button
-                                                [ paddingXY 24 12
-                                                , centerX
-                                                , Font.color primary
-                                                , Font.bold
-                                                , Font.size 22
+                                            , row
+                                                [ width fill ]
+                                                [ button
+                                                    [ paddingXY 24 12
+                                                    , Font.center
+                                                    , Font.color primary
+                                                    , Font.bold
+                                                    , Font.size 22
+                                                    , width fill
+                                                    ]
+                                                    { label = text "Cancel", onPress = Just CancelManualForm }
+                                                , button
+                                                    [ paddingXY 24 12
+                                                    , Font.center
+                                                    , Font.color primary
+                                                    , Font.bold
+                                                    , Font.size 22
+                                                    , width fill
+                                                    ]
+                                                    { label = text "Confirm", onPress = Just SubmitManualLocationForm }
                                                 ]
-                                                { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
                                             ]
 
                                     Nothing ->
