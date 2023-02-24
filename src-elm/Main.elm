@@ -172,7 +172,7 @@ type MainScreenMsg
     | GoToThemeSelectionPage
     | CloseThemeSelectorScreen
     | ApplyTheme Color Color
-    | CustomizingTheme Color Color
+    | CustomizingTheme ( Color, Color )
 
 
 type Msg
@@ -517,7 +517,7 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
-                CustomizingTheme primary secondary ->
+                CustomizingTheme ( primary, secondary ) ->
                     case model.themePage of
                         NotOnThemePage ->
                             model
@@ -1759,7 +1759,7 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                         , Font.center
                                         , height fill
                                         ]
-                                        { label = text "edit", onPress = Nothing }
+                                        { label = text "edit", onPress = Just (OnMainScreenMsg (CustomizingTheme ( primaryColor, secondaryColor ))) }
                                     , verticalDivider
                                     , button [ width fill, height fill ]
                                         { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
