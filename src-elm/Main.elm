@@ -1585,7 +1585,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                         ]
                         [ column
                             [ width fill ]
-                            [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
+                            [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
                             , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
                             , paragraph [ Font.size 16, width fill ]
                                 [ text "Now it feels like 33.4°, it's actually 31.9°"
