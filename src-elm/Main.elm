@@ -166,6 +166,7 @@ type MainScreenMsg
       -- Theme selection screen
     | GoToThemeSelectionPage
     | CloseThemeSelectorScreen
+    | ApplyTheme Color Color
 
 
 type Msg
@@ -474,6 +475,11 @@ update topMsg topModel =
                 -- Theme screen
                 CloseThemeSelectorScreen ->
                     { model | isOnThemePage = False }
+                        |> pure
+                        |> mapToMainScreen
+
+                ApplyTheme primary secondary ->
+                    { model | primaryColor = primary, secondaryColor = secondary }
                         |> pure
                         |> mapToMainScreen
 
@@ -1580,7 +1586,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
         divider =
             el [ width fill, height (px 1), Background.color modelPrimaryColor ] none
 
-        demoCard : Color -> Color -> Element msg
+        demoCard : Color -> Color -> Element Msg
         demoCard primaryColor secondaryColor =
             el [ padding 8, width fill ]
                 (column []
@@ -1611,7 +1617,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                                 )
                             ]
                         , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                            [ el [ padding 8, Font.size 22 ] (text "apply")
+                            [ button [] { label = el [ padding 8, Font.size 22 ] (text "apply"), onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor)) }
                             , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
                             , el [ padding 8, Font.size 22 ] (text "edit")
                             , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
