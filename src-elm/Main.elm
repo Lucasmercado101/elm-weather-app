@@ -4,7 +4,7 @@ import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rgb255, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
+import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, moveRight, none, onRight, padding, paddingEach, paddingXY, paragraph, px, rgb, rgb255, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1584,30 +1584,38 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
         demoCard primaryColor secondaryColor =
             el [ padding 8, width fill ]
                 (column []
-                    [ row
+                    [ column
                         [ width fill
                         , Background.color primaryColor
-                        , padding 15
-                        , spacing 8
                         , Font.color secondaryColor
                         , Border.width 2
                         , Border.color secondaryColor
-                        , Border.rounded 8
                         ]
-                        [ column
-                            [ width fill ]
-                            [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
-                            , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
-                            , paragraph [ Font.size 16, width fill ]
-                                [ text "Now it feels like 33.4°, it's actually 31.9°"
-                                ]
+                        [ row
+                            [ padding 15
+                            , spacing 8
                             ]
-                        , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
-                            (statCard primaryColor
-                                Icons.visibility
-                                (Localizations.visibility language)
-                                "25km/h"
-                            )
+                            [ column
+                                [ width fill ]
+                                [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
+                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
+                                , paragraph [ Font.size 16, width fill ]
+                                    [ text "Now it feels like 33.4°, it's actually 31.9°"
+                                    ]
+                                ]
+                            , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
+                                (statCard primaryColor
+                                    Icons.visibility
+                                    (Localizations.visibility language)
+                                    "25km/h"
+                                )
+                            ]
+                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                            [ el [ padding 8, Font.size 22 ] (text "apply")
+                            , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
+                            , el [ padding 8, Font.size 22 ] (text "edit")
+                            , el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
+                            ]
                         ]
                     ]
                 )
@@ -1655,11 +1663,13 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , demoCard (rgb255 69 60 103) (rgb255 242 247 161)
             , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
             , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
+            , demoCard black white
 
             -- Light
             , demoCard defaultPrimary black
             , demoCard (rgb255 66 198 255) black
             , demoCard (rgb255 255 101 212) black
+            , demoCard white black
             , demoCard (rgb255 240 238 237) (rgb255 201 44 109)
             , demoCard (rgb255 249 245 231) (rgb255 167 114 125)
             , demoCard (rgb255 238 233 218) (rgb255 96 150 180)
