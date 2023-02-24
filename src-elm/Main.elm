@@ -1561,7 +1561,7 @@ mainScreen model =
                     ]
                     -- NOTE: daily could be made into an Nonempty list
                     -- don't know if it would be worth it
-                    (List.map (\( date, code, max ) -> weeklyForecastCard date max code) apiData.daily)
+                    (List.map (\( date, code, max ) -> weeklyForecastCard model.secondaryColor date max code) apiData.daily)
                 )
 
             -- Attribution
@@ -1707,8 +1707,8 @@ initialLoadingScreen =
         ]
 
 
-weeklyForecastCard : Posix -> Float -> WMOCode -> Element msg
-weeklyForecastCard date max code =
+weeklyForecastCard : Color -> Posix -> Float -> WMOCode -> Element msg
+weeklyForecastCard borderColor date max code =
     let
         month : String
         month =
@@ -1719,7 +1719,7 @@ weeklyForecastCard date max code =
             Time.toDay Time.utc date |> String.fromInt
     in
     column
-        [ Border.color defaultSecondary
+        [ Border.color borderColor
         , rounded 14
         , Border.solid
         , Border.width 3
