@@ -9,6 +9,8 @@ import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
 import Element.Input exposing (button)
+import FormatNumber exposing (format)
+import FormatNumber.Locales exposing (usLocale)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -408,8 +410,7 @@ update topMsg topModel =
 
                         FixedCoordinates fixedCoordinates ->
                             -- NOTE: not doing something with the error on purpose
-                            { model | location = UsingGeoLocation fixedCoordinates }
-                                |> pure
+                            ( { model | location = UsingGeoLocation fixedCoordinates }, Ports.requestLoc )
                                 |> mapToMainScreen
 
                 -- Background refetching
@@ -554,6 +555,8 @@ view model =
                                     |> Element.html
                                 ]
                             , divider
+
+                            -- Geo location
                             , row
                                 [ width fill
                                 , height (px 52)
@@ -613,6 +616,37 @@ view model =
                                             , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
                                             }
                                     )
+                                ]
+                            , row
+                                [ width fill
+                                , height (px 52)
+                                , paddingX 15
+                                ]
+                                [ el
+                                    [ width fill
+                                    , Font.color modelData.primaryColor
+                                    , Font.heavy
+                                    ]
+                                    (text "Coordinates")
+                                , button
+                                    [ Background.color
+                                        modelData.primaryColor
+                                    , Font.heavy
+                                    , paddingXY 5 5
+                                    ]
+                                    { label =
+                                        let
+                                            coordinates =
+                                                case modelData.location of
+                                                    FixedCoordinates coords ->
+                                                        coords
+
+                                                    UsingGeoLocation coords ->
+                                                        coords
+                                        in
+                                        text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
+                                    , onPress = Nothing
+                                    }
                                 ]
                             , divider
                             , row [ width fill ]

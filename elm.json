@@ -8,6 +8,7 @@
         "direct": {
             "GlobalWebIndex/cmd-extra": "1.4.0",
             "avh4/elm-color": "1.0.0",
+            "cuducos/elm-format-number": "9.0.1",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -32,7 +33,8 @@
             "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.3",
             "ianmackenzie/elm-units": "2.9.0",
-            "justinmimbs/date": "4.0.1"
+            "justinmimbs/date": "4.0.1",
+            "myrho/elm-round": "1.0.5"
         }
     },
     "test-dependencies": {
