@@ -567,7 +567,7 @@ view model =
                                     , Font.color modelData.primaryColor
                                     , Font.heavy
                                     ]
-                                    (text "Use Geolocation")
+                                    (text "Geolocation")
                                 , button
                                     []
                                     (case modelData.location of
@@ -613,6 +613,8 @@ view model =
                                                         ]
                                                         (text "OFF")
                                                     ]
+
+                                            -- TODO: revert back if error or permission denied
                                             , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
                                             }
                                     )
@@ -628,25 +630,19 @@ view model =
                                     , Font.heavy
                                     ]
                                     (text "Coordinates")
-                                , button
-                                    [ Background.color
-                                        modelData.primaryColor
-                                    , Font.heavy
-                                    , paddingXY 5 5
-                                    ]
-                                    { label =
-                                        let
-                                            coordinates =
-                                                case modelData.location of
-                                                    FixedCoordinates coords ->
-                                                        coords
+                                , case modelData.location of
+                                    FixedCoordinates coordinates ->
+                                        button
+                                            [ Background.color modelData.primaryColor
+                                            , Font.heavy
+                                            , paddingXY 5 5
+                                            ]
+                                            { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
+                                            , onPress = Nothing
+                                            }
 
-                                                    UsingGeoLocation coords ->
-                                                        coords
-                                        in
-                                        text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
-                                    , onPress = Nothing
-                                    }
+                                    UsingGeoLocation coordinates ->
+                                        el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
                                 ]
                             , divider
                             , row [ width fill ]
