@@ -948,7 +948,7 @@ view model =
                                                     { onChange = OnChangeLatitude
                                                     , text = manualCoordinates.latitude
                                                     , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.latitude)))
-                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text "Latitude:")
+                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.latitude modelData.language ++ ":"))
                                                     }
                                                 , Input.text
                                                     [ width fill
@@ -957,7 +957,7 @@ view model =
                                                     { onChange = OnChangeLongitude
                                                     , text = manualCoordinates.longitude
                                                     , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.longitude)))
-                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text "Longitude:")
+                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.longitude modelData.language ++ ":"))
                                                     }
                                                 ]
                                             , divider
@@ -972,7 +972,7 @@ view model =
                                                     , Font.size 22
                                                     , width fill
                                                     ]
-                                                    { label = text "Cancel", onPress = Just CancelManualForm }
+                                                    { label = text (Localizations.cancel modelData.language), onPress = Just CancelManualForm }
                                                 , button
                                                     [ paddingXY 24 12
                                                     , Font.center
@@ -980,7 +980,7 @@ view model =
                                                     , Font.size 22
                                                     , width fill
                                                     ]
-                                                    { label = text "Confirm", onPress = Just SubmitManualLocationForm }
+                                                    { label = text (Localizations.confirm modelData.language), onPress = Just SubmitManualLocationForm }
                                                 ]
                                             ]
 

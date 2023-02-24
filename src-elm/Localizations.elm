@@ -246,3 +246,43 @@ languagePicker lang =
 
         Spanish ->
             "Idioma"
+
+
+cancel : Language -> String
+cancel lang =
+    case lang of
+        English ->
+            "Cancel"
+
+        Spanish ->
+            "Cancelar"
+
+
+confirm : Language -> String
+confirm lang =
+    case lang of
+        English ->
+            "Confirm"
+
+        Spanish ->
+            "Confirmar"
+
+
+latitude : Language -> String
+latitude lang =
+    case lang of
+        English ->
+            "Latitude"
+
+        Spanish ->
+            "Latitud"
+
+
+longitude : Language -> String
+longitude lang =
+    case lang of
+        English ->
+            "Longitude"
+
+        Spanish ->
+            "Longitud"
