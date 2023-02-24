@@ -858,7 +858,7 @@ view model =
                                             --   Latitude and Longitude form
                                             , row
                                                 [ paddingEach
-                                                    { top = 0
+                                                    { top = 8
                                                     , bottom = 15
                                                     , left = 15
                                                     , right = 15
