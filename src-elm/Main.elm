@@ -102,6 +102,7 @@ type alias MainScreenModel =
     , primaryColor : Color
     , optionMenu : OptionMenu
     , zone : Maybe Zone
+    , language : Language
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -119,6 +120,7 @@ type alias LoadingScreenModel =
     { fetchingStatus : InitialWebRequest Http.Error
     , coordinates : Coordinates
     , isUsingGeoLocation : Bool
+    , language : Language
     }
 
 
@@ -170,10 +172,14 @@ type Msg
 
 
 type Flags
-    = CachedWeatherData
+    = LanguageOnly
+        { language : String
+        }
+    | CachedWeatherData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
         , usingGeoLocation : Bool
+        , language : String
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
@@ -182,28 +188,42 @@ type Flags
         , state : Maybe String
         , city : Maybe String
         , usingGeoLocation : Bool
+        , language : String
         }
+
+
+languageFlagDecoder : JD.Decoder Flags
+languageFlagDecoder =
+    JD.map
+        (\language ->
+            LanguageOnly
+                { language = language
+                }
+        )
+        (JD.field "language" JD.string)
 
 
 cachedWeatherDataFlagDecoder : JD.Decoder Flags
 cachedWeatherDataFlagDecoder =
-    JD.map3
-        (\time weatherData usingGeo ->
+    JD.map4
+        (\time weatherData usingGeo language ->
             CachedWeatherData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
                 , usingGeoLocation = usingGeo
+                , language = language
                 }
         )
         (JD.field "posixTimeNow" JD.int)
         (JD.field "cachedWeatherData" Api.responseDataDecoder)
         (JD.field "usingGeoLocation" JD.bool)
+        (JD.field "language" JD.string)
 
 
 cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
 cachedWeatherAndAddressDataDecoder =
-    JD.map6
-        (\time weatherData country maybeState maybeCity usingGeo ->
+    JD.map7
+        (\time weatherData country maybeState maybeCity usingGeo language ->
             let
                 ifEmptyThenNone v =
                     if v == "" then
@@ -225,6 +245,7 @@ cachedWeatherAndAddressDataDecoder =
                 , state = state
                 , usingGeoLocation = usingGeo
                 , city = city
+                , language = language
                 }
         )
         (JD.field "posixTimeNow" JD.int)
@@ -233,6 +254,7 @@ cachedWeatherAndAddressDataDecoder =
         (JD.maybe (JD.field "state" JD.string))
         (JD.maybe (JD.field "city" JD.string))
         (JD.field "usingGeoLocation" JD.bool)
+        (JD.field "language" JD.string)
 
 
 flagsDecoders : JD.Value -> Result JD.Error Flags
@@ -241,6 +263,7 @@ flagsDecoders value =
         (JD.oneOf
             [ cachedWeatherAndAddressDataDecoder
             , cachedWeatherDataFlagDecoder
+            , languageFlagDecoder
             ]
         )
         value
@@ -258,10 +281,18 @@ main =
 
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
+    let
+        langParse langStr =
+            if langStr == "es" || String.contains "es-" langStr then
+                Spanish
+
+            else
+                English
+    in
     case flagsDecoders val of
         Ok flags ->
             case flags of
-                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation } ->
+                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -269,6 +300,7 @@ init val =
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
+                      , language = langParse language
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -296,7 +328,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation } ->
+                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -304,6 +336,7 @@ init val =
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
+                      , language = langParse language
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -331,9 +364,13 @@ init val =
                     )
                         |> mapToMainScreen
 
+                LanguageOnly { language } ->
+                    WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
+
         Err _ ->
             -- NOTE: this will not happen unless i screw up the flags
-            WelcomeScreen Welcome.welcomeScreenInit |> pure
+            WelcomeScreen (Welcome.welcomeScreenInit English)
+                |> pure
 
 
 
@@ -353,7 +390,12 @@ update topMsg topModel =
                 |> (\( welcomeScreenModel, welcomeScreenMessage ) ->
                         case welcomeScreenModel.receivedLocation of
                             Just coords ->
-                                ( LoadingScreen { fetchingStatus = Loading, coordinates = coords, isUsingGeoLocation = welcomeScreenModel.usingGeoLocation }
+                                ( LoadingScreen
+                                    { fetchingStatus = Loading
+                                    , coordinates = coords
+                                    , isUsingGeoLocation = welcomeScreenModel.usingGeoLocation
+                                    , language = welcomeScreenModel.language
+                                    }
                                 , Api.getWeatherData coords
                                     |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
                                   -- NOTE: Api.getReverseGeocoding could be called here
@@ -375,6 +417,7 @@ update topMsg topModel =
                                 { apiData = ( data, currentTime )
                                 , currentRefetchingStatus = NotRefetching
                                 , currentRefetchingAnim = Animator.init NotRefetching
+                                , language = model.language
                                 , location =
                                     if model.isUsingGeoLocation then
                                         UsingGeoLocation model.coordinates

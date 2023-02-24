@@ -22,7 +22,10 @@ const startAppWFlags = (flags) => Elm.Main.init({
     flags: flags
 });
 const freshAppStart = () => Elm.Main.init({
-    node: document.getElementById("root")
+    node: document.getElementById("root"),
+    flags: {
+        language: navigator.language || navigator.userLanguage
+    }
 });
 const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
@@ -43,7 +46,8 @@ try {
                         country: parsedAddressData.address.country,
                         city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
                         state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
-                        usingGeoLocation: true
+                        usingGeoLocation: true,
+                        language: navigator.language || navigator.userLanguage
                     }));
                 }
                 else {
@@ -53,7 +57,8 @@ try {
                         country: parsedAddressData.address.country,
                         city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
                         state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null,
-                        usingGeoLocation: false
+                        usingGeoLocation: false,
+                        language: navigator.language || navigator.userLanguage
                     }));
                 }
             });
@@ -65,7 +70,8 @@ try {
                 country: parsedAddressData.address.country,
                 city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
                 state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
-                usingGeoLocation: false
+                usingGeoLocation: false,
+                language: navigator.language || navigator.userLanguage
             }));
         }
     }
@@ -77,14 +83,16 @@ try {
                     main(startAppWFlags({
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedData,
-                        usingGeoLocation: true
+                        usingGeoLocation: true,
+                        language: navigator.language || navigator.userLanguage
                     }));
                 }
                 else {
                     main(startAppWFlags({
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedData,
-                        usingGeoLocation: false
+                        usingGeoLocation: false,
+                        language: navigator.language || navigator.userLanguage
                     }));
                 }
             });
@@ -93,7 +101,8 @@ try {
             main(startAppWFlags({
                 posixTimeNow: Date.now(),
                 cachedWeatherData: parsedData,
-                usingGeoLocation: false
+                usingGeoLocation: false,
+                language: navigator.language || navigator.userLanguage
             }));
         }
     }

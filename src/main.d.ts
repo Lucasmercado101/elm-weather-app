@@ -6,10 +6,15 @@ const enum localStorageKeys {
 // -----------------
 // ELM
 // NOTE: 1 to 1 mapping to elm flags
+type LanguageFlag = {
+  language: string;
+};
+
 type CachedWeatherDataFlag = {
   posixTimeNow: number;
   cachedWeatherData: any;
   usingGeoLocation: boolean;
+  language: string;
 };
 
 interface CachedWeatherAndAddressDataFlag {
@@ -19,9 +24,13 @@ interface CachedWeatherAndAddressDataFlag {
   country: string;
   state?: string;
   city?: string;
+  language: string;
 }
 
-type ElmFlags = CachedWeatherDataFlag | CachedWeatherAndAddressDataFlag;
+type ElmFlags =
+  | LanguageFlag
+  | CachedWeatherDataFlag
+  | CachedWeatherAndAddressDataFlag;
 // -----------------
 
 type DataSenderPort<T> = { send: (data: T) => void };

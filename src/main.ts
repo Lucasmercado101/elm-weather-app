@@ -30,7 +30,10 @@ const startAppWFlags = (flags: ElmFlags) =>
 
 const freshAppStart = () =>
   Elm.Main.init({
-    node: document.getElementById("root")
+    node: document.getElementById("root"),
+    flags: {
+      language: navigator.language || (navigator as any).userLanguage
+    }
   });
 
 const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
@@ -54,7 +57,8 @@ try {
               country: parsedAddressData.address.country,
               city: parsedAddressData.address.city ?? null,
               state: parsedAddressData.address.state ?? null,
-              usingGeoLocation: true
+              usingGeoLocation: true,
+              language: navigator.language || (navigator as any).userLanguage
             })
           );
         } else {
@@ -65,7 +69,8 @@ try {
               country: parsedAddressData.address.country,
               city: parsedAddressData.address.city ?? null,
               state: parsedAddressData.address.state ?? null,
-              usingGeoLocation: false
+              usingGeoLocation: false,
+              language: navigator.language || (navigator as any).userLanguage
             })
           );
         }
@@ -79,7 +84,8 @@ try {
           city: parsedAddressData.address.city ?? null,
           state: parsedAddressData.address.state ?? null,
           // NOTE: I'm asumming here
-          usingGeoLocation: false
+          usingGeoLocation: false,
+          language: navigator.language || (navigator as any).userLanguage
         })
       );
     }
@@ -92,7 +98,8 @@ try {
             startAppWFlags({
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedData,
-              usingGeoLocation: true
+              usingGeoLocation: true,
+              language: navigator.language || (navigator as any).userLanguage
             })
           );
         } else {
@@ -100,7 +107,8 @@ try {
             startAppWFlags({
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedData,
-              usingGeoLocation: false
+              usingGeoLocation: false,
+              language: navigator.language || (navigator as any).userLanguage
             })
           );
         }
@@ -110,7 +118,8 @@ try {
         startAppWFlags({
           posixTimeNow: Date.now(),
           cachedWeatherData: parsedData,
-          usingGeoLocation: false
+          usingGeoLocation: false,
+          language: navigator.language || (navigator as any).userLanguage
         })
       );
     }

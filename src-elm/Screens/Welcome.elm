@@ -12,6 +12,7 @@ import Utils exposing (..)
 
 type alias WelcomeScreenModel =
     { geoLocationApiError : String
+    , language : Language
 
     -- manual location form
     , manualLocation : ( String, String )
@@ -43,11 +44,12 @@ welcomeScreenSubscriptions _ =
         ]
 
 
-welcomeScreenInit : WelcomeScreenModel
-welcomeScreenInit =
+welcomeScreenInit : Language -> WelcomeScreenModel
+welcomeScreenInit lang =
     { geoLocationApiError = ""
     , receivedLocation = Nothing
     , usingGeoLocation = False
+    , language = lang
 
     --
     , manualLocation = ( "", "" )
