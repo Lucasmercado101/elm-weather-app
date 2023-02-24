@@ -1612,41 +1612,44 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             ]
         , divider
         , column [ width fill, height fill, scrollbarY ]
-            [ demoCard defaultPrimary black
+            [ -- Dark
+              demoCard (rgb255 25 20 20) (rgb255 29 185 84)
+            , demoCard (rgb255 32 38 46) (rgb255 205 88 136)
+            , demoCard (rgb255 3 0 28) (rgb255 182 234 218)
+            , demoCard (rgb255 0 24 14) (rgb255 255 170 207)
+            , demoCard (rgb255 42 45 52) (rgb255 48 197 255)
+            , demoCard (rgb255 1 127 1) (rgb255 22 22 22)
+            , demoCard (rgb255 120 1 22) (rgb255 247 181 56)
+            , demoCard (rgb255 88 101 242) black
+            , demoCard (rgb255 235 69 95) (rgb255 43 52 103)
+            , demoCard (rgb255 49 51 56) white
+            , demoCard (rgb255 36 55 99) (rgb255 255 110 49)
+            , demoCard (rgb255 51 44 57) (rgb255 240 238 237)
+            , demoCard (rgb255 57 50 50) (rgb255 228 130 87)
+            , demoCard (rgb255 205 88 136) (rgb255 32 38 46)
+            , demoCard (rgb255 13 0 90) (rgb255 3 201 136)
+            , demoCard (rgb255 43 52 103) (rgb255 235 69 95)
+            , demoCard (rgb255 69 60 103) (rgb255 242 247 161)
+            , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
+            , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
+
+            -- Light
+            , demoCard defaultPrimary black
             , demoCard (rgb255 66 198 255) black
             , demoCard (rgb255 255 101 212) black
-            , demoCard (rgb255 42 45 52) (rgb255 48 197 255)
-            , demoCard (rgb255 43 52 103) (rgb255 235 69 95)
-            , demoCard (rgb255 13 0 90) (rgb255 3 201 136)
-            , demoCard (rgb255 69 60 103) (rgb255 242 247 161)
-            , demoCard (rgb255 25 20 20) (rgb255 29 185 84)
-            , demoCard (rgb255 3 0 28) (rgb255 182 234 218)
             , demoCard (rgb255 240 238 237) (rgb255 201 44 109)
-            , demoCard (rgb255 255 227 244) (rgb255 255 27 143)
-            , demoCard (rgb255 0 24 14) (rgb255 255 170 207)
-            , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
-            , demoCard (rgb255 167 114 125) (rgb255 249 245 231)
-            , demoCard (rgb255 96 150 180) (rgb255 238 233 218)
-            , demoCard (rgb255 235 69 95) (rgb255 43 52 103)
-            , demoCard (rgb255 239 0 0) black
             , demoCard (rgb255 249 245 231) (rgb255 167 114 125)
             , demoCard (rgb255 238 233 218) (rgb255 96 150 180)
-            , demoCard (rgb255 120 1 22) (rgb255 247 181 56)
+            , demoCard (rgb255 167 114 125) (rgb255 249 245 231)
+            , demoCard (rgb255 96 150 180) (rgb255 238 233 218)
+            , demoCard (rgb255 239 0 0) black
+            , demoCard (rgb255 212 246 204) (rgb255 239 91 12)
             , demoCard (rgb255 255 170 207) (rgb255 0 24 14)
             , demoCard (rgb255 255 27 143) (rgb255 242 227 241)
-            , demoCard (rgb255 51 44 57) (rgb255 240 238 237)
+            , demoCard (rgb255 255 227 244) (rgb255 255 27 143)
             , demoCard (rgb255 240 238 237) (rgb255 51 44 57)
-            , demoCard (rgb255 88 101 242) black
-            , demoCard (rgb255 49 51 56) white
             , demoCard (rgb255 29 155 240) white
-            , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
             , demoCard (rgb255 59 89 153) (rgb255 248 248 248)
-            , demoCard (rgb255 1 127 1) (rgb255 22 22 22)
-            , demoCard (rgb255 32 38 46) (rgb255 205 88 136)
-            , demoCard (rgb255 205 88 136) (rgb255 32 38 46)
-            , demoCard (rgb255 36 55 99) (rgb255 255 110 49)
-            , demoCard (rgb255 212 246 204) (rgb255 239 91 12)
-            , demoCard (rgb255 57 50 50) (rgb255 228 130 87)
             ]
         ]
 
