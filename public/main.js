@@ -13,8 +13,14 @@ if ("serviceWorker" in navigator) {
         const data = event.data;
         if (data.type === "meteo")
             localStorage.setItem("WEATHER_DATA", data.data);
-        if (data.type === "address")
-            localStorage.setItem("ADDRESS_DATA", data.data);
+        if (data.type === "address") {
+            if (data.data == null) {
+                localStorage.removeItem("ADDRESS_DATA");
+            }
+            else {
+                localStorage.setItem("ADDRESS_DATA", data.data);
+            }
+        }
     });
 }
 const startAppWFlags = (flags) => Elm.Main.init({
