@@ -96,6 +96,11 @@ type OptionMenu
     | Open (Maybe EnteringManualCoordinates)
 
 
+type ThemePage
+    = NotOnThemePage
+    | OnThemePage (Maybe ( Color, Color ))
+
+
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
@@ -107,7 +112,7 @@ type alias MainScreenModel =
     , language : Language
 
     -- TODO: do better
-    , isOnThemePage : Bool
+    , themePage : ThemePage
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -167,6 +172,7 @@ type MainScreenMsg
     | GoToThemeSelectionPage
     | CloseThemeSelectorScreen
     | ApplyTheme Color Color
+    | CustomizingTheme Color Color
 
 
 type Msg
@@ -329,22 +335,28 @@ init val =
                     let
                         { latitude, longitude } =
                             cachedWeatherData
+
+                        primaryColor : Color
+                        primaryColor =
+                            theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
+
+                        secondaryColor : Color
+                        secondaryColor =
+                            theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
-                      , isOnThemePage = False
+                      , themePage = NotOnThemePage
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-
-                      -- TODO: get from cache
-                      , primaryColor = theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
-                      , secondaryColor = theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
+                      , primaryColor = primaryColor
+                      , secondaryColor = secondaryColor
                       , optionMenu = Closed
                       , currentAddress = Just { city = city, state = state, country = country }
                       , countryAndStateVisibility = Animator.init True
@@ -369,22 +381,28 @@ init val =
                     let
                         { latitude, longitude } =
                             cachedWeatherData
+
+                        primaryColor : Color
+                        primaryColor =
+                            theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
+
+                        secondaryColor : Color
+                        secondaryColor =
+                            theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
-                      , isOnThemePage = False
+                      , themePage = NotOnThemePage
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
-
-                      -- TODO: get from cache
-                      , primaryColor = theme |> Maybe.map Tuple.first |> Maybe.withDefault defaultPrimary
-                      , secondaryColor = theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
+                      , primaryColor = primaryColor
+                      , secondaryColor = secondaryColor
                       , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
@@ -465,12 +483,10 @@ update topMsg topModel =
 
                                     else
                                         FixedCoordinates model.coordinates
-                                , isOnThemePage = False
+                                , themePage = NotOnThemePage
                                 , zone = Just zone
-
-                                -- TODO: get from cache
                                 , primaryColor = defaultPrimary
-                                , secondaryColor = defaultSecondary
+                                , secondaryColor = defaultPrimary
                                 , optionMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
@@ -497,9 +513,21 @@ update topMsg topModel =
 
                 -- Theme screen
                 CloseThemeSelectorScreen ->
-                    { model | isOnThemePage = False }
+                    { model | themePage = NotOnThemePage }
                         |> pure
                         |> mapToMainScreen
+
+                CustomizingTheme primary secondary ->
+                    case model.themePage of
+                        NotOnThemePage ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                        OnThemePage _ ->
+                            { model | themePage = OnThemePage (Just ( primary, secondary )) }
+                                |> pure
+                                |> mapToMainScreen
 
                 ApplyTheme primary secondary ->
                     let
@@ -516,7 +544,7 @@ update topMsg topModel =
 
                 -- Options menu
                 GoToThemeSelectionPage ->
-                    { model | isOnThemePage = True, optionMenu = Closed }
+                    { model | themePage = OnThemePage Nothing, optionMenu = Closed }
                         |> pure
                         |> mapToMainScreen
 
@@ -1150,11 +1178,12 @@ view model =
                 loadingScreenView m
 
             MainScreen m ->
-                if m.isOnThemePage then
-                    themeSelectorScreen m.language m.primaryColor m.secondaryColor
+                case m.themePage of
+                    OnThemePage data ->
+                        themeSelectorScreen m data
 
-                else
-                    mainScreen m |> Element.map OnMainScreenMsg
+                    NotOnThemePage ->
+                        mainScreen m |> Element.map OnMainScreenMsg
         )
 
 
@@ -1611,14 +1640,85 @@ mainScreen model =
         )
 
 
-themeSelectorScreen : Language -> Color -> Color -> Element Msg
-themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
+themeSelectorScreen : MainScreenModel -> Maybe ( Color, Color ) -> Element Msg
+themeSelectorScreen ({ language } as model) customThemeColors =
     let
+        modelPrimaryColor =
+            model.primaryColor
+
+        modelSecondaryColor =
+            model.secondaryColor
+
         demoCard : Color -> Color -> Element Msg
         demoCard primaryColor secondaryColor =
             let
                 verticalDivider =
                     el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
+
+                customize : Color -> Color -> Element msg
+                customize first second =
+                    column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                        [ row [ Font.bold, padding 8, width fill ]
+                            [ el [ width fill ] (text "Primary color:")
+                            , Html.input
+                                [ Html.Attributes.type_ "color"
+                                , Html.Attributes.style "all" "unset"
+                                , Html.Attributes.style "height" "45px"
+                                , Html.Attributes.style "width" "45px"
+
+                                -- TODO: prevent color from being too dark
+                                , Html.Attributes.value
+                                    (toRgb first
+                                        |> (\{ blue, green, red } ->
+                                                List.map toHex
+                                                    [ round (red * 255)
+                                                    , round (green * 255)
+                                                    , round (blue * 255)
+
+                                                    -- don't know how to do alpha so i'm just omitting it here
+                                                    -- , round (alpha * 255)
+                                                    ]
+                                                    |> (::) "#"
+                                                    |> String.join ""
+                                           )
+                                    )
+
+                                -- , Html.Events.onInput ChangedPrimaryColor
+                                ]
+                                []
+                                |> Element.html
+                            ]
+                        , row [ Font.bold, padding 8, width fill ]
+                            [ el [ width fill ] (text "Secondary color:")
+                            , Html.input
+                                [ Html.Attributes.type_ "color"
+                                , Html.Attributes.style "all" "unset"
+                                , Html.Attributes.style "height" "45px"
+                                , Html.Attributes.style "width" "45px"
+
+                                -- TODO: prevent color from being too dark
+                                , Html.Attributes.value
+                                    (toRgb second
+                                        |> (\{ blue, green, red } ->
+                                                List.map toHex
+                                                    [ round (red * 255)
+                                                    , round (green * 255)
+                                                    , round (blue * 255)
+
+                                                    -- don't know how to do alpha so i'm just omitting it here
+                                                    -- , round (alpha * 255)
+                                                    ]
+                                                    |> (::) "#"
+                                                    |> String.join ""
+                                           )
+                                    )
+
+                                -- , Html.Events.onInput ChangedPrimaryColor
+                                ]
+                                []
+                                |> Element.html
+                            ]
+                        ]
             in
             el [ padding 8, width fill ]
                 (column []
@@ -1637,9 +1737,7 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                                 [ width fill ]
                                 [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
                                 , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
-                                , paragraph [ Font.size 16, width fill ]
-                                    [ text "Now it feels like 33.4°, it's actually 31.9°"
-                                    ]
+                                , paragraph [ Font.size 16, width fill ] [ text "Now it feels like 33.4°, it's actually 31.9°" ]
                                 ]
                             , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
                                 (statCard primaryColor
@@ -1648,21 +1746,26 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                                     "25km/h"
                                 )
                             ]
-                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                            [ el
-                                [ paddingY 12
-                                , Font.size 22
-                                , width fill
-                                , Font.center
-                                , height fill
-                                ]
-                                (text "edit")
-                            , verticalDivider
-                            , button [ width fill, height fill ]
-                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
-                                , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
-                                }
-                            ]
+                        , case customThemeColors of
+                            Just ( first, second ) ->
+                                customize first second
+
+                            Nothing ->
+                                row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                                    [ button
+                                        [ paddingY 12
+                                        , Font.size 22
+                                        , width fill
+                                        , Font.center
+                                        , height fill
+                                        ]
+                                        { label = text "edit", onPress = Nothing }
+                                    , verticalDivider
+                                    , button [ width fill, height fill ]
+                                        { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
+                                        , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
+                                        }
+                                    ]
                         ]
                     ]
                 )
