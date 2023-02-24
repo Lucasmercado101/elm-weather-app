@@ -206,3 +206,33 @@ attribution language =
 
         Spanish ->
             "Datos meteorológicos por "
+
+
+geolocation : Language -> String
+geolocation language =
+    case language of
+        English ->
+            "Geolocation"
+
+        Spanish ->
+            "Geolocalización"
+
+
+coordinates : Language -> String
+coordinates language =
+    case language of
+        English ->
+            "Coordinates"
+
+        Spanish ->
+            "Coordenadas"
+
+
+primaryColor : Language -> String
+primaryColor language =
+    case language of
+        English ->
+            "Primary Color"
+
+        Spanish ->
+            "Color Primario"

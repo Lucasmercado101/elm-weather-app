@@ -756,7 +756,7 @@ view model =
                                         , Font.color modelData.primaryColor
                                         , Font.heavy
                                         ]
-                                        (text "Primary Color")
+                                        (text (Localizations.primaryColor modelData.language))
                                     , Html.input
                                         [ Html.Attributes.type_ "color"
                                         , Html.Attributes.style "border" "transparent"
@@ -798,7 +798,7 @@ view model =
                                         , Font.color modelData.primaryColor
                                         , Font.heavy
                                         ]
-                                        (text "Geolocation")
+                                        (text (Localizations.geolocation modelData.language))
                                     , button
                                         []
                                         (case modelData.location of
@@ -858,7 +858,7 @@ view model =
                                         , Font.color modelData.primaryColor
                                         , Font.heavy
                                         ]
-                                        (text "Coordinates")
+                                        (text (Localizations.coordinates modelData.language))
                                     , case modelData.location of
                                         FixedCoordinates coordinates ->
                                             button
