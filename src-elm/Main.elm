@@ -1621,7 +1621,8 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , demoCard (rgb255 69 60 103) (rgb255 242 247 161)
             , demoCard (rgb255 25 20 20) (rgb255 29 185 84)
             , demoCard (rgb255 3 0 28) (rgb255 182 234 218)
-            , demoCard (rgb255 242 227 241) (rgb255 255 27 143)
+            , demoCard (rgb255 240 238 237) (rgb255 201 44 109)
+            , demoCard (rgb255 255 227 244) (rgb255 255 27 143)
             , demoCard (rgb255 0 24 14) (rgb255 255 170 207)
             , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
             , demoCard (rgb255 167 114 125) (rgb255 249 245 231)
@@ -1641,6 +1642,11 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
             , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
             , demoCard (rgb255 59 89 153) (rgb255 248 248 248)
             , demoCard (rgb255 1 127 1) (rgb255 22 22 22)
+            , demoCard (rgb255 32 38 46) (rgb255 205 88 136)
+            , demoCard (rgb255 205 88 136) (rgb255 32 38 46)
+            , demoCard (rgb255 36 55 99) (rgb255 255 110 49)
+            , demoCard (rgb255 212 246 204) (rgb255 239 91 12)
+            , demoCard (rgb255 57 50 50) (rgb255 228 130 87)
             ]
         ]
 
