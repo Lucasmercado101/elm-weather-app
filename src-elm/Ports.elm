@@ -1,4 +1,4 @@
-port module Ports exposing (errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc)
+port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc)
 
 
 port requestLocation : () -> Cmd nothing
@@ -18,3 +18,10 @@ port noGeoLocationApiAvailableReceiver : (() -> msg) -> Sub msg
 
 
 port locationReceiver : ({ latitude : Float, longitude : Float } -> msg) -> Sub msg
+
+
+type alias RGB =
+    ( ( Float, Float, Float ), ( Float, Float, Float ) )
+
+
+port changedTheme : RGB -> Cmd msg

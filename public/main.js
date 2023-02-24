@@ -128,4 +128,12 @@ function main(app) {
             app.ports.noGeoLocationApiAvailableReceiver.send();
         }
     });
+    app.ports.changedTheme.subscribe((data) => {
+        const [pr, pg, pb] = data[0];
+        const [sr, sg, sb] = data[1];
+        localStorage.setItem("THEME", JSON.stringify({
+            primary: { r: pr, g: pg, b: pb },
+            secondary: { r: sr, g: sg, b: sb }
+        }));
+    });
 }

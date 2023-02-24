@@ -479,8 +479,16 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 ApplyTheme primary secondary ->
-                    { model | primaryColor = primary, secondaryColor = secondary }
-                        |> pure
+                    let
+                        primaryColors =
+                            Element.toRgb primary
+
+                        secondaryColors =
+                            Element.toRgb secondary
+                    in
+                    ( { model | primaryColor = primary, secondaryColor = secondary }
+                    , Ports.changedTheme ( ( primaryColors.red, primaryColors.green, primaryColors.blue ), ( secondaryColors.red, secondaryColors.green, secondaryColors.blue ) )
+                    )
                         |> mapToMainScreen
 
                 -- Options menu

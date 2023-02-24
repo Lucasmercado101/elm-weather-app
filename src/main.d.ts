@@ -1,6 +1,7 @@
 const enum localStorageKeys {
   WEATHER_DATA = "WEATHER_DATA",
-  ADDRESS_DATA = "ADDRESS_DATA"
+  ADDRESS_DATA = "ADDRESS_DATA",
+  THEME = "THEME"
 }
 
 // -----------------
@@ -38,6 +39,16 @@ type DataSenderPort<T> = { send: (data: T) => void };
 interface ElmApp {
   ports: {
     requestLocation: { subscribe(cb: () => void) };
+    changedTheme: {
+      subscribe(
+        cb: (
+          primaryAndSecondary: [
+            [number, number, number],
+            [number, number, number]
+          ]
+        ) => void
+      );
+    };
     locationReceiver: DataSenderPort<GeolocationCoordinates>;
     errorObtainingCurrentPosition: DataSenderPort<
       errorObtainingCurrentPosition["code"]
