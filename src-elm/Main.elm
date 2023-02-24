@@ -75,7 +75,7 @@ animator =
 
 
 type Location
-    = UsingGeoLocation
+    = UsingGeoLocation Coordinates
     | FixedCoordinates Coordinates
 
 
@@ -130,6 +130,7 @@ type MainScreenMsg
     | Tick Time.Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
+    | ToggleGeoLocation
 
 
 type Msg
@@ -246,7 +247,7 @@ init val =
                       , currentRefetchingAnim = Animator.init Refetching
                       , location =
                             if usingGeoLocation == True then
-                                UsingGeoLocation
+                                UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
@@ -281,7 +282,7 @@ init val =
                       , currentRefetchingAnim = Animator.init Refetching
                       , location =
                             if usingGeoLocation == True then
-                                UsingGeoLocation
+                                UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
@@ -352,7 +353,7 @@ update topMsg topModel =
                                 , currentRefetchingAnim = Animator.init NotRefetching
                                 , location =
                                     if model.isUsingGeoLocation then
-                                        UsingGeoLocation
+                                        UsingGeoLocation model.coordinates
 
                                     else
                                         FixedCoordinates model.coordinates
@@ -398,6 +399,19 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
+                ToggleGeoLocation ->
+                    case model.location of
+                        UsingGeoLocation fixedCoordinates ->
+                            { model | location = FixedCoordinates fixedCoordinates }
+                                |> pure
+                                |> mapToMainScreen
+
+                        FixedCoordinates fixedCoordinates ->
+                            -- NOTE: not doing something with the error on purpose
+                            { model | location = UsingGeoLocation fixedCoordinates }
+                                |> pure
+                                |> mapToMainScreen
+
                 -- Background refetching
                 GotCountryAndStateMainScreen countryAndState ->
                     case countryAndState of
@@ -430,7 +444,7 @@ update topMsg topModel =
                         , currentRefetchingStatus = Refetching
                       }
                     , case model.location of
-                        UsingGeoLocation ->
+                        UsingGeoLocation _ ->
                             Ports.requestLoc
 
                         FixedCoordinates coords ->
@@ -442,7 +456,7 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 ReceivedGeoLocation coords ->
-                    ( model
+                    ( { model | location = UsingGeoLocation coords }
                     , Cmd.batch
                         [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
                         , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
@@ -502,7 +516,8 @@ view model =
                             ]
                             [ row
                                 [ width fill
-                                , paddingXY 15 8
+                                , height (px 52)
+                                , paddingX 15
                                 ]
                                 [ el
                                     [ width fill
@@ -537,6 +552,67 @@ view model =
                                     ]
                                     []
                                     |> Element.html
+                                ]
+                            , divider
+                            , row
+                                [ width fill
+                                , height (px 52)
+                                , paddingX 15
+                                ]
+                                [ el
+                                    [ width fill
+                                    , Font.color modelData.primaryColor
+                                    , Font.heavy
+                                    ]
+                                    (text "Use Geolocation")
+                                , button
+                                    []
+                                    (case modelData.location of
+                                        UsingGeoLocation _ ->
+                                            { label =
+                                                row
+                                                    [ Border.color modelData.primaryColor
+                                                    , Border.width 3
+                                                    ]
+                                                    [ el
+                                                        [ Font.color modelData.primaryColor
+                                                        , paddingXY 8 5
+                                                        , Font.heavy
+                                                        ]
+                                                        (text "ON")
+                                                    , el
+                                                        [ Background.color modelData.primaryColor
+                                                        , Font.heavy
+                                                        , paddingXY 8 5
+                                                        ]
+                                                        (text "OFF")
+                                                    ]
+                                            , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
+                                            }
+
+                                        FixedCoordinates _ ->
+                                            { label =
+                                                row
+                                                    [ Border.color modelData.primaryColor
+                                                    , Border.width 3
+                                                    ]
+                                                    [ el
+                                                        [ Background.color modelData.primaryColor
+                                                        , Font.heavy
+                                                        , paddingXY 8 5
+                                                        ]
+                                                        (text "ON")
+                                                    , el
+                                                        [ Font.color modelData.primaryColor
+                                                        , paddingXY 8 5
+                                                        , Font.heavy
+                                                        , centerX
+                                                        ]
+                                                        (text "OFF")
+                                                    ]
+                                            , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
+                                            }
+                                    )
                                 ]
                             , divider
                             , row [ width fill ]
