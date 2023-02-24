@@ -6,7 +6,7 @@ const cleanCss = require("gulp-clean-css");
 const jsonminify = require("gulp-jsonminify");
 
 const elmToJs = () =>
-  src("src/Main.elm")
+  src("src-elm/Main.elm")
     .pipe(
       elm.bundle("elm.js", {
         optimize: true
