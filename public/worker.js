@@ -25,7 +25,18 @@ self.addEventListener("fetch", (e) => {
             if (url.hostname.includes("meteo")) {
               client.postMessage({ type: "meteo", data: text });
             } else {
-              client.postMessage({ type: "address", data: text });
+              try {
+                const parsedData = JSON.parse(text);
+                if (
+                  !parsedData?.address?.country &&
+                  !parsedData?.address?.city &&
+                  !parsedData?.address?.state
+                ) {
+                  client.postMessage({ type: "address", data: null });
+                } else {
+                  client.postMessage({ type: "address", data: text });
+                }
+              } catch {}
             }
           })
           .catch((e) => {

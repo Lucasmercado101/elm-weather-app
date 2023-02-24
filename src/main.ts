@@ -17,8 +17,13 @@ if ("serviceWorker" in navigator) {
     const data = event.data;
     if (data.type === "meteo")
       localStorage.setItem(localStorageKeys.WEATHER_DATA, data.data);
-    if (data.type === "address")
-      localStorage.setItem(localStorageKeys.ADDRESS_DATA, data.data);
+    if (data.type === "address") {
+      if (data.data == null) {
+        localStorage.removeItem(localStorageKeys.ADDRESS_DATA);
+      } else {
+        localStorage.setItem(localStorageKeys.ADDRESS_DATA, data.data);
+      }
+    }
   });
 }
 
