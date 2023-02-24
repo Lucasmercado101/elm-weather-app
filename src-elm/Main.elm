@@ -891,6 +891,7 @@ view model =
                                             button
                                                 [ Background.color modelData.primaryColor
                                                 , Font.heavy
+                                                , Font.color modelData.secondaryColor
                                                 , paddingXY 5 5
                                                 ]
                                                 { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
@@ -958,6 +959,7 @@ view model =
                                                 [ Input.text
                                                     [ width fill
                                                     , Background.color modelData.primaryColor
+                                                    , Font.color modelData.secondaryColor
                                                     ]
                                                     { onChange = OnChangeLatitude
                                                     , text = manualCoordinates.latitude
@@ -967,6 +969,7 @@ view model =
                                                 , Input.text
                                                     [ width fill
                                                     , Background.color modelData.primaryColor
+                                                    , Font.color modelData.secondaryColor
                                                     ]
                                                     { onChange = OnChangeLongitude
                                                     , text = manualCoordinates.longitude
