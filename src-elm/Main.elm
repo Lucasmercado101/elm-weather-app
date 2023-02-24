@@ -461,7 +461,7 @@ update topMsg topModel =
 
                 -- Options menu
                 GoToThemeSelectionPage ->
-                    { model | isOnThemePage = True }
+                    { model | isOnThemePage = True, optionMenu = Closed }
                         |> pure
                         |> mapToMainScreen
 
@@ -1086,7 +1086,11 @@ view model =
                 loadingScreenView m
 
             MainScreen m ->
-                mainScreen m |> Element.map OnMainScreenMsg
+                if m.isOnThemePage then
+                    themeSelectorScreen m.language m.primaryColor black
+
+                else
+                    mainScreen m |> Element.map OnMainScreenMsg
         )
 
 
