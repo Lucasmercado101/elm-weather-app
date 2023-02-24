@@ -515,6 +515,8 @@ view model =
                                     , Html.Attributes.style "border" "transparent"
                                     , Html.Attributes.style "background" "transparent"
                                     , Html.Attributes.style "height" "35px"
+
+                                    -- TODO: prevent color from being too dark
                                     , Html.Attributes.value
                                         (toRgb modelData.primaryColor
                                             |> (\{ blue, green, red } ->
