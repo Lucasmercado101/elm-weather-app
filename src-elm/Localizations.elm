@@ -1,6 +1,8 @@
 module Localizations exposing (..)
 
 import Element exposing (Element, none, text)
+import Time exposing (Month(..), Weekday(..))
+import Utils exposing (dayToString, monthToString)
 
 
 type Language
@@ -119,3 +121,78 @@ weeklyForecast language =
 
         Spanish ->
             "Pronóstico Semanal"
+
+
+dayAndMonth : Language -> ( Time.Weekday, Time.Month ) -> ( String, String )
+dayAndMonth language ( day, month ) =
+    case language of
+        English ->
+            ( dayToString day, monthToString month )
+
+        Spanish ->
+            ( esDayToString day, esMonthToString month )
+
+
+esDayToString : Time.Weekday -> String
+esDayToString day =
+    case day of
+        Mon ->
+            "Lunes"
+
+        Tue ->
+            "Martes"
+
+        Wed ->
+            "Miércoles"
+
+        Thu ->
+            "Jueves"
+
+        Fri ->
+            "Viernes"
+
+        Sat ->
+            "Sábado"
+
+        Sun ->
+            "Domingo"
+
+
+esMonthToString : Time.Month -> String
+esMonthToString month =
+    case month of
+        Jan ->
+            "Enero"
+
+        Feb ->
+            "Febrero"
+
+        Mar ->
+            "Marzo"
+
+        Apr ->
+            "Abril"
+
+        May ->
+            "Mayo"
+
+        Jun ->
+            "Junio"
+
+        Jul ->
+            "Julio"
+
+        Aug ->
+            "Agosto"
+
+        Sep ->
+            "Septiembre"
+
+        Oct ->
+            "Octubre"
+
+        Nov ->
+            "Noviembre"
+
+        Dec ->
+            "Diciembre"

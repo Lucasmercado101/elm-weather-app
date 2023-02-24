@@ -1105,24 +1105,26 @@ mainScreen model =
                 , paddingXY 16 8
                 , Border.rounded 200
                 ]
-                (paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
-                    [ text
-                        (currentTime
-                            |> Time.toWeekday zone
-                            |> dayToString
-                        )
-                    , text ", "
-                    , text
-                        (currentTime
+                (let
+                    ( weekDay, month ) =
+                        Localizations.dayAndMonth model.language
+                            ( currentTime
+                                |> Time.toWeekday zone
+                            , currentTime
+                                |> Time.toMonth zone
+                            )
+
+                    day =
+                        currentTime
                             |> Time.toDay zone
                             |> String.fromInt
-                        )
+                 in
+                 paragraph [ Font.color model.primaryColor, Font.size 14, Font.light ]
+                    [ text weekDay
+                    , text ", "
+                    , text day
                     , text " "
-                    , text
-                        (currentTime
-                            |> Time.toMonth zone
-                            |> monthToString
-                        )
+                    , text month
                     ]
                 )
 
