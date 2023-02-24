@@ -885,30 +885,31 @@ view model =
                                                 ]
                                                 [ Input.text
                                                     [ width fill
-                                                    , Background.color primary
+                                                    , Background.color modelData.primaryColor
                                                     ]
                                                     { onChange = OnChangeLatitude
                                                     , text = manualCoordinates.latitude
                                                     , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.latitude)))
-                                                    , label = Input.labelAbove [ Font.color primary ] (text "Latitude:")
+                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text "Latitude:")
                                                     }
                                                 , Input.text
                                                     [ width fill
-                                                    , Background.color primary
+                                                    , Background.color modelData.primaryColor
                                                     ]
                                                     { onChange = OnChangeLongitude
                                                     , text = manualCoordinates.longitude
                                                     , placeholder = Just (Input.placeholder [] (el [ Font.color black, alpha 0.65 ] (text manualCoordinates.longitude)))
-                                                    , label = Input.labelAbove [ Font.color primary ] (text "Longitude:")
+                                                    , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text "Longitude:")
                                                     }
                                                 ]
                                             , divider
                                             , row
-                                                [ width fill ]
+                                                [ width fill
+                                                , Font.color modelData.primaryColor
+                                                ]
                                                 [ button
                                                     [ paddingXY 24 12
                                                     , Font.center
-                                                    , Font.color primary
                                                     , Font.bold
                                                     , Font.size 22
                                                     , width fill
@@ -917,7 +918,6 @@ view model =
                                                 , button
                                                     [ paddingXY 24 12
                                                     , Font.center
-                                                    , Font.color primary
                                                     , Font.bold
                                                     , Font.size 22
                                                     , width fill
