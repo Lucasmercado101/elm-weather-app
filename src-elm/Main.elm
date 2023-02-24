@@ -833,14 +833,15 @@ view model =
                                                         , Border.width 3
                                                         ]
                                                         [ el
-                                                            [ Font.color modelData.primaryColor
-                                                            , paddingXY 8 5
+                                                            [ paddingXY 8 5
+                                                            , Font.color modelData.primaryColor
                                                             , Font.heavy
                                                             ]
                                                             (text "ON")
                                                         , el
                                                             [ Background.color modelData.primaryColor
                                                             , Font.heavy
+                                                            , Font.color modelData.secondaryColor
                                                             , paddingXY 8 5
                                                             ]
                                                             (text "OFF")
@@ -857,6 +858,7 @@ view model =
                                                         [ el
                                                             [ Background.color modelData.primaryColor
                                                             , Font.heavy
+                                                            , Font.color modelData.secondaryColor
                                                             , paddingXY 8 5
                                                             ]
                                                             (text "ON")
@@ -864,6 +866,7 @@ view model =
                                                             [ Font.color modelData.primaryColor
                                                             , paddingXY 8 5
                                                             , Font.heavy
+                                                            , Font.color modelData.primaryColor
                                                             , centerX
                                                             ]
                                                             (text "OFF")
@@ -1027,6 +1030,7 @@ view model =
                                                         , el
                                                             [ Background.color modelData.primaryColor
                                                             , Font.heavy
+                                                            , Font.color modelData.secondaryColor
                                                             , paddingXY 8 5
                                                             ]
                                                             (text "ES")
@@ -1043,6 +1047,7 @@ view model =
                                                         [ el
                                                             [ Background.color modelData.primaryColor
                                                             , Font.heavy
+                                                            , Font.color modelData.secondaryColor
                                                             , paddingXY 8 5
                                                             ]
                                                             (text "EN")
@@ -1050,6 +1055,7 @@ view model =
                                                             [ Font.color modelData.primaryColor
                                                             , paddingXY 8 5
                                                             , Font.heavy
+                                                            , Font.color modelData.primaryColor
                                                             , centerX
                                                             ]
                                                             (text "ES")
