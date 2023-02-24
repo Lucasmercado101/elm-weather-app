@@ -83,12 +83,23 @@ type Location
     | FixedCoordinates Coordinates
 
 
+type alias EnteringManualCoordinates =
+    { latitude : String
+    , longitude : String
+    }
+
+
+type OptionMenu
+    = Closed
+    | Open (Maybe EnteringManualCoordinates)
+
+
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , location : Location
     , primaryColor : Color
-    , isOptionMenuOpen : Bool
+    , optionMenu : OptionMenu
     , zone : Maybe Zone
 
     -- NOTE: when I fetch I return response and current time posix
@@ -127,16 +138,18 @@ type LoadingScreenMsg
 
 type MainScreenMsg
     = ChangedPrimaryColor String
-    | OpenOptionsMenu
-    | CloseOptionsMenu
     | RefetchDataOnBackground
     | GotRefetchingWeatherResp (Result Http.Error ( ResponseData, Posix, Zone ))
     | Tick Time.Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
+      -- Options menu
+    | OpenOptionsMenu
+    | CloseOptionsMenu
     | ToggleGeoLocation
     | RequestLocationPermsApiError Int
     | NoGeoLocationApi ()
+    | ShowManualCoordinatesForm
 
 
 type Msg
@@ -258,7 +271,7 @@ init val =
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                       , primaryColor = primary
-                      , isOptionMenuOpen = False
+                      , optionMenu = Closed
                       , currentAddress = Just { city = city, state = state, country = country }
                       , countryAndStateVisibility = Animator.init True
 
@@ -293,7 +306,7 @@ init val =
                             else
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                       , primaryColor = primary
-                      , isOptionMenuOpen = False
+                      , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
 
@@ -365,7 +378,7 @@ update topMsg topModel =
                                         FixedCoordinates model.coordinates
                                 , zone = Just zone
                                 , primaryColor = primary
-                                , isOptionMenuOpen = False
+                                , optionMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
                                 }
@@ -396,12 +409,25 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 OpenOptionsMenu ->
-                    { model | isOptionMenuOpen = True }
+                    { model | optionMenu = Open Nothing }
                         |> pure
                         |> mapToMainScreen
 
                 CloseOptionsMenu ->
-                    { model | isOptionMenuOpen = False }
+                    { model | optionMenu = Closed }
+                        |> pure
+                        |> mapToMainScreen
+
+                ShowManualCoordinatesForm ->
+                    { model
+                        | optionMenu =
+                            Open
+                                (Just
+                                    { latitude = ""
+                                    , longitude = ""
+                                    }
+                                )
+                    }
                         |> pure
                         |> mapToMainScreen
 
@@ -525,158 +551,167 @@ view model =
         , inFront
             (case model of
                 MainScreen modelData ->
-                    let
+                    (let
                         divider =
                             el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
-                    in
-                    if modelData.isOptionMenuOpen then
-                        column
-                            [ width fill
-                            , Background.color black
-                            ]
-                            [ row
+                     in
+                     case modelData.optionMenu of
+                        Open isEnteringManualCoordinates ->
+                            column
                                 [ width fill
-                                , height (px 52)
-                                , paddingX 15
+                                , Background.color black
                                 ]
-                                [ el
+                                [ row
                                     [ width fill
-                                    , Font.color modelData.primaryColor
-                                    , Font.heavy
+                                    , height (px 52)
+                                    , paddingX 15
                                     ]
-                                    (text "Primary Color")
-                                , Html.input
-                                    [ Html.Attributes.type_ "color"
-                                    , Html.Attributes.style "border" "transparent"
-                                    , Html.Attributes.style "background" "transparent"
-                                    , Html.Attributes.style "height" "35px"
+                                    [ el
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , Font.heavy
+                                        ]
+                                        (text "Primary Color")
+                                    , Html.input
+                                        [ Html.Attributes.type_ "color"
+                                        , Html.Attributes.style "border" "transparent"
+                                        , Html.Attributes.style "background" "transparent"
+                                        , Html.Attributes.style "height" "35px"
 
-                                    -- TODO: prevent color from being too dark
-                                    , Html.Attributes.value
-                                        (toRgb modelData.primaryColor
-                                            |> (\{ blue, green, red } ->
-                                                    List.map toHex
-                                                        [ round (red * 255)
-                                                        , round (green * 255)
-                                                        , round (blue * 255)
+                                        -- TODO: prevent color from being too dark
+                                        , Html.Attributes.value
+                                            (toRgb modelData.primaryColor
+                                                |> (\{ blue, green, red } ->
+                                                        List.map toHex
+                                                            [ round (red * 255)
+                                                            , round (green * 255)
+                                                            , round (blue * 255)
 
-                                                        -- don't know how to do alpha so i'm just omitting it here
-                                                        -- , round (alpha * 255)
+                                                            -- don't know how to do alpha so i'm just omitting it here
+                                                            -- , round (alpha * 255)
+                                                            ]
+                                                            |> (::) "#"
+                                                            |> String.join ""
+                                                   )
+                                            )
+                                        , Html.Attributes.style "width" "35px"
+                                        , Html.Events.onInput ChangedPrimaryColor
+                                        ]
+                                        []
+                                        |> Element.html
+                                    ]
+                                , divider
+
+                                -- Geo location
+                                , row
+                                    [ width fill
+                                    , height (px 52)
+                                    , paddingX 15
+                                    ]
+                                    [ el
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , Font.heavy
+                                        ]
+                                        (text "Geolocation")
+                                    , button
+                                        []
+                                        (case modelData.location of
+                                            UsingGeoLocation _ ->
+                                                { label =
+                                                    row
+                                                        [ Border.color modelData.primaryColor
+                                                        , Border.width 3
                                                         ]
-                                                        |> (::) "#"
-                                                        |> String.join ""
-                                               )
+                                                        [ el
+                                                            [ Font.color modelData.primaryColor
+                                                            , paddingXY 8 5
+                                                            , Font.heavy
+                                                            ]
+                                                            (text "ON")
+                                                        , el
+                                                            [ Background.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            , paddingXY 8 5
+                                                            ]
+                                                            (text "OFF")
+                                                        ]
+                                                , onPress = Just ToggleGeoLocation
+                                                }
+
+                                            FixedCoordinates _ ->
+                                                { label =
+                                                    row
+                                                        [ Border.color modelData.primaryColor
+                                                        , Border.width 3
+                                                        ]
+                                                        [ el
+                                                            [ Background.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            , paddingXY 8 5
+                                                            ]
+                                                            (text "ON")
+                                                        , el
+                                                            [ Font.color modelData.primaryColor
+                                                            , paddingXY 8 5
+                                                            , Font.heavy
+                                                            , centerX
+                                                            ]
+                                                            (text "OFF")
+                                                        ]
+                                                , onPress = Just ToggleGeoLocation
+                                                }
                                         )
-                                    , Html.Attributes.style "width" "35px"
-                                    , Html.Events.onInput (\l -> OnMainScreenMsg (ChangedPrimaryColor l))
                                     ]
-                                    []
-                                    |> Element.html
-                                ]
-                            , divider
-
-                            -- Geo location
-                            , row
-                                [ width fill
-                                , height (px 52)
-                                , paddingX 15
-                                ]
-                                [ el
+                                , row
                                     [ width fill
-                                    , Font.color modelData.primaryColor
-                                    , Font.heavy
+                                    , height (px 52)
+                                    , paddingX 15
                                     ]
-                                    (text "Geolocation")
-                                , button
-                                    []
-                                    (case modelData.location of
-                                        UsingGeoLocation _ ->
-                                            { label =
-                                                row
-                                                    [ Border.color modelData.primaryColor
-                                                    , Border.width 3
-                                                    ]
-                                                    [ el
-                                                        [ Font.color modelData.primaryColor
-                                                        , paddingXY 8 5
-                                                        , Font.heavy
-                                                        ]
-                                                        (text "ON")
-                                                    , el
-                                                        [ Background.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        , paddingXY 8 5
-                                                        ]
-                                                        (text "OFF")
-                                                    ]
-                                            , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
-                                            }
+                                    [ el
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , Font.heavy
+                                        ]
+                                        (text "Coordinates")
+                                    , case modelData.location of
+                                        FixedCoordinates coordinates ->
+                                            button
+                                                [ Background.color modelData.primaryColor
+                                                , Font.heavy
+                                                , paddingXY 5 5
+                                                ]
+                                                { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
+                                                , onPress = Just ShowManualCoordinatesForm
+                                                }
 
-                                        FixedCoordinates _ ->
-                                            { label =
-                                                row
-                                                    [ Border.color modelData.primaryColor
-                                                    , Border.width 3
-                                                    ]
-                                                    [ el
-                                                        [ Background.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        , paddingXY 8 5
-                                                        ]
-                                                        (text "ON")
-                                                    , el
-                                                        [ Font.color modelData.primaryColor
-                                                        , paddingXY 8 5
-                                                        , Font.heavy
-                                                        , centerX
-                                                        ]
-                                                        (text "OFF")
-                                                    ]
-                                            , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
-                                            }
-                                    )
-                                ]
-                            , row
-                                [ width fill
-                                , height (px 52)
-                                , paddingX 15
-                                ]
-                                [ el
-                                    [ width fill
-                                    , Font.color modelData.primaryColor
-                                    , Font.heavy
+                                        UsingGeoLocation coordinates ->
+                                            el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
                                     ]
-                                    (text "Coordinates")
-                                , case modelData.location of
-                                    FixedCoordinates coordinates ->
-                                        button
-                                            [ Background.color modelData.primaryColor
-                                            , Font.heavy
-                                            , paddingXY 5 5
-                                            ]
-                                            { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
-                                            , onPress = Nothing
-                                            }
+                                , case isEnteringManualCoordinates of
+                                    Just val ->
+                                        el [ Font.color modelData.primaryColor, Font.heavy ] (text "Entering manual coordinates")
 
-                                    UsingGeoLocation coordinates ->
-                                        el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
-                                ]
-                            , divider
-                            , row [ width fill ]
-                                [ button
-                                    [ width fill
-                                    , Font.color modelData.primaryColor
-                                    , padding 15
-                                    , Font.heavy
-                                    , Font.center
+                                    Nothing ->
+                                        none
+                                , divider
+                                , row [ width fill ]
+                                    [ button
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , padding 15
+                                        , Font.heavy
+                                        , Font.center
+                                        ]
+                                        { label = text "X", onPress = Just CloseOptionsMenu }
                                     ]
-                                    { label = text "X", onPress = Just (OnMainScreenMsg CloseOptionsMenu) }
+                                , divider
                                 ]
-                            , divider
-                            ]
 
-                    else
-                        none
+                        Closed ->
+                            none
+                    )
+                        |> Element.map OnMainScreenMsg
 
                 LoadingScreen _ ->
                     none
