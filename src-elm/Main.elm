@@ -1583,9 +1583,6 @@ mainScreen model =
 themeSelectorScreen : Language -> Color -> Color -> Element Msg
 themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
     let
-        divider =
-            el [ width fill, height (px 1), Background.color modelPrimaryColor ] none
-
         demoCard : Color -> Color -> Element Msg
         demoCard primaryColor secondaryColor =
             let
@@ -1655,7 +1652,9 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                 }
             , el [ width fill, Font.alignRight, Font.color modelPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
             ]
-        , divider
+
+        -- Divider
+        , el [ width fill, height (px 2), Background.color modelPrimaryColor ] none
         , column
             [ width fill
             , height fill
