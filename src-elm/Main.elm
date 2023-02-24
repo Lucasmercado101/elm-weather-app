@@ -1231,7 +1231,8 @@ mainScreen model =
             -- definitely overkill.
             case hasHourlyDataOfToday of
                 Just ((Nonempty firstHourly restHourly) as todayHourlyData) ->
-                    column []
+                    column
+                        [ Font.color model.secondaryColor ]
                         [ el
                             [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
                             , Font.heavy
@@ -1299,7 +1300,7 @@ mainScreen model =
                                     -- NOTE: it can come as null in the JSON
                                     "--"
                     in
-                    column [ width fill ]
+                    column [ width fill, Font.color model.secondaryColor ]
                         [ el [ width fill, Font.center, Font.bold, paddingEach { top = 14, bottom = 12, left = 0, right = 0 } ]
                             -- NOTE: weatherCode can come as null in the JSON
                             (text
@@ -1465,7 +1466,8 @@ mainScreen model =
 
                 -- current country / state / city
                 , column
-                    [ width fill
+                    [ Font.color model.secondaryColor
+                    , width fill
                     , spacing 6
                     , alpha
                         (Animator.move model.countryAndStateVisibility <|
@@ -1535,10 +1537,12 @@ mainScreen model =
               el
                 [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
                 , Font.heavy
+                , Font.color model.secondaryColor
                 ]
                 (text (Localizations.weeklyForecast model.language))
             , el
                 [ width fill
+                , Font.color model.secondaryColor
                 ]
                 (row
                     [ padding 15
