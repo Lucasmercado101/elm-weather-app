@@ -1590,8 +1590,8 @@ themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
                         , padding 15
                         , spacing 8
                         , Font.color secondaryColor
-                        , Border.width 1
-                        , Border.color modelSecondaryColor
+                        , Border.width 2
+                        , Border.color secondaryColor
                         , Border.rounded 8
                         ]
                         [ column
