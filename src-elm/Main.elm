@@ -105,6 +105,9 @@ type alias MainScreenModel =
     , zone : Maybe Zone
     , language : Language
 
+    -- TODO: do better
+    , isOnThemePage : Bool
+
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
     -- but when I get the data and to do things at the time I fetched it
@@ -159,6 +162,7 @@ type MainScreenMsg
     | SubmitManualLocationForm
     | CancelManualForm
     | ToggleLanguage
+    | GoToThemeSelectionPage
 
 
 type Msg
@@ -303,6 +307,7 @@ init val =
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
+                      , isOnThemePage = False
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -339,6 +344,7 @@ init val =
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
+                      , isOnThemePage = False
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -426,6 +432,7 @@ update topMsg topModel =
 
                                     else
                                         FixedCoordinates model.coordinates
+                                , isOnThemePage = False
                                 , zone = Just zone
                                 , primaryColor = primary
                                 , optionMenu = Closed
@@ -453,6 +460,11 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 -- Options menu
+                GoToThemeSelectionPage ->
+                    { model | isOnThemePage = True }
+                        |> pure
+                        |> mapToMainScreen
+
                 ToggleLanguage ->
                     { model
                         | language =
@@ -777,7 +789,7 @@ view model =
                                                 [ Font.color modelData.primaryColor ]
                                                 (Icons.chevron_right 40 Inherit |> Element.html)
                                             ]
-                                    , onPress = Nothing
+                                    , onPress = Just GoToThemeSelectionPage
                                     }
                                 , divider
 
