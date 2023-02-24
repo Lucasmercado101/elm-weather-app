@@ -961,7 +961,6 @@ view model =
                                                     , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.longitude modelData.language ++ ":"))
                                                     }
                                                 ]
-                                            , divider
                                             , row
                                                 [ width fill
                                                 , Font.color modelData.primaryColor
@@ -974,6 +973,7 @@ view model =
                                                     , width fill
                                                     ]
                                                     { label = text (Localizations.cancel modelData.language), onPress = Just CancelManualForm }
+                                                , el [ width (px 1), height fill, Background.color modelData.primaryColor ] none
                                                 , button
                                                     [ paddingXY 24 12
                                                     , Font.center
