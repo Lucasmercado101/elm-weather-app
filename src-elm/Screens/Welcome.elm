@@ -5,8 +5,8 @@ import Element exposing (Element, alpha, centerX, centerY, column, el, fill, hei
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input exposing (button)
+import Localizations exposing (Language(..))
 import Ports exposing (..)
-import Time exposing (Posix)
 import Utils exposing (..)
 
 

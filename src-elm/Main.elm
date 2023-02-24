@@ -17,6 +17,7 @@ import Html.Events
 import Http
 import Json.Decode as JD
 import List.Nonempty as NEList exposing (Nonempty(..))
+import Localizations exposing (Language(..))
 import MIcons exposing (..)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..), Icon)
@@ -1137,7 +1138,7 @@ mainScreen model =
                             [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
                             , Font.heavy
                             ]
-                            (text "Daily summary")
+                            (text (Localizations.dailySummary model.language))
                         , let
                             closestHourly : Hourly
                             closestHourly =
@@ -1163,37 +1164,18 @@ mainScreen model =
                                        )
                           in
                           paragraph
-                            [ paddingEach { top = 14, left = 15, right = 0, bottom = 0 }
+                            [ paddingEach { top = 14, left = 15, right = 19, bottom = 0 }
                             , Font.bold
                             , Font.size 16
                             , width fill
                             ]
-                            [ case ( closestHourly.apparentTemperature, closestHourly.temperature ) of
-                                ( Just apparent, Just actual ) ->
-                                    text ("Now it feels like " ++ (apparent |> String.fromFloat) ++ "°, it's actually " ++ (actual |> String.fromFloat) ++ "°")
-
-                                ( Just apparent, Nothing ) ->
-                                    text ("Now it feels like " ++ (apparent |> String.fromFloat) ++ "°")
-
-                                ( Nothing, Just actual ) ->
-                                    text ("Now it's " ++ (actual |> String.fromFloat) ++ "°")
-
-                                ( Nothing, Nothing ) ->
-                                    -- NOTE: in theory should never happen
-                                    none
+                            [ Localizations.nowItFeels model.language
+                                closestHourly.apparentTemperature
+                                closestHourly.temperature
                             , br
-                            , case ( lowestTempOfToday, highestTempOfToday ) of
-                                ( Just lowest, Just highest ) ->
-                                    text ("Today, the temperature is felt in the range from " ++ (lowest |> String.fromFloat) ++ "° to " ++ (highest |> String.fromFloat) ++ "°")
-
-                                ( Just lowest, Nothing ) ->
-                                    text ("Today, the temperature lowest temperature is " ++ (lowest |> String.fromFloat) ++ "°")
-
-                                ( Nothing, Just highest ) ->
-                                    text ("Today, the temperature highest temperature is " ++ (highest |> String.fromFloat) ++ "°")
-
-                                ( Nothing, Nothing ) ->
-                                    none
+                            , Localizations.temperatureRange model.language
+                                lowestTempOfToday
+                                highestTempOfToday
                             ]
                         ]
 

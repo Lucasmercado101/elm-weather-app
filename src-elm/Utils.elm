@@ -203,8 +203,3 @@ type InitialWebRequest b
 
 type alias Coordinates =
     { latitude : Float, longitude : Float }
-
-
-type Language
-    = Spanish
-    | English
