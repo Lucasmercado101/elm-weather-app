@@ -158,6 +158,7 @@ type MainScreenMsg
     | OnChangeLongitude String
     | SubmitManualLocationForm
     | CancelManualForm
+    | ToggleLanguage
 
 
 type Msg
@@ -452,6 +453,19 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 -- Options menu
+                ToggleLanguage ->
+                    { model
+                        | language =
+                            case model.language of
+                                English ->
+                                    Spanish
+
+                                Spanish ->
+                                    English
+                    }
+                        |> pure
+                        |> mapToMainScreen
+
                 ChangedPrimaryColor hexColor ->
                     { model | primaryColor = hexColor |> hexToColor |> Result.withDefault model.primaryColor }
                         |> pure
@@ -972,6 +986,67 @@ view model =
 
                                     Nothing ->
                                         none
+                                , divider
+                                , row
+                                    [ width fill
+                                    , height (px 52)
+                                    , paddingX 15
+                                    ]
+                                    [ el
+                                        [ width fill
+                                        , Font.color modelData.primaryColor
+                                        , Font.heavy
+                                        ]
+                                        (text (Localizations.geolocation modelData.language))
+                                    , button
+                                        []
+                                        (case modelData.language of
+                                            English ->
+                                                { label =
+                                                    row
+                                                        [ Border.color modelData.primaryColor
+                                                        , Border.width 3
+                                                        ]
+                                                        [ el
+                                                            [ Font.color modelData.primaryColor
+                                                            , paddingXY 8 5
+                                                            , Font.heavy
+                                                            ]
+                                                            (text "EN")
+                                                        , el
+                                                            [ Background.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            , paddingXY 8 5
+                                                            ]
+                                                            (text "ES")
+                                                        ]
+                                                , onPress = Just ToggleLanguage
+                                                }
+
+                                            Spanish ->
+                                                { label =
+                                                    row
+                                                        [ Border.color modelData.primaryColor
+                                                        , Border.width 3
+                                                        ]
+                                                        [ el
+                                                            [ Background.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            , paddingXY 8 5
+                                                            ]
+                                                            (text "EN")
+                                                        , el
+                                                            [ Font.color modelData.primaryColor
+                                                            , paddingXY 8 5
+                                                            , Font.heavy
+                                                            , centerX
+                                                            ]
+                                                            (text "ES")
+                                                        ]
+                                                , onPress = Just ToggleLanguage
+                                                }
+                                        )
+                                    ]
                                 , divider
                                 , row [ width fill ]
                                     [ button
