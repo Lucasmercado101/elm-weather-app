@@ -196,3 +196,13 @@ esMonthToString month =
 
         Dec ->
             "Diciembre"
+
+
+attribution : Language -> String
+attribution language =
+    case language of
+        English ->
+            "Weather data by "
+
+        Spanish ->
+            "Datos meteorológicos por "
