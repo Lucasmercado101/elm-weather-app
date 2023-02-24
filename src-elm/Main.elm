@@ -1063,74 +1063,7 @@ view model =
                                 ]
 
                         Closed ->
-                            let
-                                demoCard primaryColor secondaryColor =
-                                    let
-                                        primary =
-                                            hexToColor primaryColor |> Result.withDefault modelData.primaryColor
-
-                                        secondary =
-                                            hexToColor secondaryColor |> Result.withDefault modelData.primaryColor
-                                    in
-                                    el [ padding 8, width fill ]
-                                        (row
-                                            [ width fill
-                                            , Background.color primary
-                                            , padding 15
-                                            , spacing 8
-                                            , Font.color secondary
-                                            , Border.width 1
-                                            , Border.color black
-                                            , Border.rounded 8
-                                            ]
-                                            [ column
-                                                [ width fill ]
-                                                [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
-                                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
-                                                , paragraph [ Font.size 16, width fill ]
-                                                    [ text "Now it feels like 33.4°, it's actually 31.9°"
-                                                    ]
-                                                ]
-                                            , el [ Background.color secondary, Border.rounded 12, padding 12 ]
-                                                (statCard primary
-                                                    Icons.visibility
-                                                    (Localizations.visibility modelData.language)
-                                                    "25km/h"
-                                                )
-                                            ]
-                                        )
-                            in
-                            column [ width fill, Background.color black ]
-                                [ row
-                                    [ width fill
-                                    , height (px 52)
-                                    , paddingEach
-                                        { top = 0
-                                        , bottom = 0
-                                        , left = 8
-                                        , right = 15
-                                        }
-                                    ]
-                                    [ el
-                                        [ width fill
-                                        , Font.color modelData.primaryColor
-                                        , Font.heavy
-                                        ]
-                                        (Icons.chevron_left 52 Inherit |> Element.html)
-                                    , el [ Font.color modelData.primaryColor, Font.bold ] (text "Theme")
-                                    ]
-                                , divider
-                                , column [ width fill ]
-                                    [ demoCard "2A2D34" "30C5FF"
-                                    , demoCard "780116" "F7B538"
-                                    , demoCard "9bbc0f" "0f380f"
-                                    , demoCard "9bbc0f" "0f380f"
-                                    , demoCard "9bbc0f" "0f380f"
-                                    , demoCard "9bbc0f" "0f380f"
-                                    , demoCard "9bbc0f" "0f380f"
-                                    ]
-                                , divider
-                                ]
+                            none
                     )
                         |> Element.map OnMainScreenMsg
 
@@ -1608,6 +1541,81 @@ mainScreen model =
                 ]
             ]
         )
+
+
+themeSelectorScreen : Language -> Color -> Color -> Element msg
+themeSelectorScreen language modelPrimaryColor modelSecondaryColor =
+    let
+        divider =
+            el [ width fill, height (px 1), Background.color modelPrimaryColor ] none
+
+        demoCard primaryColor secondaryColor =
+            let
+                primary =
+                    hexToColor primaryColor |> Result.withDefault modelPrimaryColor
+
+                secondary =
+                    hexToColor secondaryColor |> Result.withDefault modelSecondaryColor
+            in
+            el [ padding 8, width fill ]
+                (row
+                    [ width fill
+                    , Background.color primary
+                    , padding 15
+                    , spacing 8
+                    , Font.color secondary
+                    , Border.width 1
+                    , Border.color black
+                    , Border.rounded 8
+                    ]
+                    [ column
+                        [ width fill ]
+                        [ paragraph [ Font.size 42, Font.heavy, paddingBottom 12 ] [ text "21°" ]
+                        , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
+                        , paragraph [ Font.size 16, width fill ]
+                            [ text "Now it feels like 33.4°, it's actually 31.9°"
+                            ]
+                        ]
+                    , el [ Background.color secondary, Border.rounded 12, padding 12 ]
+                        (statCard primary
+                            Icons.visibility
+                            (Localizations.visibility language)
+                            "25km/h"
+                        )
+                    ]
+                )
+    in
+    column [ width fill, Background.color black ]
+        [ row
+            [ width fill
+            , height (px 52)
+            , paddingEach
+                { top = 0
+                , bottom = 0
+                , left = 8
+                , right = 15
+                }
+            ]
+            [ el
+                [ width fill
+                , Font.color modelPrimaryColor
+                , Font.heavy
+                ]
+                (Icons.chevron_left 52 Inherit |> Element.html)
+            , el [ Font.color modelPrimaryColor, Font.bold ] (text "Theme")
+            ]
+        , divider
+        , column [ width fill ]
+            [ demoCard "2A2D34" "30C5FF"
+            , demoCard "780116" "F7B538"
+            , demoCard "9bbc0f" "0f380f"
+            , demoCard "9bbc0f" "0f380f"
+            , demoCard "9bbc0f" "0f380f"
+            , demoCard "9bbc0f" "0f380f"
+            , demoCard "9bbc0f" "0f380f"
+            ]
+        , divider
+        ]
 
 
 initialLoadingScreen : Element msg
