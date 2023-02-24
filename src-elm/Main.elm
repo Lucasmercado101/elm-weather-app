@@ -39,6 +39,8 @@ subscriptions model =
         MainScreen modelData ->
             Sub.batch
                 [ Ports.locationReceiver ReceivedGeoLocation
+                , Ports.errorObtainingCurrentPosition RequestLocationPermsApiError
+                , Ports.noGeoLocationApiAvailableReceiver NoGeoLocationApi
                 , animator |> Animator.toSubscription Tick modelData
                 ]
                 |> Sub.map OnMainScreenMsg
@@ -133,6 +135,8 @@ type MainScreenMsg
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
     | ToggleGeoLocation
+    | RequestLocationPermsApiError Int
+    | NoGeoLocationApi ()
 
 
 type Msg
@@ -401,6 +405,8 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
+                -- NOTE: only changing if:
+                -- location allowed and no geo api errors
                 ToggleGeoLocation ->
                     case model.location of
                         UsingGeoLocation fixedCoordinates ->
@@ -408,10 +414,20 @@ update topMsg topModel =
                                 |> pure
                                 |> mapToMainScreen
 
-                        FixedCoordinates fixedCoordinates ->
+                        FixedCoordinates _ ->
                             -- NOTE: not doing something with the error on purpose
-                            ( { model | location = UsingGeoLocation fixedCoordinates }, Ports.requestLoc )
+                            ( model, Ports.requestLoc )
                                 |> mapToMainScreen
+
+                RequestLocationPermsApiError _ ->
+                    model
+                        |> pure
+                        |> mapToMainScreen
+
+                NoGeoLocationApi _ ->
+                    model
+                        |> pure
+                        |> mapToMainScreen
 
                 -- Background refetching
                 GotCountryAndStateMainScreen countryAndState ->
@@ -613,8 +629,6 @@ view model =
                                                         ]
                                                         (text "OFF")
                                                     ]
-
-                                            -- TODO: revert back if error or permission denied
                                             , onPress = Just (OnMainScreenMsg ToggleGeoLocation)
                                             }
                                     )
