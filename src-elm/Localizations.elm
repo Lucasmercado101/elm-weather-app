@@ -375,3 +375,23 @@ applied lang =
 
         Spanish ->
             "aplicado"
+
+
+customThemes : Language -> String
+customThemes lang =
+    case lang of
+        English ->
+            "Custom Themes"
+
+        Spanish ->
+            "Temas Personalizados"
+
+
+themes : Language -> String
+themes lang =
+    case lang of
+        English ->
+            "Themes"
+
+        Spanish ->
+            "Temas"
