@@ -6,8 +6,8 @@ import Utils exposing (dayToString, monthToString)
 
 
 type Language
-    = Spanish
-    | English
+    = English
+    | Spanish
 
 
 dailySummary : Language -> String
