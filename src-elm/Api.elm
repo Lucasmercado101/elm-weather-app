@@ -356,6 +356,8 @@ listMap7 fn a b c d e f g =
 
 
 -- WMO Weather interpretation codes (WW)
+-- https://open-meteo.com/en/docs#weathervariables
+-- https://www.jodc.go.jp/data_format/weather-code.html
 
 
 type WMOCode
@@ -399,7 +401,7 @@ codeToDescription code =
             MainlyClear
 
         2 ->
-            MainlyClear
+            PartlyCloudy
 
         3 ->
             Overcast
