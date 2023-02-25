@@ -212,6 +212,44 @@ type alias Coordinates =
     { latitude : Float, longitude : Float }
 
 
+toIso8601BasicFormat : Time.Zone -> Time.Posix -> String
+toIso8601BasicFormat zone time =
+    let
+        year : String
+        year =
+            Time.toYear zone time |> String.fromInt
+
+        month : String
+        month =
+            Time.toMonth zone time |> monthToInt |> String.fromInt
+
+        day : String
+        day =
+            Time.toDay zone time |> String.fromInt
+    in
+    year
+        ++ "-"
+        ++ (month
+                |> (\l ->
+                        if String.length l == 1 then
+                            "0" ++ l
+
+                        else
+                            l
+                   )
+           )
+        ++ "-"
+        ++ (day
+                |> (\l ->
+                        if String.length l == 1 then
+                            "0" ++ l
+
+                        else
+                            l
+                   )
+           )
+
+
 
 {-
    converted from https://github.com/eskimoblood/elm-color-extra/blob/5.1.0/src/Color/Convert.elm#L138

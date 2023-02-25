@@ -8,8 +8,8 @@ import Material.Icons as Icons
 import Material.Icons.Types exposing (Icon)
 import Task exposing (Task)
 import Time exposing (Posix, Zone)
-import Time.Extra exposing (Interval(..), add, posixToParts)
-import Utils exposing (Coordinates, monthToInt)
+import Time.Extra exposing (Interval(..), add)
+import Utils exposing (Coordinates, toIso8601BasicFormat)
 
 
 
@@ -131,49 +131,24 @@ getWeatherDataAsTask { latitude, longitude } =
                     endDate =
                         startDate |> add Day 7 zone
 
-                    dateToStr : Time.Extra.Parts -> String
-                    dateToStr parts =
-                        String.fromInt parts.year
-                            ++ "-"
-                            ++ (parts.month
-                                    |> monthToInt
-                                    |> String.fromInt
-                                    |> (\l ->
-                                            if String.length l == 1 then
-                                                "0" ++ l
-
-                                            else
-                                                l
-                                       )
-                               )
-                            ++ "-"
-                            ++ (parts.day
-                                    |> String.fromInt
-                                    |> (\l ->
-                                            if String.length l == 1 then
-                                                "0" ++ l
-
-                                            else
-                                                l
-                                       )
-                               )
-
                     startDateString : String
                     startDateString =
-                        startDate
-                            |> posixToParts zone
-                            |> dateToStr
+                        startDate |> toIso8601BasicFormat zone
 
                     endDateStrings : String
                     endDateStrings =
-                        endDate
-                            |> posixToParts zone
-                            |> dateToStr
+                        endDate |> toIso8601BasicFormat zone
                 in
                 Http.task
                     { method = "GET"
                     , headers = []
-                    , url = getWeatherDataEndpoint { latitude = lat, longitude = lon, startDate = startDateString, endDate = endDateStrings }
+                    , url =
+                        getWeatherDataEndpoint
+                            { latitude = lat
+                            , longitude = lon
+                            , startDate = startDateString
+                            , endDate = endDateStrings
+                            }
                     , body = Http.emptyBody
                     , resolver =
                         Http.stringResolver
