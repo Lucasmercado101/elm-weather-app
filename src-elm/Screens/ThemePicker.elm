@@ -452,11 +452,6 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
 
 themePreviewCard : Language -> Theme -> Element ThemePickerMsg -> Element ThemePickerMsg
 themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bottomElements =
-    let
-        verticalDivider : Element msg
-        verticalDivider =
-            el [ width fill, height fill, width (px 2), Background.color cardThemeSecondaryColor ] none
-    in
     el [ padding 8, width fill ]
         (column []
             [ column
