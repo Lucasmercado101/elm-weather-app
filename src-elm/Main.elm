@@ -21,9 +21,8 @@ import Localizations exposing (Language(..))
 import MIcons exposing (..)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..), Icon)
-import ParseInt
 import Ports
-import Regex
+import Screens.ThemePicker as ThemePicker
 import Screens.Welcome as Welcome
 import Task
 import Time exposing (Posix, Zone)
@@ -48,6 +47,10 @@ subscriptions model =
 
         LoadingScreen _ ->
             Sub.none
+
+        ThemePickerScreen m ->
+            ThemePicker.themePickerSubscriptions m
+                |> Sub.map OnThemePickerScreenMsg
 
         WelcomeScreen m ->
             Welcome.welcomeScreenSubscriptions m
@@ -143,6 +146,7 @@ type Model
     = WelcomeScreen Welcome.WelcomeScreenModel
     | LoadingScreen LoadingScreenModel
     | MainScreen MainScreenModel
+    | ThemePickerScreen ThemePicker.ThemePickerModel
 
 
 
@@ -161,6 +165,7 @@ type MainScreenMsg
     | Tick Time.Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
+    | GoToThemePickerScreen
       -- Options menu
     | OpenOptionsMenu
     | CloseOptionsMenu
@@ -173,20 +178,13 @@ type MainScreenMsg
     | SubmitManualLocationForm
     | CancelManualForm
     | ToggleLanguage
-      -- Theme selection screen
-    | GoToThemeSelectionPage
-    | CloseThemeSelectorScreen
-    | ApplyTheme Color Color
-    | CustomizingTheme ( Color, Color )
-    | CancelCustomizingTheme
-    | ChangedPrimaryColorCustomizingTheme String
-    | ChangedSecondaryColorCustomizingTheme String
 
 
 type Msg
     = OnWelcomeScreenMsg Welcome.WelcomeScreenMsg
     | OnLoadingScreenMsg LoadingScreenMsg
     | OnMainScreenMsg MainScreenMsg
+    | OnThemePickerScreenMsg ThemePicker.ThemePickerMsg
 
 
 
@@ -519,119 +517,8 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
-                -- Theme screen
-                CloseThemeSelectorScreen ->
-                    { model | themePage = NotOnThemePage }
-                        |> pure
-                        |> mapToMainScreen
-
-                CustomizingTheme ( primary, secondary ) ->
-                    case model.themePage of
-                        NotOnThemePage ->
-                            model
-                                |> pure
-                                |> mapToMainScreen
-
-                        OnThemePage _ ->
-                            { model
-                                | themePage =
-                                    OnThemePage
-                                        (Just
-                                            { originalThemeColors = ( primary, secondary )
-                                            , customizingTheme = ( primary, secondary )
-                                            }
-                                        )
-                            }
-                                |> pure
-                                |> mapToMainScreen
-
-                CancelCustomizingTheme ->
-                    case model.themePage of
-                        NotOnThemePage ->
-                            model
-                                |> pure
-                                |> mapToMainScreen
-
-                        OnThemePage _ ->
-                            { model | themePage = OnThemePage Nothing }
-                                |> pure
-                                |> mapToMainScreen
-
-                ChangedPrimaryColorCustomizingTheme hexColor ->
-                    case model.themePage of
-                        NotOnThemePage ->
-                            model
-                                |> pure
-                                |> mapToMainScreen
-
-                        OnThemePage maybeColors ->
-                            case maybeColors of
-                                Nothing ->
-                                    model
-                                        |> pure
-                                        |> mapToMainScreen
-
-                                Just colors ->
-                                    { model
-                                        | themePage =
-                                            OnThemePage
-                                                (Just
-                                                    { colors
-                                                        | customizingTheme =
-                                                            ( hexColor |> hexToColor |> Result.withDefault (Tuple.first colors.customizingTheme)
-                                                            , Tuple.second colors.customizingTheme
-                                                            )
-                                                    }
-                                                )
-                                    }
-                                        |> pure
-                                        |> mapToMainScreen
-
-                ChangedSecondaryColorCustomizingTheme hexColor ->
-                    case model.themePage of
-                        NotOnThemePage ->
-                            model
-                                |> pure
-                                |> mapToMainScreen
-
-                        OnThemePage maybeColors ->
-                            case maybeColors of
-                                Nothing ->
-                                    model
-                                        |> pure
-                                        |> mapToMainScreen
-
-                                Just colors ->
-                                    { model
-                                        | themePage =
-                                            OnThemePage
-                                                (Just
-                                                    { colors
-                                                        | customizingTheme =
-                                                            ( Tuple.first colors.customizingTheme
-                                                            , hexColor |> hexToColor |> Result.withDefault (Tuple.second colors.customizingTheme)
-                                                            )
-                                                    }
-                                                )
-                                    }
-                                        |> pure
-                                        |> mapToMainScreen
-
-                ApplyTheme primary secondary ->
-                    let
-                        primaryColors =
-                            Element.toRgb primary
-
-                        secondaryColors =
-                            Element.toRgb secondary
-                    in
-                    ( { model | primaryColor = primary, secondaryColor = secondary }
-                    , Ports.changedTheme ( ( primaryColors.red, primaryColors.green, primaryColors.blue ), ( secondaryColors.red, secondaryColors.green, secondaryColors.blue ) )
-                    )
-                        |> mapToMainScreen
-
                 -- Options menu
-                GoToThemeSelectionPage ->
+                GoToThemePickerScreen ->
                     { model | themePage = OnThemePage Nothing, optionMenu = Closed }
                         |> pure
                         |> mapToMainScreen
@@ -960,7 +847,7 @@ view model =
                                                 [ Font.color modelData.primaryColor ]
                                                 (Icons.chevron_right 40 Inherit |> Element.html)
                                             ]
-                                    , onPress = Just GoToThemeSelectionPage
+                                    , onPress = Just GoToThemePickerScreen
                                     }
                                 , divider
 
@@ -1239,6 +1126,9 @@ view model =
                     )
                         |> Element.map OnMainScreenMsg
 
+                ThemePickerScreen _ ->
+                    none
+
                 LoadingScreen _ ->
                     none
 
@@ -1266,12 +1156,10 @@ view model =
                 loadingScreenView m
 
             MainScreen m ->
-                case m.themePage of
-                    OnThemePage data ->
-                        themeSelectorScreen m data
+                mainScreen m |> Element.map OnMainScreenMsg
 
-                    NotOnThemePage ->
-                        mainScreen m |> Element.map OnMainScreenMsg
+            ThemePickerScreen m ->
+                ThemePicker.themePickerView m |> Element.map OnThemePickerScreenMsg
         )
 
 
@@ -1728,240 +1616,6 @@ mainScreen model =
         )
 
 
-themeSelectorScreen : MainScreenModel -> Maybe { originalThemeColors : ( Color, Color ), customizingTheme : ( Color, Color ) } -> Element Msg
-themeSelectorScreen ({ language } as model) customThemeColors =
-    let
-        modelPrimaryColor =
-            model.primaryColor
-
-        modelSecondaryColor =
-            model.secondaryColor
-
-        demoCard : ( Color, Color ) -> Maybe ( Color, Color ) -> Element Msg
-        demoCard ( prim, sec ) customizingColors =
-            let
-                primaryColor : Color
-                primaryColor =
-                    customizingColors |> Maybe.map Tuple.first |> Maybe.withDefault prim
-
-                secondaryColor : Color
-                secondaryColor =
-                    customizingColors |> Maybe.map Tuple.second |> Maybe.withDefault sec
-
-                verticalDivider =
-                    el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
-
-                customize : Color -> Color -> Element Msg
-                customize first second =
-                    column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                        [ row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text (Localizations.primaryColor model.language ++ ":"))
-                            , Html.input
-                                [ Html.Attributes.type_ "color"
-                                , Html.Attributes.style "all" "unset"
-                                , Html.Attributes.style "height" "45px"
-                                , Html.Attributes.style "width" "45px"
-
-                                -- TODO: prevent color from being too dark
-                                , Html.Attributes.value
-                                    (toRgb first
-                                        |> (\{ blue, green, red } ->
-                                                List.map toHex
-                                                    [ round (red * 255)
-                                                    , round (green * 255)
-                                                    , round (blue * 255)
-
-                                                    -- don't know how to do alpha so i'm just omitting it here
-                                                    -- , round (alpha * 255)
-                                                    ]
-                                                    |> (::) "#"
-                                                    |> String.join ""
-                                           )
-                                    )
-                                , Html.Events.onInput (ChangedPrimaryColorCustomizingTheme >> OnMainScreenMsg)
-                                ]
-                                []
-                                |> Element.html
-                            ]
-                        , row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text (Localizations.secondaryColor model.language ++ ":"))
-                            , Html.input
-                                [ Html.Attributes.type_ "color"
-                                , Html.Attributes.style "all" "unset"
-                                , Html.Attributes.style "height" "45px"
-                                , Html.Attributes.style "width" "45px"
-
-                                -- TODO: prevent color from being too dark
-                                , Html.Attributes.value
-                                    (toRgb second
-                                        |> (\{ blue, green, red } ->
-                                                List.map toHex
-                                                    [ round (red * 255)
-                                                    , round (green * 255)
-                                                    , round (blue * 255)
-
-                                                    -- don't know how to do alpha so i'm just omitting it here
-                                                    -- , round (alpha * 255)
-                                                    ]
-                                                    |> (::) "#"
-                                                    |> String.join ""
-                                           )
-                                    )
-                                , Html.Events.onInput (ChangedSecondaryColorCustomizingTheme >> OnMainScreenMsg)
-                                ]
-                                []
-                                |> Element.html
-                            ]
-                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                            [ button
-                                [ paddingY 12
-                                , Font.size 22
-                                , width fill
-                                , Font.center
-                                , height fill
-                                ]
-                                { label = text "cancel", onPress = Just (OnMainScreenMsg CancelCustomizingTheme) }
-                            , verticalDivider
-                            , button [ width fill, height fill ]
-                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
-                                }
-                            ]
-                        ]
-            in
-            el [ padding 8, width fill ]
-                (column []
-                    [ column
-                        [ width fill
-                        , Background.color primaryColor
-                        , Font.color secondaryColor
-                        , Border.width 2
-                        , Border.color secondaryColor
-                        ]
-                        [ row
-                            [ padding 15
-                            , spacing 8
-                            ]
-                            [ column
-                                [ width fill ]
-                                [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
-                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary model.language) ]
-                                , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels model.language (Just 33.4) (Just 21.1) ]
-                                ]
-                            , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
-                                (statCard primaryColor
-                                    Icons.visibility
-                                    (Localizations.visibility language)
-                                    "25km/h"
-                                )
-                            ]
-                        , case customizingColors of
-                            Just ( customFirst, customSecond ) ->
-                                customize customFirst customSecond
-
-                            Nothing ->
-                                row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                                    [ button
-                                        [ paddingY 12
-                                        , Font.size 22
-                                        , width fill
-                                        , Font.center
-                                        , height fill
-                                        ]
-                                        { label = text (Localizations.edit model.language), onPress = Just (OnMainScreenMsg (CustomizingTheme ( primaryColor, secondaryColor ))) }
-                                    , verticalDivider
-                                    , button [ width fill, height fill ]
-                                        { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                        , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
-                                        }
-                                    ]
-                        ]
-                    ]
-                )
-    in
-    column [ width fill, height fill ]
-        [ row
-            [ width fill
-            , height (px 52)
-            , Background.color modelSecondaryColor
-            ]
-            [ button
-                [ height fill
-                , Font.color modelPrimaryColor
-                , paddingX 8
-                ]
-                { label = el [ centerX, centerY ] (Icons.chevron_left 40 Inherit |> Element.html)
-                , onPress = Just (OnMainScreenMsg CloseThemeSelectorScreen)
-                }
-            , el [ width fill, Font.alignRight, Font.color modelPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
-            ]
-
-        -- Divider
-        , el [ width fill, height (px 2), Background.color modelPrimaryColor ] none
-        , column
-            [ width fill
-            , height fill
-            , scrollbarY
-            , Background.color modelPrimaryColor
-            ]
-            ([ -- Dark
-               ( rgb255 25 20 20, rgb255 29 185 84 )
-             , ( rgb255 32 38 46, rgb255 205 88 136 )
-             , ( rgb255 3 0 28, rgb255 182 234 218 )
-             , ( rgb255 0 24 14, rgb255 255 170 207 )
-             , ( rgb255 42 45 52, rgb255 48 197 255 )
-             , ( rgb255 51 44 57, rgb255 240 238 237 )
-             , ( rgb255 49 51 56, white )
-             , ( rgb255 57 50 50, rgb255 228 130 87 )
-             , ( rgb255 205 88 136, rgb255 32 38 46 )
-             , ( rgb255 1 127 1, rgb255 22 22 22 )
-             , ( rgb255 120 1 22, rgb255 247 181 56 )
-             , ( rgb255 88 101 242, black )
-             , ( rgb255 235 69 95, rgb255 43 52 103 )
-             , ( rgb255 36 55 99, rgb255 255 110 49 )
-             , ( rgb255 13 0 90, rgb255 3 201 136 )
-             , ( rgb255 43 52 103, rgb255 235 69 95 )
-             , ( rgb255 69 60 103, rgb255 242 247 161 )
-             , ( rgb255 22 22 22, rgb255 0 165 0 )
-             , ( rgb255 155 188 15, rgb255 15 56 15 )
-             , ( black, white )
-
-             -- Light
-             , ( defaultPrimary, black )
-             , ( rgb255 66 198 255, black )
-             , ( rgb255 255 101 212, black )
-             , ( white, black )
-             , ( rgb255 240 238 237, rgb255 201 44 109 )
-             , ( rgb255 249 245 231, rgb255 167 114 125 )
-             , ( rgb255 238 233 218, rgb255 96 150 180 )
-             , ( rgb255 167 114 125, rgb255 249 245 231 )
-             , ( rgb255 96 150 180, rgb255 238 233 218 )
-             , ( rgb255 239 0 0, black )
-             , ( rgb255 212 246 204, rgb255 239 91 12 )
-             , ( rgb255 255 170 207, rgb255 0 24 14 )
-             , ( rgb255 255 27 143, rgb255 242 227 241 )
-             , ( rgb255 255 227 244, rgb255 255 27 143 )
-             , ( rgb255 240 238 237, rgb255 51 44 57 )
-             , ( rgb255 29 155 240, white )
-             , ( rgb255 59 89 153, rgb255 248 248 248 )
-             ]
-                |> List.map
-                    (\demoCardColors ->
-                        case customThemeColors of
-                            Just { originalThemeColors, customizingTheme } ->
-                                if demoCardColors == originalThemeColors then
-                                    demoCard demoCardColors (Just customizingTheme)
-
-                                else
-                                    demoCard demoCardColors Nothing
-
-                            Nothing ->
-                                demoCard demoCardColors Nothing
-                    )
-            )
-        ]
-
-
 initialLoadingScreen : Element msg
 initialLoadingScreen =
     column
@@ -2123,88 +1777,6 @@ toKm meters =
 nbsp : String
 nbsp =
     "\u{00A0}"
-
-
-
-{-
-   Converted from https://github.com/eskimoblood/elm-color-extra/blob/5.1.0/src/Color/Convert.elm#L252
--}
-
-
-toHex : Int -> String
-toHex i =
-    ParseInt.toRadix 16 i |> Result.withDefault "" >> String.padLeft 2 '0'
-
-
-
-{-
-   converted from https://github.com/eskimoblood/elm-color-extra/blob/5.1.0/src/Color/Convert.elm#L138
--}
-
-
-hexToColor : String -> Result String Element.Color
-hexToColor =
-    let
-        {- Converts "f" to "ff" and "ff" to "ff" -}
-        extend : String -> String
-        extend token =
-            case String.toList token of
-                [ t ] ->
-                    String.fromList [ t, t ]
-
-                _ ->
-                    token
-
-        pattern =
-            ""
-                ++ "^"
-                ++ "#?"
-                ++ "(?:"
-                -- RRGGBB
-                ++ "(?:([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2}))"
-                -- RGB
-                ++ "|"
-                ++ "(?:([a-f\\d])([a-f\\d])([a-f\\d]))"
-                -- RRGGBBAA
-                ++ "|"
-                ++ "(?:([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2}))"
-                -- RGBA
-                ++ "|"
-                ++ "(?:([a-f\\d])([a-f\\d])([a-f\\d])([a-f\\d]))"
-                ++ ")"
-                ++ "$"
-    in
-    String.toLower
-        >> Regex.findAtMost 1
-            (Maybe.withDefault Regex.never <|
-                Regex.fromString pattern
-            )
-        >> List.head
-        >> Maybe.map .submatches
-        >> Maybe.map (List.filterMap identity)
-        >> Result.fromMaybe "Parsing hex regex failed"
-        >> Result.andThen
-            (\colors ->
-                case List.map (extend >> ParseInt.parseIntHex) colors of
-                    [ Ok r, Ok g, Ok b, Ok a ] ->
-                        Ok <| Element.rgba255 r g b (roundToPlaces 2 (toFloat a / 255))
-
-                    [ Ok r, Ok g, Ok b ] ->
-                        Ok <| Element.rgba255 r g b 1
-
-                    _ ->
-                        -- there could be more descriptive error cases per channel
-                        Err "Parsing ints from hex failed"
-            )
-
-
-roundToPlaces : Int -> Float -> Float
-roundToPlaces places number =
-    let
-        multiplier =
-            toFloat (10 ^ places)
-    in
-    toFloat (round (number * multiplier)) / multiplier
 
 
 neFoldrMaybeListWithDefault : number -> Nonempty (Maybe number) -> (number -> number -> number) -> number
