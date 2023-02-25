@@ -62,7 +62,7 @@ subscriptions model =
 type RefetchingStatus a
     = NotRefetching
     | Refetching
-    | Error a
+    | Error
 
 
 animator : Animator.Animator MainScreenModel
@@ -773,8 +773,8 @@ update topMsg topModel =
                             { model
                                 | currentRefetchingAnim =
                                     model.currentRefetchingAnim
-                                        |> Animator.go Animator.immediately (Error err)
-                                , currentRefetchingStatus = Error err
+                                        |> Animator.go Animator.immediately Error
+                                , currentRefetchingStatus = Error
                             }
                     )
                         |> pure
@@ -1485,7 +1485,7 @@ mainScreen model =
                                                 Animator.wrap 0 (2 * pi)
                                                     |> Animator.loop (Animator.millis 800)
 
-                                            Error _ ->
+                                            Error ->
                                                 Animator.at 0
                                 )
                             ]
@@ -1498,7 +1498,7 @@ mainScreen model =
                                     Icons.hourglass_empty 28 Inherit
                                         |> Element.html
 
-                                Error _ ->
+                                Error ->
                                     Icons.sync_problem 28 Inherit
                                         |> Element.html
                             )
@@ -1510,7 +1510,7 @@ mainScreen model =
                             Refetching ->
                                 Nothing
 
-                            Error _ ->
+                            Error ->
                                 Just RefetchDataOnBackground
                     }
 
