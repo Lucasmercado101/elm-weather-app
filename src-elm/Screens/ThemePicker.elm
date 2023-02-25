@@ -47,6 +47,7 @@ type CustomizingTheme
 type alias ThemePickerModel =
     { language : Language
     , currentTheme : Theme
+    , customThemes : Maybe (List Theme)
     , location : Location
     , zone : Zone
     , apiData : ( Api.ResponseData, Posix )
@@ -159,10 +160,11 @@ themePickerUpdate msg model =
             )
 
 
-themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> ThemePickerModel
-themePickerInit lang currentTheme zone location apiData currentAddress =
+themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> Maybe (List Theme) -> ThemePickerModel
+themePickerInit lang currentTheme zone location apiData currentAddress customThemes =
     { language = lang
     , currentTheme = currentTheme
+    , customThemes = customThemes
     , customizingTheme = NotCustomizingTheme
     , location = location
     , zone = zone

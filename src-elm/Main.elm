@@ -101,6 +101,7 @@ type alias MainScreenModel =
     , location : Location
     , zone : Maybe Zone
     , language : Language
+    , customThemes : Maybe (List Theme)
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -224,6 +225,7 @@ init val =
                       , optionMenu = Closed
                       , currentAddress = Just addressData
                       , countryAndStateVisibility = Animator.init True
+                      , customThemes = customThemes
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -266,6 +268,7 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
+                      , customThemes = customThemes
                       , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
@@ -339,6 +342,7 @@ update topMsg topModel =
                                 , currentRefetchingStatus = NotRefetching
                                 , currentRefetchingAnim = Animator.init NotRefetching
                                 , language = model.language
+                                , customThemes = Nothing
                                 , location =
                                     if model.isUsingGeoLocation then
                                         UsingGeoLocation model.coordinates
@@ -376,7 +380,7 @@ update topMsg topModel =
                 GoToThemePickerScreen ->
                     case model.zone of
                         Just zone ->
-                            ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor ) zone model.location model.apiData model.currentAddress
+                            ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor ) zone model.location model.apiData model.currentAddress model.customThemes
                                 |> pure
                                 |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
 
@@ -676,6 +680,7 @@ update topMsg topModel =
                                 , language = a.language
                                 , location = a.location
                                 , primaryColor = primary
+                                , customThemes = a.customThemes
                                 , secondaryColor = secondary
                                 , optionMenu = Closed
                                 , currentAddress = a.currentAddress
