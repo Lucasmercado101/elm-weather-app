@@ -53,7 +53,7 @@ config =
     , NoSinglePatternCase.rule NoSinglePatternCase.fixInArgument
     , Simplify.rule Simplify.defaults
     , NoEtaReducibleLambdas.rule
-        { lambdaReduceStrategy = NoEtaReducibleLambdas.OnlyWhenSingleArgument
+        { lambdaReduceStrategy = NoEtaReducibleLambdas.RemoveLambdaWhenNoCallsInApplication 
         , argumentNamePredicate = always True
         }
     ]

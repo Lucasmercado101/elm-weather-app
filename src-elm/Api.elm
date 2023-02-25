@@ -234,25 +234,17 @@ dailyDecoder =
 hourlyDecoder : Decoder (List Hourly)
 hourlyDecoder =
     map7
-        (\times temp humidity apparentTemp weatherCode windSpeed visibility ->
-            listMap7
-                (\time tem h at weatherC ws v ->
-                    { time = time
-                    , temperature = tem
-                    , relativeHumidity = h
-                    , apparentTemperature = at
-                    , weatherCode = weatherC |> Maybe.map codeToDescription
-                    , windSpeed = ws
-                    , visibility = v
-                    }
-                )
-                times
-                temp
-                humidity
-                apparentTemp
-                weatherCode
-                windSpeed
-                visibility
+        (listMap7
+            (\time tem h at weatherC ws v ->
+                { time = time
+                , temperature = tem
+                , relativeHumidity = h
+                , apparentTemperature = at
+                , weatherCode = weatherC |> Maybe.map codeToDescription
+                , windSpeed = ws
+                , visibility = v
+                }
+            )
         )
         (field "time" (list string) |> map timesToPosix)
         (field "temperature_2m" (list (maybe float)))

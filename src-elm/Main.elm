@@ -197,7 +197,7 @@ type Flags
 colorDecoder : JD.Decoder Color
 colorDecoder =
     JD.map3
-        (\r g b -> Element.rgb r g b)
+        Element.rgb
         (JD.field "r" JD.float)
         (JD.field "g" JD.float)
         (JD.field "b" JD.float)
