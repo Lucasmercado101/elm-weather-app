@@ -453,33 +453,31 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
 themePreviewCard : Language -> Theme -> Element ThemePickerMsg -> Element ThemePickerMsg
 themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bottomElements =
     el [ padding 8, width fill ]
-        (column []
-            [ column
-                [ width fill
-                , Background.color cardThemePrimaryColor
-                , Font.color cardThemeSecondaryColor
-                , Border.width 2
-                , Border.color cardThemeSecondaryColor
+        (column
+            [ width fill
+            , Background.color cardThemePrimaryColor
+            , Font.color cardThemeSecondaryColor
+            , Border.width 2
+            , Border.color cardThemeSecondaryColor
+            ]
+            [ row
+                [ padding 15
+                , spacing 8
                 ]
-                [ row
-                    [ padding 15
-                    , spacing 8
+                [ column
+                    [ width fill ]
+                    [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
+                    , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary language) ]
+                    , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels language (Just 33.4) (Just 21.1) ]
                     ]
-                    [ column
-                        [ width fill ]
-                        [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
-                        , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary language) ]
-                        , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels language (Just 33.4) (Just 21.1) ]
-                        ]
-                    , el [ Background.color cardThemeSecondaryColor, Border.rounded 12, padding 12 ]
-                        (statCard cardThemePrimaryColor
-                            Icons.visibility
-                            (Localizations.visibility language)
-                            "25km/h"
-                        )
-                    ]
-                , bottomElements
+                , el [ Background.color cardThemeSecondaryColor, Border.rounded 12, padding 12 ]
+                    (statCard cardThemePrimaryColor
+                        Icons.visibility
+                        (Localizations.visibility language)
+                        "25km/h"
+                    )
                 ]
+            , bottomElements
             ]
         )
 
