@@ -106,8 +106,8 @@ getWeatherDataEndpoint { latitude, longitude, startDate, endDate } =
         ++ ""
 
 
-getWeatherData : Coordinates -> Task Http.Error ( ResponseData, Posix, Zone )
-getWeatherData { latitude, longitude } =
+getWeatherDataAsTask : Coordinates -> Task Http.Error ( ResponseData, Posix, Zone )
+getWeatherDataAsTask { latitude, longitude } =
     Task.map2 Tuple.pair Time.here Time.now
         |> Task.andThen
             (\( zone, posix ) ->
@@ -193,6 +193,11 @@ getWeatherData { latitude, longitude } =
                     , timeout = Just 10000
                     }
             )
+
+
+getWeatherData : Coordinates -> (Result Http.Error ( ResponseData, Posix, Zone ) -> msg) -> Cmd msg
+getWeatherData coords msg =
+    getWeatherDataAsTask coords |> Task.attempt msg
 
 
 type alias ResponseData =

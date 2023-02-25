@@ -368,7 +368,7 @@ init val =
                       else
                         Cmd.batch
                             [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            , Api.getWeatherData { latitude = latitude, longitude = longitude } |> Task.attempt GotRefetchingWeatherResp
+                            , Api.getWeatherData { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
                             ]
                     )
                         |> mapToMainScreen
@@ -413,7 +413,7 @@ init val =
                       else
                         Cmd.batch
                             [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            , Api.getWeatherData { latitude = latitude, longitude = longitude } |> Task.attempt GotRefetchingWeatherResp
+                            , Api.getWeatherData { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
                             ]
                     )
                         |> mapToMainScreen
@@ -450,8 +450,7 @@ update topMsg topModel =
                                     , isUsingGeoLocation = welcomeScreenModel.usingGeoLocation
                                     , language = welcomeScreenModel.language
                                     }
-                                , Api.getWeatherData coords
-                                    |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
+                                , Api.getWeatherData coords GotWeatherResponse |> Cmd.map OnLoadingScreenMsg
                                   -- NOTE: Api.getReverseGeocoding could be called here
                                   -- to pass it along to MainScreen but it's not really worth it
                                 )
@@ -494,8 +493,8 @@ update topMsg topModel =
 
                 RetryFetchingWeather ->
                     ( LoadingScreen { model | fetchingStatus = Loading }
-                    , Api.getWeatherData model.coordinates
-                        |> Task.attempt (\l -> OnLoadingScreenMsg (GotWeatherResponse l))
+                    , Api.getWeatherData model.coordinates GotWeatherResponse
+                        |> Cmd.map OnLoadingScreenMsg
                     )
 
         ( OnMainScreenMsg msg, MainScreen model ) ->
@@ -668,7 +667,7 @@ update topMsg topModel =
                                                       }
                                                     , Cmd.batch
                                                         [ Api.getReverseGeocoding { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
-                                                        , Api.getWeatherData { latitude = latFloat, longitude = lonFloat } |> Task.attempt GotRefetchingWeatherResp
+                                                        , Api.getWeatherData { latitude = latFloat, longitude = lonFloat } GotRefetchingWeatherResp
                                                         ]
                                                     )
                                                         |> mapToMainScreen
@@ -749,7 +748,7 @@ update topMsg topModel =
                         FixedCoordinates coords ->
                             Cmd.batch
                                 [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
+                                , Api.getWeatherData coords GotRefetchingWeatherResp
                                 ]
                     )
                         |> mapToMainScreen
@@ -760,7 +759,7 @@ update topMsg topModel =
                             ( { model | optionMenu = Open Nothing, location = UsingGeoLocation coords }
                             , Cmd.batch
                                 [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
+                                , Api.getWeatherData coords GotRefetchingWeatherResp
                                 ]
                             )
                                 |> mapToMainScreen
@@ -769,7 +768,7 @@ update topMsg topModel =
                             ( { model | location = UsingGeoLocation coords }
                             , Cmd.batch
                                 [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords |> Task.attempt GotRefetchingWeatherResp
+                                , Api.getWeatherData coords GotRefetchingWeatherResp
                                 ]
                             )
                                 |> mapToMainScreen
