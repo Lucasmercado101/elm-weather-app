@@ -1,10 +1,18 @@
 module Screens.ThemePicker exposing (..)
 
 import Cmd.Extra exposing (pure)
-import Element exposing (Color, Element, column, el, fill, height, px, width)
+import Components exposing (statCard)
+import Element exposing (Color, Element, centerX, centerY, column, el, fill, height, none, padding, paragraph, px, rgb255, row, scrollbarY, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
+import Element.Input exposing (button)
+import Html
+import Html.Attributes
+import Html.Events
 import Localizations exposing (Language)
+import Material.Icons as Icons
+import Material.Icons.Types exposing (Coloring(..))
 import Ports
 import Utils exposing (..)
 
@@ -150,6 +158,9 @@ themePickerInit lang currentTheme =
     { language = lang
     , currentTheme = currentTheme
     , customizingTheme = NotCustomizingTheme
+
+    -- Parent will check this
+    , exitScreen = False
     }
 
 
@@ -158,8 +169,11 @@ themePickerInit lang currentTheme =
 
 
 themePickerView : ThemePickerModel -> Element ThemePickerMsg
-themePickerView ({ language } as model) =
+themePickerView ({ language, currentTheme, customizingTheme } as model) =
     let
+        ( currentPrimaryColor, currentSecondaryColor ) =
+            currentTheme
+
         demoCard : Theme -> Maybe Theme -> Element ThemePickerMsg
         demoCard ( cardThemePrimaryColor, cardThemeSecondaryColor ) customizingColors =
             let
@@ -174,7 +188,7 @@ themePickerView ({ language } as model) =
                 verticalDivider =
                     el [ width fill, height fill, width (px 2), Background.color currentlyEditingSecondaryColor ] none
 
-                customize : Color -> Color -> Element Msg
+                customize : Color -> Color -> Element ThemePickerMsg
                 customize first second =
                     column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
                         [ row [ Font.bold, padding 8, width fill ]
@@ -201,7 +215,7 @@ themePickerView ({ language } as model) =
                                                     |> String.join ""
                                            )
                                     )
-                                , Html.Events.onInput (ChangedPrimaryColorCustomizingTheme >> OnMainScreenMsg)
+                                , Html.Events.onInput ChangedPrimaryColor
                                 ]
                                 []
                                 |> Element.html
@@ -230,7 +244,7 @@ themePickerView ({ language } as model) =
                                                     |> String.join ""
                                            )
                                     )
-                                , Html.Events.onInput (ChangedSecondaryColorCustomizingTheme >> OnMainScreenMsg)
+                                , Html.Events.onInput ChangedSecondaryColor
                                 ]
                                 []
                                 |> Element.html
@@ -243,11 +257,11 @@ themePickerView ({ language } as model) =
                                 , Font.center
                                 , height fill
                                 ]
-                                { label = text "cancel", onPress = Just (OnMainScreenMsg CancelCustomizingTheme) }
+                                { label = text (Localizations.cancel model.language), onPress = Just CancelCustomizingTheme }
                             , verticalDivider
                             , button [ width fill, height fill ]
                                 { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
+                                , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
                                 }
                             ]
                         ]
@@ -256,10 +270,10 @@ themePickerView ({ language } as model) =
                 (column []
                     [ column
                         [ width fill
-                        , Background.color primaryColor
-                        , Font.color secondaryColor
+                        , Background.color currentlyEditingPrimaryColor
+                        , Font.color currentlyEditingSecondaryColor
                         , Border.width 2
-                        , Border.color secondaryColor
+                        , Border.color currentlyEditingSecondaryColor
                         ]
                         [ row
                             [ padding 15
@@ -271,8 +285,8 @@ themePickerView ({ language } as model) =
                                 , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary model.language) ]
                                 , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels model.language (Just 33.4) (Just 21.1) ]
                                 ]
-                            , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
-                                (statCard primaryColor
+                            , el [ Background.color currentlyEditingSecondaryColor, Border.rounded 12, padding 12 ]
+                                (statCard currentlyEditingPrimaryColor
                                     Icons.visibility
                                     (Localizations.visibility language)
                                     "25km/h"
@@ -291,11 +305,13 @@ themePickerView ({ language } as model) =
                                         , Font.center
                                         , height fill
                                         ]
-                                        { label = text (Localizations.edit model.language), onPress = Just (OnMainScreenMsg (CustomizingTheme ( primaryColor, secondaryColor ))) }
+                                        { label = text (Localizations.edit model.language)
+                                        , onPress = Just (BeginEditingTheme ( cardThemePrimaryColor, cardThemeSecondaryColor ))
+                                        }
                                     , verticalDivider
                                     , button [ width fill, height fill ]
                                         { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                        , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
+                                        , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
                                         }
                                     ]
                         ]
@@ -306,26 +322,26 @@ themePickerView ({ language } as model) =
         [ row
             [ width fill
             , height (px 52)
-            , Background.color modelSecondaryColor
+            , Background.color currentSecondaryColor
             ]
             [ button
                 [ height fill
-                , Font.color modelPrimaryColor
+                , Font.color currentPrimaryColor
                 , paddingX 8
                 ]
                 { label = el [ centerX, centerY ] (Icons.chevron_left 40 Inherit |> Element.html)
-                , onPress = Just (OnMainScreenMsg CloseThemeSelectorScreen)
+                , onPress = Just GoToMainScreen
                 }
-            , el [ width fill, Font.alignRight, Font.color modelPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
+            , el [ width fill, Font.alignRight, Font.color currentPrimaryColor, Font.bold, paddingRight 15 ] (text (Localizations.theme language))
             ]
 
         -- Divider
-        , el [ width fill, height (px 2), Background.color modelPrimaryColor ] none
+        , el [ width fill, height (px 2), Background.color currentPrimaryColor ] none
         , column
             [ width fill
             , height fill
             , scrollbarY
-            , Background.color modelPrimaryColor
+            , Background.color currentPrimaryColor
             ]
             ([ -- Dark
                ( rgb255 25 20 20, rgb255 29 185 84 )
@@ -370,15 +386,15 @@ themePickerView ({ language } as model) =
              ]
                 |> List.map
                     (\demoCardColors ->
-                        case customThemeColors of
-                            Just { originalThemeColors, customizingTheme } ->
-                                if demoCardColors == originalThemeColors then
-                                    demoCard demoCardColors (Just customizingTheme)
+                        case customizingTheme of
+                            CustomizingTheme { originalTheme, customTheme } ->
+                                if demoCardColors == originalTheme then
+                                    demoCard demoCardColors (Just customTheme)
 
                                 else
                                     demoCard demoCardColors Nothing
 
-                            Nothing ->
+                            NotCustomizingTheme ->
                                 demoCard demoCardColors Nothing
                     )
             )

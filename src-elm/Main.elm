@@ -4,6 +4,7 @@ import Animator
 import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
 import Browser
 import Cmd.Extra exposing (pure)
+import Components exposing (..)
 import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, moveRight, none, onRight, padding, paddingEach, paddingXY, paragraph, px, rgb, rgb255, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
@@ -12,15 +13,13 @@ import Element.Input as Input exposing (button)
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (usLocale)
 import Html exposing (Html)
-import Html.Attributes
-import Html.Events
 import Http
 import Json.Decode as JD
 import List.Nonempty as NEList exposing (Nonempty(..))
 import Localizations exposing (Language(..))
 import MIcons exposing (..)
 import Material.Icons as Icons
-import Material.Icons.Types exposing (Coloring(..), Icon)
+import Material.Icons.Types exposing (Coloring(..))
 import Ports
 import Screens.ThemePicker as ThemePicker
 import Screens.Welcome as Welcome
@@ -118,9 +117,6 @@ type alias MainScreenModel =
     , optionMenu : OptionMenu
     , zone : Maybe Zone
     , language : Language
-
-    -- TODO: do better
-    , themePage : ThemePage
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -354,7 +350,6 @@ init val =
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
-                      , themePage = NotOnThemePage
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -400,7 +395,6 @@ init val =
                       , currentRefetchingStatus = Refetching
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
-                      , themePage = NotOnThemePage
                       , location =
                             if usingGeoLocation == True then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -489,7 +483,6 @@ update topMsg topModel =
 
                                     else
                                         FixedCoordinates model.coordinates
-                                , themePage = NotOnThemePage
                                 , zone = Just zone
                                 , primaryColor = defaultPrimary
                                 , secondaryColor = defaultPrimary
@@ -519,9 +512,9 @@ update topMsg topModel =
 
                 -- Options menu
                 GoToThemePickerScreen ->
-                    { model | themePage = OnThemePage Nothing, optionMenu = Closed }
+                    ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor )
                         |> pure
-                        |> mapToMainScreen
+                        |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
 
                 ToggleLanguage ->
                     { model
@@ -801,6 +794,10 @@ update topMsg topModel =
                     )
                         |> pure
                         |> mapToMainScreen
+
+        ( OnThemePickerScreenMsg ms, ThemePickerScreen md ) ->
+            ThemePicker.themePickerUpdate ms md
+                |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
 
         ( _, _ ) ->
             topModel |> pure
@@ -1653,18 +1650,6 @@ weeklyForecastCard borderColor date max code =
         [ el [ centerX ] (text (String.fromFloat max ++ "°"))
         , el [ centerX ] (wmoCodeToIcon code 24 Inherit |> Element.html)
         , el [ centerX, Font.size 14 ] (text (day ++ nbsp ++ String.left 3 month))
-        ]
-
-
-statCard : Color -> Icon msg -> String -> String -> Element msg
-statCard color icon title value =
-    column
-        [ spacing 12
-        , Font.color color
-        ]
-        [ el [ centerX, paddingBottom 8, Font.color color ] (icon 52 Inherit |> Element.html)
-        , el [ Font.regular, Font.size 24, centerX ] (text value)
-        , el [ centerX, Font.size 14, Font.light ] (text title)
         ]
 
 
