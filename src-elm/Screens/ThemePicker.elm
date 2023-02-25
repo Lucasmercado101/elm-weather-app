@@ -287,7 +287,8 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 , Html.Attributes.style "height" "45px"
                                                 , Html.Attributes.style "width" "45px"
 
-                                                -- TODO: prevent color from being too dark
+                                                -- NOTE: purposefully not preventing
+                                                -- the color from being too dark
                                                 , Html.Attributes.value
                                                     (toRgb customFirstColor
                                                         |> (\{ blue, green, red } ->
@@ -316,7 +317,8 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 , Html.Attributes.style "height" "45px"
                                                 , Html.Attributes.style "width" "45px"
 
-                                                -- TODO: prevent color from being too dark
+                                                -- NOTE: purposefully not preventing
+                                                -- the color from being too dark
                                                 , Html.Attributes.value
                                                     (toRgb customSecondColor
                                                         |> (\{ blue, green, red } ->
