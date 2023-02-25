@@ -26,6 +26,7 @@ import NoUnused.Exports
 import NoUnused.Parameters
 import NoUnused.Patterns
 import NoUnused.Variables
+import NoSinglePatternCase
 import Review.Rule as Rule exposing (Rule)
 import Simplify
 
@@ -48,5 +49,6 @@ config =
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
+    , NoSinglePatternCase.rule NoSinglePatternCase.fixInArgument
     , Simplify.rule Simplify.defaults
     ]
