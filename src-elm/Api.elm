@@ -227,7 +227,7 @@ dailyDecoder =
 hourlyDecoder : Decoder (List Hourly)
 hourlyDecoder =
     map7
-        (listMap7 Hourly)
+        (Utils.listMap7 Hourly)
         (field "time" (list string) |> map timesToPosix)
         (field "temperature_2m" (list (maybe float)))
         (field "relativehumidity_2m" (list int))
@@ -252,58 +252,6 @@ timesToPosix timesStr =
         -- Will never get here, if it does, it's the API's fault
         -- TODO: no .withDefault, handle any errors in the main view instead
         |> List.map (Result.withDefault (Time.millisToPosix 0))
-
-
-listMap6 :
-    (a -> b -> c -> d -> e -> f -> result)
-    -> List a
-    -> List b
-    -> List c
-    -> List d
-    -> List e
-    -> List f
-    -> List result
-listMap6 fn a b c d e f =
-    case ( a, b, c ) of
-        ( x :: xs, y :: ys, z :: zs ) ->
-            case ( d, e, f ) of
-                ( xd :: ds, xe :: es, xf :: fs ) ->
-                    fn x y z xd xe xf :: listMap6 fn xs ys zs ds es fs
-
-                _ ->
-                    []
-
-        _ ->
-            []
-
-
-listMap7 :
-    (a -> b -> c -> d -> e -> f -> g -> result)
-    -> List a
-    -> List b
-    -> List c
-    -> List d
-    -> List e
-    -> List f
-    -> List g
-    -> List result
-listMap7 fn a b c d e f g =
-    case ( a, b, c ) of
-        ( x :: xs, y :: ys, z :: zs ) ->
-            case ( d, e, f ) of
-                ( xd :: ds, xe :: es, xf :: fs ) ->
-                    case g of
-                        xg :: gs ->
-                            fn x y z xd xe xf xg :: listMap7 fn xs ys zs ds es fs gs
-
-                        _ ->
-                            []
-
-                _ ->
-                    []
-
-        _ ->
-            []
 
 
 

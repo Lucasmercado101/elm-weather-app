@@ -337,3 +337,55 @@ toHex i =
 type Location
     = UsingGeoLocation Coordinates
     | FixedCoordinates Coordinates
+
+
+listMap6 :
+    (a -> b -> c -> d -> e -> f -> result)
+    -> List a
+    -> List b
+    -> List c
+    -> List d
+    -> List e
+    -> List f
+    -> List result
+listMap6 fn a b c d e f =
+    case ( a, b, c ) of
+        ( x :: xs, y :: ys, z :: zs ) ->
+            case ( d, e, f ) of
+                ( xd :: ds, xe :: es, xf :: fs ) ->
+                    fn x y z xd xe xf :: listMap6 fn xs ys zs ds es fs
+
+                _ ->
+                    []
+
+        _ ->
+            []
+
+
+listMap7 :
+    (a -> b -> c -> d -> e -> f -> g -> result)
+    -> List a
+    -> List b
+    -> List c
+    -> List d
+    -> List e
+    -> List f
+    -> List g
+    -> List result
+listMap7 fn a b c d e f g =
+    case ( a, b, c ) of
+        ( x :: xs, y :: ys, z :: zs ) ->
+            case ( d, e, f ) of
+                ( xd :: ds, xe :: es, xf :: fs ) ->
+                    case g of
+                        xg :: gs ->
+                            fn x y z xd xe xf xg :: listMap7 fn xs ys zs ds es fs gs
+
+                        _ ->
+                            []
+
+                _ ->
+                    []
+
+        _ ->
+            []
