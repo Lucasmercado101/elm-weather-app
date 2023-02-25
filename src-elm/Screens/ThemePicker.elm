@@ -144,6 +144,7 @@ themePickerUpdate msg model =
             in
             ( { model
                 | currentTheme = ( primary, secondary )
+                , customizingTheme = NotCustomizingTheme
                 , customThemes =
                     if isCustomTheme then
                         case model.customThemes of
@@ -210,182 +211,10 @@ themePickerInit lang currentTheme zone location apiData currentAddress customThe
 
 
 themePickerView : ThemePickerModel -> Element ThemePickerMsg
-themePickerView ({ language, currentTheme, customizingTheme, customThemes } as model) =
+themePickerView ({ language, currentTheme, customThemes } as model) =
     let
         ( currentPrimaryColor, currentSecondaryColor ) =
             currentTheme
-
-        demoCard : Theme -> Maybe Theme -> Bool -> Element ThemePickerMsg
-        demoCard ( cardThemePrimaryColor, cardThemeSecondaryColor ) customizingColors themeApplied =
-            let
-                currentlyEditingPrimaryColor : Color
-                currentlyEditingPrimaryColor =
-                    customizingColors |> Maybe.map Tuple.first |> Maybe.withDefault cardThemePrimaryColor
-
-                currentlyEditingSecondaryColor : Color
-                currentlyEditingSecondaryColor =
-                    customizingColors |> Maybe.map Tuple.second |> Maybe.withDefault cardThemeSecondaryColor
-
-                verticalDivider : Element msg
-                verticalDivider =
-                    el [ width fill, height fill, width (px 2), Background.color currentlyEditingSecondaryColor ] none
-
-                customize : Color -> Color -> Element ThemePickerMsg
-                customize first second =
-                    column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                        [ row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text (Localizations.primaryColor model.language ++ ":"))
-                            , Html.input
-                                [ Html.Attributes.type_ "color"
-                                , Html.Attributes.style "all" "unset"
-                                , Html.Attributes.style "height" "45px"
-                                , Html.Attributes.style "width" "45px"
-
-                                -- TODO: prevent color from being too dark
-                                , Html.Attributes.value
-                                    (toRgb first
-                                        |> (\{ blue, green, red } ->
-                                                List.map toHex
-                                                    [ round (red * 255)
-                                                    , round (green * 255)
-                                                    , round (blue * 255)
-
-                                                    -- don't know how to do alpha so i'm just omitting it here
-                                                    -- , round (alpha * 255)
-                                                    ]
-                                                    |> (::) "#"
-                                                    |> String.concat
-                                           )
-                                    )
-                                , Html.Events.onInput ChangedPrimaryColor
-                                ]
-                                []
-                                |> Element.html
-                            ]
-                        , row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text (Localizations.secondaryColor model.language ++ ":"))
-                            , Html.input
-                                [ Html.Attributes.type_ "color"
-                                , Html.Attributes.style "all" "unset"
-                                , Html.Attributes.style "height" "45px"
-                                , Html.Attributes.style "width" "45px"
-
-                                -- TODO: prevent color from being too dark
-                                , Html.Attributes.value
-                                    (toRgb second
-                                        |> (\{ blue, green, red } ->
-                                                List.map toHex
-                                                    [ round (red * 255)
-                                                    , round (green * 255)
-                                                    , round (blue * 255)
-
-                                                    -- don't know how to do alpha so i'm just omitting it here
-                                                    -- , round (alpha * 255)
-                                                    ]
-                                                    |> (::) "#"
-                                                    |> String.concat
-                                           )
-                                    )
-                                , Html.Events.onInput ChangedSecondaryColor
-                                ]
-                                []
-                                |> Element.html
-                            ]
-                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                            [ button
-                                [ paddingY 12
-                                , Font.size 22
-                                , width fill
-                                , Font.center
-                                , height fill
-                                ]
-                                { label = text (Localizations.cancel model.language), onPress = Just CancelCustomizingTheme }
-                            , verticalDivider
-                            , button [ width fill, height fill ]
-                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                , onPress =
-                                    Just
-                                        (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor )
-                                            (if ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ) == ( cardThemePrimaryColor, cardThemeSecondaryColor ) then
-                                                Debug.log "The same, no colors changed" <|
-                                                    False
-
-                                             else
-                                                True
-                                            )
-                                        )
-                                }
-                            ]
-                        ]
-            in
-            el [ padding 8, width fill ]
-                (column []
-                    [ column
-                        [ width fill
-                        , Background.color currentlyEditingPrimaryColor
-                        , Font.color currentlyEditingSecondaryColor
-                        , Border.width 2
-                        , Border.color currentlyEditingSecondaryColor
-                        ]
-                        [ row
-                            [ padding 15
-                            , spacing 8
-                            ]
-                            [ column
-                                [ width fill ]
-                                [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
-                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary model.language) ]
-                                , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels model.language (Just 33.4) (Just 21.1) ]
-                                ]
-                            , el [ Background.color currentlyEditingSecondaryColor, Border.rounded 12, padding 12 ]
-                                (statCard currentlyEditingPrimaryColor
-                                    Icons.visibility
-                                    (Localizations.visibility language)
-                                    "25km/h"
-                                )
-                            ]
-                        , case customizingColors of
-                            Just ( customFirst, customSecond ) ->
-                                customize customFirst customSecond
-
-                            Nothing ->
-                                row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                                    [ button
-                                        [ paddingY 12
-                                        , Font.size 22
-                                        , width fill
-                                        , Font.center
-                                        , height fill
-                                        ]
-                                        { label = text (Localizations.edit model.language)
-                                        , onPress = Just (BeginEditingTheme ( cardThemePrimaryColor, cardThemeSecondaryColor ))
-                                        }
-                                    , verticalDivider
-                                    , if themeApplied then
-                                        el
-                                            [ width fill
-                                            , height fill
-                                            , Font.color cardThemePrimaryColor
-                                            , Background.color cardThemeSecondaryColor
-                                            ]
-                                            (el
-                                                [ centerX
-                                                , centerY
-                                                , Font.size 22
-                                                , Font.center
-                                                ]
-                                                (text (Localizations.applied model.language))
-                                            )
-
-                                      else
-                                        button [ width fill, height fill ]
-                                            { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                            , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ) False)
-                                            }
-                                    ]
-                        ]
-                    ]
-                )
     in
     column [ width fill, height fill ]
         [ row
@@ -458,33 +287,154 @@ themePickerView ({ language, currentTheme, customizingTheme, customThemes } as m
 
                 toDemoCards =
                     List.map
-                        (\demoCardColors ->
+                        (\themeColors ->
                             let
-                                card : Maybe Theme -> Bool -> Element ThemePickerMsg
-                                card =
-                                    demoCard demoCardColors
+                                currentlyCustomizingTheme : ( Color, Color ) -> Element ThemePickerMsg
+                                currentlyCustomizingTheme ( customFirstColor, customSecondColor ) =
+                                    column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                                        [ row [ Font.bold, padding 8, width fill ]
+                                            [ el [ width fill ] (text (Localizations.primaryColor model.language ++ ":"))
+                                            , Html.input
+                                                [ Html.Attributes.type_ "color"
+                                                , Html.Attributes.style "all" "unset"
+                                                , Html.Attributes.style "height" "45px"
+                                                , Html.Attributes.style "width" "45px"
 
-                                defaultCard : Bool -> Element ThemePickerMsg
-                                defaultCard =
-                                    card Nothing
+                                                -- TODO: prevent color from being too dark
+                                                , Html.Attributes.value
+                                                    (toRgb customFirstColor
+                                                        |> (\{ blue, green, red } ->
+                                                                List.map toHex
+                                                                    [ round (red * 255)
+                                                                    , round (green * 255)
+                                                                    , round (blue * 255)
+
+                                                                    -- don't know how to do alpha so i'm just omitting it here
+                                                                    -- , round (alpha * 255)
+                                                                    ]
+                                                                    |> (::) "#"
+                                                                    |> String.concat
+                                                           )
+                                                    )
+                                                , Html.Events.onInput ChangedPrimaryColor
+                                                ]
+                                                []
+                                                |> Element.html
+                                            ]
+                                        , row [ Font.bold, padding 8, width fill ]
+                                            [ el [ width fill ] (text (Localizations.secondaryColor model.language ++ ":"))
+                                            , Html.input
+                                                [ Html.Attributes.type_ "color"
+                                                , Html.Attributes.style "all" "unset"
+                                                , Html.Attributes.style "height" "45px"
+                                                , Html.Attributes.style "width" "45px"
+
+                                                -- TODO: prevent color from being too dark
+                                                , Html.Attributes.value
+                                                    (toRgb customSecondColor
+                                                        |> (\{ blue, green, red } ->
+                                                                List.map toHex
+                                                                    [ round (red * 255)
+                                                                    , round (green * 255)
+                                                                    , round (blue * 255)
+
+                                                                    -- don't know how to do alpha so i'm just omitting it here
+                                                                    -- , round (alpha * 255)
+                                                                    ]
+                                                                    |> (::) "#"
+                                                                    |> String.concat
+                                                           )
+                                                    )
+                                                , Html.Events.onInput ChangedSecondaryColor
+                                                ]
+                                                []
+                                                |> Element.html
+                                            ]
+                                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                                            [ button
+                                                [ paddingY 12
+                                                , Font.size 22
+                                                , width fill
+                                                , Font.center
+                                                , height fill
+                                                ]
+                                                { label = text (Localizations.cancel model.language), onPress = Just CancelCustomizingTheme }
+                                            , verticalDivider
+                                            , button [ width fill, height fill ]
+                                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
+                                                , onPress =
+                                                    Just
+                                                        (ApplyTheme ( customFirstColor, customSecondColor )
+                                                            (if ( customFirstColor, customSecondColor ) == themeColors then
+                                                                False
+
+                                                             else
+                                                                True
+                                                            )
+                                                        )
+                                                }
+                                            ]
+                                        ]
+
+                                themeApplied : Bool
+                                themeApplied =
+                                    themeColors == model.currentTheme
+
+                                applyPreExistingTheme : ThemePickerMsg
+                                applyPreExistingTheme =
+                                    ApplyTheme themeColors False
+
+                                verticalDivider : Element msg
+                                verticalDivider =
+                                    el [ width fill, height fill, width (px 2), Background.color (Tuple.second themeColors) ] none
+
+                                initialButtons : Element ThemePickerMsg
+                                initialButtons =
+                                    row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                                        [ button
+                                            [ paddingY 12
+                                            , Font.size 22
+                                            , width fill
+                                            , Font.center
+                                            , height fill
+                                            ]
+                                            { label = text (Localizations.edit model.language)
+                                            , onPress = Just (BeginEditingTheme themeColors)
+                                            }
+                                        , verticalDivider
+                                        , if themeApplied then
+                                            el
+                                                [ width fill
+                                                , height fill
+                                                , Font.color (Tuple.first themeColors)
+                                                , Background.color (Tuple.second themeColors)
+                                                ]
+                                                (el
+                                                    [ centerX
+                                                    , centerY
+                                                    , Font.size 22
+                                                    , Font.center
+                                                    ]
+                                                    (text (Localizations.applied model.language))
+                                                )
+
+                                          else
+                                            button [ width fill, height fill ]
+                                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
+                                                , onPress = Just applyPreExistingTheme
+                                                }
+                                        ]
                             in
-                            case customizingTheme of
-                                CustomizingTheme { originalTheme, customTheme } ->
-                                    if demoCardColors == currentTheme then
-                                        card Nothing True
-
-                                    else if demoCardColors == originalTheme then
-                                        card (Just customTheme) False
+                            case model.customizingTheme of
+                                CustomizingTheme { customTheme, originalTheme } ->
+                                    if themeColors == originalTheme then
+                                        themePreviewCard model.language customTheme (currentlyCustomizingTheme customTheme)
 
                                     else
-                                        defaultCard False
+                                        themePreviewCard model.language themeColors initialButtons
 
                                 NotCustomizingTheme ->
-                                    if demoCardColors == currentTheme then
-                                        card Nothing True
-
-                                    else
-                                        defaultCard False
+                                    themePreviewCard model.language themeColors initialButtons
                         )
              in
              (case customThemes of
@@ -513,3 +463,42 @@ themePickerView ({ language, currentTheme, customizingTheme, customThemes } as m
                 ++ (defaultThemes |> toDemoCards)
             )
         ]
+
+
+themePreviewCard : Language -> Theme -> Element ThemePickerMsg -> Element ThemePickerMsg
+themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bottomElements =
+    let
+        verticalDivider : Element msg
+        verticalDivider =
+            el [ width fill, height fill, width (px 2), Background.color cardThemeSecondaryColor ] none
+    in
+    el [ padding 8, width fill ]
+        (column []
+            [ column
+                [ width fill
+                , Background.color cardThemePrimaryColor
+                , Font.color cardThemeSecondaryColor
+                , Border.width 2
+                , Border.color cardThemeSecondaryColor
+                ]
+                [ row
+                    [ padding 15
+                    , spacing 8
+                    ]
+                    [ column
+                        [ width fill ]
+                        [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
+                        , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary language) ]
+                        , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels language (Just 33.4) (Just 21.1) ]
+                        ]
+                    , el [ Background.color cardThemeSecondaryColor, Border.rounded 12, padding 12 ]
+                        (statCard cardThemePrimaryColor
+                            Icons.visibility
+                            (Localizations.visibility language)
+                            "25km/h"
+                        )
+                    ]
+                , bottomElements
+                ]
+            ]
+        )
