@@ -19,18 +19,6 @@ import Time exposing (Posix, Zone)
 import Utils exposing (..)
 
 
-type alias PrimaryColor =
-    Color
-
-
-type alias SecondaryColor =
-    Color
-
-
-type alias Theme =
-    ( PrimaryColor, SecondaryColor )
-
-
 
 -- MSG
 

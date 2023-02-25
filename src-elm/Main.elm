@@ -10,6 +10,7 @@ import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
 import Element.Input as Input exposing (button)
+import Flags
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (usLocale)
 import Html exposing (Html)
@@ -171,130 +172,6 @@ type Msg
 -- location: granted but error on attempting to get location
 
 
-type Flags
-    = LanguageOnly
-        { language : String
-        }
-    | CachedWeatherData
-        { posixTimeNow : Int
-        , cachedWeatherData : Api.ResponseData
-        , usingGeoLocation : Bool
-        , language : String
-        , theme : Maybe ( Color, Color )
-        }
-    | CachedWeatherAndAddressData
-        { posixTimeNow : Int
-        , cachedWeatherData : Api.ResponseData
-        , country : String
-        , state : Maybe String
-        , city : Maybe String
-        , usingGeoLocation : Bool
-        , language : String
-        , theme : Maybe ( Color, Color )
-        }
-
-
-colorDecoder : JD.Decoder Color
-colorDecoder =
-    JD.map3
-        Element.rgb
-        (JD.field "r" JD.float)
-        (JD.field "g" JD.float)
-        (JD.field "b" JD.float)
-
-
-themeColorsDecoder : JD.Decoder ( Color, Color )
-themeColorsDecoder =
-    JD.map2
-        Tuple.pair
-        (JD.field "primary" colorDecoder)
-        (JD.field "secondary" colorDecoder)
-
-
-languageFlagDecoder : JD.Decoder Flags
-languageFlagDecoder =
-    JD.map
-        (\language ->
-            LanguageOnly
-                { language = language
-                }
-        )
-        (JD.field "language" JD.string)
-
-
-cachedWeatherDataFlagDecoder : JD.Decoder Flags
-cachedWeatherDataFlagDecoder =
-    JD.map5
-        (\time weatherData usingGeo language theme ->
-            CachedWeatherData
-                { posixTimeNow = time
-                , cachedWeatherData = weatherData
-                , usingGeoLocation = usingGeo
-                , language = language
-                , theme = theme
-                }
-        )
-        (JD.field "posixTimeNow" JD.int)
-        (JD.field "cachedWeatherData" Api.responseDataDecoder)
-        (JD.field "usingGeoLocation" JD.bool)
-        (JD.field "language" JD.string)
-        (JD.maybe (JD.field "theme" themeColorsDecoder))
-
-
-cachedWeatherAndAddressDataDecoder : JD.Decoder Flags
-cachedWeatherAndAddressDataDecoder =
-    JD.map8
-        (\time weatherData country maybeState maybeCity usingGeo language theme ->
-            let
-                ifEmptyThenNone : String -> Maybe String
-                ifEmptyThenNone v =
-                    if v == "" then
-                        Nothing
-
-                    else
-                        Just v
-
-                state : Maybe String
-                state =
-                    maybeState |> Maybe.andThen ifEmptyThenNone
-
-                city : Maybe String
-                city =
-                    maybeCity |> Maybe.andThen ifEmptyThenNone
-            in
-            CachedWeatherAndAddressData
-                { posixTimeNow = time
-                , cachedWeatherData = weatherData
-                , country = country
-                , state = state
-                , usingGeoLocation = usingGeo
-                , city = city
-                , language = language
-                , theme = theme
-                }
-        )
-        (JD.field "posixTimeNow" JD.int)
-        (JD.field "cachedWeatherData" Api.responseDataDecoder)
-        (JD.field "country" JD.string)
-        (JD.maybe (JD.field "state" JD.string))
-        (JD.maybe (JD.field "city" JD.string))
-        (JD.field "usingGeoLocation" JD.bool)
-        (JD.field "language" JD.string)
-        (JD.maybe (JD.field "theme" themeColorsDecoder))
-
-
-flagsDecoders : JD.Value -> Result JD.Error Flags
-flagsDecoders value =
-    JD.decodeValue
-        (JD.oneOf
-            [ cachedWeatherAndAddressDataDecoder
-            , cachedWeatherDataFlagDecoder
-            , languageFlagDecoder
-            ]
-        )
-        value
-
-
 main : Program JD.Value Model Msg
 main =
     Browser.element
@@ -316,10 +193,10 @@ init val =
             else
                 English
     in
-    case flagsDecoders val of
+    case Flags.flagsDecoders val of
         Ok flags ->
             case flags of
-                CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language, theme } ->
+                Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language, theme } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -364,7 +241,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme } ->
+                Flags.CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -409,7 +286,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                LanguageOnly { language } ->
+                Flags.LanguageOnly { language } ->
                     WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
 
         Err _ ->

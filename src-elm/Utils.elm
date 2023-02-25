@@ -389,3 +389,15 @@ listMap7 fn a b c d e f g =
 
         _ ->
             []
+
+
+type alias PrimaryColor =
+    Color
+
+
+type alias SecondaryColor =
+    Color
+
+
+type alias Theme =
+    ( PrimaryColor, SecondaryColor )
