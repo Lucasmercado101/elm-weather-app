@@ -46,8 +46,8 @@ themeColorsDecoder =
         (field "secondary" colorDecoder)
 
 
-languageFlagDecoder : Decoder Flags
-languageFlagDecoder =
+languageOnlyDecoder : Decoder Flags
+languageOnlyDecoder =
     map
         (\language ->
             LanguageOnly
@@ -124,7 +124,7 @@ flagsDecoders value =
         (oneOf
             [ cachedWeatherAndAddressDataDecoder
             , cachedWeatherDataFlagDecoder
-            , languageFlagDecoder
+            , languageOnlyDecoder
             ]
         )
         value
