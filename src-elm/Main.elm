@@ -17,7 +17,6 @@ import Http
 import Json.Decode as JD
 import List.Nonempty as NEList exposing (Nonempty(..))
 import Localizations exposing (Language(..))
-import MIcons exposing (..)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..))
 import Ports
@@ -769,7 +768,7 @@ update topMsg topModel =
                                 , zone = Just zone
                             }
 
-                        Err err ->
+                        Err _ ->
                             { model
                                 | currentRefetchingAnim =
                                     model.currentRefetchingAnim
