@@ -28,7 +28,7 @@ type ThemePickerMsg
     | BeginEditingTheme Theme
     | ChangedPrimaryColor String
     | ChangedSecondaryColor String
-    | ApplyTheme Theme
+    | ApplyTheme Theme Bool
     | CancelCustomizingTheme
 
 
@@ -131,7 +131,7 @@ themePickerUpdate msg model =
             { model | customizingTheme = NotCustomizingTheme }
                 |> pure
 
-        ApplyTheme ( primary, secondary ) ->
+        ApplyTheme ( primary, secondary ) isCustomTheme ->
             let
                 primaryColors : { red : Float, green : Float, blue : Float, alpha : Float }
                 primaryColors =
@@ -142,10 +142,20 @@ themePickerUpdate msg model =
                     Element.toRgb secondary
             in
             ( { model | currentTheme = ( primary, secondary ) }
-            , Ports.changedTheme
-                ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
-                , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
-                )
+            , Cmd.batch
+                [ Ports.changedTheme
+                    ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
+                    , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
+                    )
+                , if isCustomTheme then
+                    Ports.saveCustomTheme
+                        ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
+                        , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
+                        )
+
+                  else
+                    Cmd.none
+                ]
             )
 
 
@@ -262,7 +272,16 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                             , verticalDivider
                             , button [ width fill, height fill ]
                                 { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
+                                , onPress =
+                                    Just
+                                        (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor )
+                                            (if ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ) == ( cardThemePrimaryColor, cardThemeSecondaryColor ) then
+                                                False
+
+                                             else
+                                                True
+                                            )
+                                        )
                                 }
                             ]
                         ]
@@ -329,7 +348,7 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                                       else
                                         button [ width fill, height fill ]
                                             { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                            , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
+                                            , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ) False)
                                             }
                                     ]
                         ]

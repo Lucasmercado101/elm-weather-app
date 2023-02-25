@@ -29,14 +29,14 @@ const startAppWFlags = (flags) => Elm.Main.init({
 });
 const freshAppStart = () => Elm.Main.init({
     node: document.getElementById("root"),
-    flags: {
-        language: navigator.language || navigator.userLanguage
-    }
+    flags: navigator.language || navigator.userLanguage
 });
 const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
 const theme = localStorage.getItem("THEME");
+const customThemes = localStorage.getItem("THEMES");
 let parsedTheme = null;
+let parsedCustomThemes = null;
 try {
     if (theme) {
         parsedTheme = JSON.parse(theme);
@@ -44,6 +44,9 @@ try {
         const blue = parsedTheme.primary.g * 255;
         const green = parsedTheme.primary.b * 255;
         document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
+    }
+    if (customThemes) {
+        parsedCustomThemes = JSON.parse(customThemes);
     }
     if (cachedWeatherData && cachedAddressData) {
         const parsedWeatherData = JSON.parse(cachedWeatherData);
@@ -55,24 +58,30 @@ try {
                     main(startAppWFlags({
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedWeatherData,
-                        country: parsedAddressData.address.country,
-                        city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
-                        state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
+                        addressData: {
+                            country: parsedAddressData.address.country,
+                            city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
+                            state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null
+                        },
                         usingGeoLocation: true,
                         language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme
+                        theme: parsedTheme,
+                        customThemes: parsedCustomThemes
                     }));
                 }
                 else {
                     main(startAppWFlags({
                         posixTimeNow: Date.now(),
                         cachedWeatherData: parsedWeatherData,
-                        country: parsedAddressData.address.country,
-                        city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
-                        state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null,
+                        addressData: {
+                            country: parsedAddressData.address.country,
+                            city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
+                            state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null
+                        },
                         usingGeoLocation: false,
                         language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme
+                        theme: parsedTheme,
+                        customThemes: parsedCustomThemes
                     }));
                 }
             });
@@ -81,12 +90,15 @@ try {
             main(startAppWFlags({
                 posixTimeNow: Date.now(),
                 cachedWeatherData: parsedWeatherData,
-                country: parsedAddressData.address.country,
-                city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
-                state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null,
+                addressData: {
+                    country: parsedAddressData.address.country,
+                    city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
+                    state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null
+                },
                 usingGeoLocation: false,
                 language: navigator.language || navigator.userLanguage,
-                theme: parsedTheme
+                theme: parsedTheme,
+                customThemes: parsedCustomThemes
             }));
         }
     }
@@ -100,7 +112,8 @@ try {
                         cachedWeatherData: parsedData,
                         usingGeoLocation: true,
                         language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme
+                        theme: parsedTheme,
+                        customThemes: parsedCustomThemes
                     }));
                 }
                 else {
@@ -109,7 +122,8 @@ try {
                         cachedWeatherData: parsedData,
                         usingGeoLocation: false,
                         language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme
+                        theme: parsedTheme,
+                        customThemes: parsedCustomThemes
                     }));
                 }
             });
@@ -120,7 +134,8 @@ try {
                 cachedWeatherData: parsedData,
                 usingGeoLocation: false,
                 language: navigator.language || navigator.userLanguage,
-                theme: parsedTheme
+                theme: parsedTheme,
+                customThemes: parsedCustomThemes
             }));
         }
     }
@@ -147,5 +162,34 @@ function main(app) {
             primary: { r: pr, g: pg, b: pb },
             secondary: { r: sr, g: sg, b: sb }
         }));
+    });
+    app.ports.saveCustomTheme.subscribe((data) => {
+        const [pr, pg, pb] = data[0];
+        const [sr, sg, sb] = data[1];
+        const currentCustomThemes = localStorage.getItem("THEMES");
+        let parsedCustomThemes = [];
+        try {
+            if (currentCustomThemes) {
+                parsedCustomThemes = JSON.parse(currentCustomThemes);
+            }
+            if (parsedCustomThemes.length > 10) {
+                parsedCustomThemes.shift();
+            }
+            if (parsedCustomThemes.some((theme) => theme[0][0] === pr &&
+                theme[0][1] === pg &&
+                theme[0][2] === pb &&
+                theme[1][0] === sr &&
+                theme[1][1] === sg &&
+                theme[1][2] === sb)) {
+                return;
+            }
+            parsedCustomThemes.push([
+                [pr, pg, pb],
+                [sr, sg, sb]
+            ]);
+            localStorage.setItem("THEMES", JSON.stringify(parsedCustomThemes));
+        }
+        catch (_a) {
+        }
     });
 }

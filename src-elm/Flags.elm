@@ -7,25 +7,27 @@ import Utils exposing (Theme)
 
 
 type Flags
-    = LanguageOnly
-        { language : String
-        }
+    = LanguageOnly String
     | CachedWeatherData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
         , usingGeoLocation : Bool
         , language : String
         , theme : Maybe Theme
+        , customThemes : Maybe (List Theme)
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
-        , country : String
-        , state : Maybe String
-        , city : Maybe String
+        , addressData :
+            { country : String
+            , state : Maybe String
+            , city : Maybe String
+            }
         , usingGeoLocation : Bool
         , language : String
         , theme : Maybe Theme
+        , customThemes : Maybe (List Theme)
         }
 
 
@@ -48,25 +50,20 @@ themeColorsDecoder =
 
 languageOnlyDecoder : Decoder Flags
 languageOnlyDecoder =
-    map
-        (\language ->
-            LanguageOnly
-                { language = language
-                }
-        )
-        (field "language" string)
+    string |> map LanguageOnly
 
 
 cachedWeatherDataFlagDecoder : Decoder Flags
 cachedWeatherDataFlagDecoder =
-    map5
-        (\time weatherData usingGeo language theme ->
+    map6
+        (\time weatherData usingGeo language theme customThemes ->
             CachedWeatherData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
                 , usingGeoLocation = usingGeo
                 , language = language
                 , theme = theme
+                , customThemes = customThemes
                 }
         )
         (field "posixTimeNow" int)
@@ -74,48 +71,45 @@ cachedWeatherDataFlagDecoder =
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
+        (maybe (field "customThemes" (list themeColorsDecoder)))
 
 
 cachedWeatherAndAddressDataDecoder : Decoder Flags
 cachedWeatherAndAddressDataDecoder =
-    map8
-        (\time weatherData country maybeState maybeCity usingGeo language theme ->
-            let
-                ifEmptyThenNone : String -> Maybe String
-                ifEmptyThenNone v =
-                    if v == "" then
-                        Nothing
+    let
+        ifEmptyThenNone : String -> Maybe String
+        ifEmptyThenNone v =
+            if v == "" then
+                Nothing
 
-                    else
-                        Just v
-
-                state : Maybe String
-                state =
-                    maybeState |> Maybe.andThen ifEmptyThenNone
-
-                city : Maybe String
-                city =
-                    maybeCity |> Maybe.andThen ifEmptyThenNone
-            in
+            else
+                Just v
+    in
+    map7
+        (\time weatherData addressData usingGeo language theme customThemes ->
             CachedWeatherAndAddressData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
-                , country = country
-                , state = state
+                , addressData = addressData
                 , usingGeoLocation = usingGeo
-                , city = city
                 , language = language
                 , theme = theme
+                , customThemes = customThemes
                 }
         )
         (field "posixTimeNow" int)
         (field "cachedWeatherData" Api.responseDataDecoder)
-        (field "country" string)
-        (maybe (field "state" string))
-        (maybe (field "city" string))
+        (field "addressData"
+            (map3 (\country state city -> { country = country, state = state, city = city })
+                (field "country" string)
+                (maybe (field "state" string) |> map (Maybe.andThen ifEmptyThenNone))
+                (maybe (field "city" string) |> map (Maybe.andThen ifEmptyThenNone))
+            )
+        )
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
+        (maybe (field "customThemes" (list themeColorsDecoder)))
 
 
 flagsDecoders : Value -> Result Error Flags

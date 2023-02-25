@@ -1,4 +1,4 @@
-port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc)
+port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc, saveCustomTheme)
 
 
 port requestLocation : () -> Cmd nothing
@@ -25,3 +25,6 @@ type alias RGB =
 
 
 port changedTheme : RGB -> Cmd msg
+
+
+port saveCustomTheme : RGB -> Cmd msg

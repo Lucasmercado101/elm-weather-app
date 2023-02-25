@@ -36,16 +36,16 @@ const startAppWFlags = (flags: ElmFlags) =>
 const freshAppStart = () =>
   Elm.Main.init({
     node: document.getElementById("root"),
-    flags: {
-      language: navigator.language || (navigator as any).userLanguage
-    }
+    flags: navigator.language || (navigator as any).userLanguage
   });
 
 const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
 const cachedAddressData = localStorage.getItem(localStorageKeys.ADDRESS_DATA);
 const theme = localStorage.getItem(localStorageKeys.THEME);
+const customThemes = localStorage.getItem(localStorageKeys.THEMES);
 
 let parsedTheme: any = null;
+let parsedCustomThemes: any = null;
 
 try {
   if (theme) {
@@ -54,6 +54,10 @@ try {
     const blue = parsedTheme.primary.g * 255;
     const green = parsedTheme.primary.b * 255;
     document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
+  }
+
+  if (customThemes) {
+    parsedCustomThemes = JSON.parse(customThemes);
   }
 
   if (cachedWeatherData && cachedAddressData) {
@@ -66,12 +70,15 @@ try {
             startAppWFlags({
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedWeatherData,
-              country: parsedAddressData.address.country,
-              city: parsedAddressData.address.city ?? null,
-              state: parsedAddressData.address.state ?? null,
+              addressData: {
+                country: parsedAddressData.address.country,
+                city: parsedAddressData.address.city ?? null,
+                state: parsedAddressData.address.state ?? null
+              },
               usingGeoLocation: true,
               language: navigator.language || (navigator as any).userLanguage,
-              theme: parsedTheme
+              theme: parsedTheme,
+              customThemes: parsedCustomThemes
             })
           );
         } else {
@@ -79,12 +86,15 @@ try {
             startAppWFlags({
               posixTimeNow: Date.now(),
               cachedWeatherData: parsedWeatherData,
-              country: parsedAddressData.address.country,
-              city: parsedAddressData.address.city ?? null,
-              state: parsedAddressData.address.state ?? null,
+              addressData: {
+                country: parsedAddressData.address.country,
+                city: parsedAddressData.address.city ?? null,
+                state: parsedAddressData.address.state ?? null
+              },
               usingGeoLocation: false,
               language: navigator.language || (navigator as any).userLanguage,
-              theme: parsedTheme
+              theme: parsedTheme,
+              customThemes: parsedCustomThemes
             })
           );
         }
@@ -94,13 +104,16 @@ try {
         startAppWFlags({
           posixTimeNow: Date.now(),
           cachedWeatherData: parsedWeatherData,
-          country: parsedAddressData.address.country,
-          city: parsedAddressData.address.city ?? null,
-          state: parsedAddressData.address.state ?? null,
+          addressData: {
+            country: parsedAddressData.address.country,
+            city: parsedAddressData.address.city ?? null,
+            state: parsedAddressData.address.state ?? null
+          },
           // NOTE: I'm asumming here
           usingGeoLocation: false,
           language: navigator.language || (navigator as any).userLanguage,
-          theme: parsedTheme
+          theme: parsedTheme,
+          customThemes: parsedCustomThemes
         })
       );
     }
@@ -115,7 +128,8 @@ try {
               cachedWeatherData: parsedData,
               usingGeoLocation: true,
               language: navigator.language || (navigator as any).userLanguage,
-              theme: parsedTheme
+              theme: parsedTheme,
+              customThemes: parsedCustomThemes
             })
           );
         } else {
@@ -125,7 +139,8 @@ try {
               cachedWeatherData: parsedData,
               usingGeoLocation: false,
               language: navigator.language || (navigator as any).userLanguage,
-              theme: parsedTheme
+              theme: parsedTheme,
+              customThemes: parsedCustomThemes
             })
           );
         }
@@ -137,7 +152,8 @@ try {
           cachedWeatherData: parsedData,
           usingGeoLocation: false,
           language: navigator.language || (navigator as any).userLanguage,
-          theme: parsedTheme
+          theme: parsedTheme,
+          customThemes: parsedCustomThemes
         })
       );
     }
@@ -161,6 +177,7 @@ function main(app: ElmApp) {
       app.ports.noGeoLocationApiAvailableReceiver.send();
     }
   });
+
   app.ports.changedTheme.subscribe((data) => {
     const [pr, pg, pb] = data[0];
     const [sr, sg, sb] = data[1];
@@ -171,5 +188,49 @@ function main(app: ElmApp) {
         secondary: { r: sr, g: sg, b: sb }
       })
     );
+  });
+
+  app.ports.saveCustomTheme.subscribe((data) => {
+    const [pr, pg, pb] = data[0];
+    const [sr, sg, sb] = data[1];
+    const currentCustomThemes = localStorage.getItem(localStorageKeys.THEMES);
+    let parsedCustomThemes: [
+      [number, number, number],
+      [number, number, number]
+    ][] = [];
+
+    try {
+      if (currentCustomThemes) {
+        parsedCustomThemes = JSON.parse(currentCustomThemes);
+      }
+      if (parsedCustomThemes.length > 10) {
+        parsedCustomThemes.shift();
+      }
+
+      if (
+        parsedCustomThemes.some(
+          (theme) =>
+            theme[0][0] === pr &&
+            theme[0][1] === pg &&
+            theme[0][2] === pb &&
+            theme[1][0] === sr &&
+            theme[1][1] === sg &&
+            theme[1][2] === sb
+        )
+      ) {
+        return;
+      }
+      parsedCustomThemes.push([
+        [pr, pg, pb],
+        [sr, sg, sb]
+      ]);
+
+      localStorage.setItem(
+        localStorageKeys.THEMES,
+        JSON.stringify(parsedCustomThemes)
+      );
+    } catch {
+      // Do nothing if it fails, it doesn't matter
+    }
   });
 }

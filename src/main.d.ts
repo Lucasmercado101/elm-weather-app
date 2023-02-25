@@ -1,15 +1,14 @@
 const enum localStorageKeys {
   WEATHER_DATA = "WEATHER_DATA",
   ADDRESS_DATA = "ADDRESS_DATA",
-  THEME = "THEME"
+  THEME = "THEME",
+  THEMES = "THEMES"
 }
 
 // -----------------
 // ELM
 // NOTE: 1 to 1 mapping to elm flags
-type LanguageFlag = {
-  language: string;
-};
+type LanguageFlag = string;
 
 type CachedWeatherDataFlag = {
   posixTimeNow: number;
@@ -17,17 +16,17 @@ type CachedWeatherDataFlag = {
   usingGeoLocation: boolean;
   language: string;
   theme: any;
+  customThemes: any;
 };
 
 interface CachedWeatherAndAddressDataFlag {
   posixTimeNow: number;
   cachedWeatherData: any;
+  addressData: { country: string; state?: string; city?: string };
   usingGeoLocation: boolean;
-  country: string;
-  state?: string;
-  city?: string;
   language: string;
   theme: any;
+  customThemes: any;
 }
 
 type ElmFlags =
@@ -37,20 +36,17 @@ type ElmFlags =
 // -----------------
 
 type DataSenderPort<T> = { send: (data: T) => void };
+type DataReceiverPort<T> = { subscribe(cb: (data: T) => void) };
 
 interface ElmApp {
   ports: {
     requestLocation: { subscribe(cb: () => void) };
-    changedTheme: {
-      subscribe(
-        cb: (
-          primaryAndSecondary: [
-            [number, number, number],
-            [number, number, number]
-          ]
-        ) => void
-      );
-    };
+    changedTheme: DataReceiverPort<
+      [[number, number, number], [number, number, number]]
+    >;
+    saveCustomTheme: DataReceiverPort<
+      [[number, number, number], [number, number, number]]
+    >;
     locationReceiver: DataSenderPort<GeolocationCoordinates>;
     errorObtainingCurrentPosition: DataSenderPort<
       errorObtainingCurrentPosition["code"]

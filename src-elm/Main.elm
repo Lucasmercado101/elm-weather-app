@@ -196,7 +196,7 @@ init val =
     case Flags.flagsDecoders val of
         Ok flags ->
             case flags of
-                Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, country, state, city, usingGeoLocation, language, theme } ->
+                Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, addressData, usingGeoLocation, language, theme, customThemes } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -222,7 +222,7 @@ init val =
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
                       , optionMenu = Closed
-                      , currentAddress = Just { city = city, state = state, country = country }
+                      , currentAddress = Just addressData
                       , countryAndStateVisibility = Animator.init True
 
                       -- TODO: handle zone, when refreshing there's no good initial value
@@ -241,7 +241,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                Flags.CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme } ->
+                Flags.CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme, customThemes } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -286,7 +286,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                Flags.LanguageOnly { language } ->
+                Flags.LanguageOnly language ->
                     WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
 
         Err _ ->
