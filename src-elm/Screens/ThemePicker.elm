@@ -350,12 +350,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 , onPress =
                                                     Just
                                                         (ApplyTheme ( customFirstColor, customSecondColor )
-                                                            (if ( customFirstColor, customSecondColor ) == themeColors then
-                                                                False
-
-                                                             else
-                                                                True
-                                                            )
+                                                            (not (( customFirstColor, customSecondColor ) == themeColors))
                                                         )
                                                 }
                                             ]
@@ -364,10 +359,6 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                 themeApplied : Bool
                                 themeApplied =
                                     themeColors == model.currentTheme
-
-                                applyPreExistingTheme : ThemePickerMsg
-                                applyPreExistingTheme =
-                                    ApplyTheme themeColors False
 
                                 verticalDivider : Element msg
                                 verticalDivider =
@@ -404,6 +395,11 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 )
 
                                           else
+                                            let
+                                                applyPreExistingTheme : ThemePickerMsg
+                                                applyPreExistingTheme =
+                                                    ApplyTheme themeColors False
+                                            in
                                             button [ width fill, height fill ]
                                                 { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
                                                 , onPress = Just applyPreExistingTheme
