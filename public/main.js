@@ -175,18 +175,18 @@ function main(app) {
             if (parsedCustomThemes.length > 10) {
                 parsedCustomThemes.shift();
             }
-            if (parsedCustomThemes.some((theme) => theme[0][0] === pr &&
-                theme[0][1] === pg &&
-                theme[0][2] === pb &&
-                theme[1][0] === sr &&
-                theme[1][1] === sg &&
-                theme[1][2] === sb)) {
+            if (parsedCustomThemes.some((theme) => theme.primary.r === pr &&
+                theme.primary.g === pg &&
+                theme.primary.b === pb &&
+                theme.secondary.r === sr &&
+                theme.secondary.g === sg &&
+                theme.secondary.b === sb)) {
                 return;
             }
-            parsedCustomThemes.push([
-                [pr, pg, pb],
-                [sr, sg, sb]
-            ]);
+            parsedCustomThemes.push({
+                primary: { r: pr, g: pg, b: pb },
+                secondary: { r: sr, g: sg, b: sb }
+            });
             localStorage.setItem("THEMES", JSON.stringify(parsedCustomThemes));
         }
         catch (_a) {

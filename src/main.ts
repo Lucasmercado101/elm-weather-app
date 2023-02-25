@@ -194,10 +194,10 @@ function main(app: ElmApp) {
     const [pr, pg, pb] = data[0];
     const [sr, sg, sb] = data[1];
     const currentCustomThemes = localStorage.getItem(localStorageKeys.THEMES);
-    let parsedCustomThemes: [
-      [number, number, number],
-      [number, number, number]
-    ][] = [];
+    let parsedCustomThemes: {
+      primary: { r: number; b: number; g: number };
+      secondary: { r: number; b: number; g: number };
+    }[] = [];
 
     try {
       if (currentCustomThemes) {
@@ -210,20 +210,20 @@ function main(app: ElmApp) {
       if (
         parsedCustomThemes.some(
           (theme) =>
-            theme[0][0] === pr &&
-            theme[0][1] === pg &&
-            theme[0][2] === pb &&
-            theme[1][0] === sr &&
-            theme[1][1] === sg &&
-            theme[1][2] === sb
+            theme.primary.r === pr &&
+            theme.primary.g === pg &&
+            theme.primary.b === pb &&
+            theme.secondary.r === sr &&
+            theme.secondary.g === sg &&
+            theme.secondary.b === sb
         )
       ) {
         return;
       }
-      parsedCustomThemes.push([
-        [pr, pg, pb],
-        [sr, sg, sb]
-      ]);
+      parsedCustomThemes.push({
+        primary: { r: pr, g: pg, b: pb },
+        secondary: { r: sr, g: sg, b: sb }
+      });
 
       localStorage.setItem(
         localStorageKeys.THEMES,
