@@ -43,7 +43,6 @@ try {
         const red = parsedTheme.primary.r * 255;
         const blue = parsedTheme.primary.g * 255;
         const green = parsedTheme.primary.b * 255;
-        console.log(`rgb(${red}, ${blue}, ${green})`);
         document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
     }
     if (cachedWeatherData && cachedAddressData) {
