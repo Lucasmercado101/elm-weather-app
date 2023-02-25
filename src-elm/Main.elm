@@ -333,7 +333,7 @@ init val =
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
                       , location =
-                            if usingGeoLocation == True then
+                            if usingGeoLocation then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
@@ -349,7 +349,7 @@ init val =
                       -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
                       , zone = Just Time.utc
                       }
-                    , if usingGeoLocation == True then
+                    , if usingGeoLocation then
                         Ports.requestLoc
 
                       else
@@ -378,7 +378,7 @@ init val =
                       , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
                       , location =
-                            if usingGeoLocation == True then
+                            if usingGeoLocation then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
 
                             else
@@ -394,7 +394,7 @@ init val =
                       -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
                       , zone = Just Time.utc
                       }
-                    , if usingGeoLocation == True then
+                    , if usingGeoLocation then
                         Ports.requestLoc
 
                       else
@@ -782,7 +782,7 @@ update topMsg topModel =
         ( OnThemePickerScreenMsg ms, ThemePickerScreen md ) ->
             ThemePicker.themePickerUpdate ms md
                 |> (\( a, b ) ->
-                        if a.exitScreen == True then
+                        if a.exitScreen then
                             let
                                 ( primary, secondary ) =
                                     a.currentTheme
@@ -824,12 +824,12 @@ view model =
         , inFront
             (case model of
                 MainScreen modelData ->
-                    (let
-                        divider =
-                            el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
-                     in
-                     case modelData.optionMenu of
+                    (case modelData.optionMenu of
                         Open isEnteringManualCoordinates ->
+                            let
+                                divider =
+                                    el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
+                            in
                             column
                                 [ width fill
                                 , Background.color modelData.secondaryColor
@@ -1521,7 +1521,7 @@ mainScreen model =
                     , alpha
                         (Animator.move model.countryAndStateVisibility <|
                             \state ->
-                                if state == True then
+                                if state then
                                     Animator.at 1
 
                                 else

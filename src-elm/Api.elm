@@ -253,20 +253,14 @@ hourlyDecoder =
         (\times temp humidity apparentTemp weatherCode windSpeed visibility ->
             listMap7
                 (\time tem h at weatherC ws v ->
-                    let
-                        -- "let" here only for a better error message
-                        hourly : Hourly
-                        hourly =
-                            { time = time
-                            , temperature = tem
-                            , relativeHumidity = h
-                            , apparentTemperature = at
-                            , weatherCode = weatherC |> Maybe.map codeToDescription
-                            , windSpeed = ws
-                            , visibility = v
-                            }
-                    in
-                    hourly
+                    { time = time
+                    , temperature = tem
+                    , relativeHumidity = h
+                    , apparentTemperature = at
+                    , weatherCode = weatherC |> Maybe.map codeToDescription
+                    , windSpeed = ws
+                    , visibility = v
+                    }
                 )
                 times
                 temp
