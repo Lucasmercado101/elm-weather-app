@@ -98,7 +98,12 @@ type OptionMenu
 
 type ThemePage
     = NotOnThemePage
-    | OnThemePage (Maybe ( Color, Color ))
+    | OnThemePage
+        (Maybe
+            { originalThemeColors : ( Color, Color )
+            , customizingTheme : ( Color, Color )
+            }
+        )
 
 
 type alias MainScreenModel =
@@ -173,6 +178,9 @@ type MainScreenMsg
     | CloseThemeSelectorScreen
     | ApplyTheme Color Color
     | CustomizingTheme ( Color, Color )
+    | CancelCustomizingTheme
+    | ChangedPrimaryColorCustomizingTheme String
+    | ChangedSecondaryColorCustomizingTheme String
 
 
 type Msg
@@ -525,9 +533,89 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                         OnThemePage _ ->
-                            { model | themePage = OnThemePage (Just ( primary, secondary )) }
+                            { model
+                                | themePage =
+                                    OnThemePage
+                                        (Just
+                                            { originalThemeColors = ( primary, secondary )
+                                            , customizingTheme = ( primary, secondary )
+                                            }
+                                        )
+                            }
                                 |> pure
                                 |> mapToMainScreen
+
+                CancelCustomizingTheme ->
+                    case model.themePage of
+                        NotOnThemePage ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                        OnThemePage _ ->
+                            { model | themePage = OnThemePage Nothing }
+                                |> pure
+                                |> mapToMainScreen
+
+                ChangedPrimaryColorCustomizingTheme hexColor ->
+                    case model.themePage of
+                        NotOnThemePage ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                        OnThemePage maybeColors ->
+                            case maybeColors of
+                                Nothing ->
+                                    model
+                                        |> pure
+                                        |> mapToMainScreen
+
+                                Just colors ->
+                                    { model
+                                        | themePage =
+                                            OnThemePage
+                                                (Just
+                                                    { colors
+                                                        | customizingTheme =
+                                                            ( hexColor |> hexToColor |> Result.withDefault (Tuple.first colors.customizingTheme)
+                                                            , Tuple.second colors.customizingTheme
+                                                            )
+                                                    }
+                                                )
+                                    }
+                                        |> pure
+                                        |> mapToMainScreen
+
+                ChangedSecondaryColorCustomizingTheme hexColor ->
+                    case model.themePage of
+                        NotOnThemePage ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
+
+                        OnThemePage maybeColors ->
+                            case maybeColors of
+                                Nothing ->
+                                    model
+                                        |> pure
+                                        |> mapToMainScreen
+
+                                Just colors ->
+                                    { model
+                                        | themePage =
+                                            OnThemePage
+                                                (Just
+                                                    { colors
+                                                        | customizingTheme =
+                                                            ( Tuple.first colors.customizingTheme
+                                                            , hexColor |> hexToColor |> Result.withDefault (Tuple.second colors.customizingTheme)
+                                                            )
+                                                    }
+                                                )
+                                    }
+                                        |> pure
+                                        |> mapToMainScreen
 
                 ApplyTheme primary secondary ->
                     let
@@ -1640,7 +1728,7 @@ mainScreen model =
         )
 
 
-themeSelectorScreen : MainScreenModel -> Maybe ( Color, Color ) -> Element Msg
+themeSelectorScreen : MainScreenModel -> Maybe { originalThemeColors : ( Color, Color ), customizingTheme : ( Color, Color ) } -> Element Msg
 themeSelectorScreen ({ language } as model) customThemeColors =
     let
         modelPrimaryColor =
@@ -1649,13 +1737,21 @@ themeSelectorScreen ({ language } as model) customThemeColors =
         modelSecondaryColor =
             model.secondaryColor
 
-        demoCard : Color -> Color -> Element Msg
-        demoCard primaryColor secondaryColor =
+        demoCard : ( Color, Color ) -> Maybe ( Color, Color ) -> Element Msg
+        demoCard ( prim, sec ) customizingColors =
             let
+                primaryColor : Color
+                primaryColor =
+                    customizingColors |> Maybe.map Tuple.first |> Maybe.withDefault prim
+
+                secondaryColor : Color
+                secondaryColor =
+                    customizingColors |> Maybe.map Tuple.second |> Maybe.withDefault sec
+
                 verticalDivider =
                     el [ width fill, height fill, width (px 2), Background.color secondaryColor ] none
 
-                customize : Color -> Color -> Element msg
+                customize : Color -> Color -> Element Msg
                 customize first second =
                     column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
                         [ row [ Font.bold, padding 8, width fill ]
@@ -1682,8 +1778,7 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                                     |> String.join ""
                                            )
                                     )
-
-                                -- , Html.Events.onInput ChangedPrimaryColor
+                                , Html.Events.onInput (ChangedPrimaryColorCustomizingTheme >> OnMainScreenMsg)
                                 ]
                                 []
                                 |> Element.html
@@ -1712,11 +1807,25 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                                     |> String.join ""
                                            )
                                     )
-
-                                -- , Html.Events.onInput ChangedPrimaryColor
+                                , Html.Events.onInput (ChangedSecondaryColorCustomizingTheme >> OnMainScreenMsg)
                                 ]
                                 []
                                 |> Element.html
+                            ]
+                        , row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
+                            [ button
+                                [ paddingY 12
+                                , Font.size 22
+                                , width fill
+                                , Font.center
+                                , height fill
+                                ]
+                                { label = text "cancel", onPress = Just (OnMainScreenMsg CancelCustomizingTheme) }
+                            , verticalDivider
+                            , button [ width fill, height fill ]
+                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
+                                , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
+                                }
                             ]
                         ]
             in
@@ -1746,9 +1855,9 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                     "25km/h"
                                 )
                             ]
-                        , case customThemeColors of
-                            Just ( first, second ) ->
-                                customize first second
+                        , case customizingColors of
+                            Just ( customFirst, customSecond ) ->
+                                customize customFirst customSecond
 
                             Nothing ->
                                 row [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
@@ -1795,47 +1904,61 @@ themeSelectorScreen ({ language } as model) customThemeColors =
             , scrollbarY
             , Background.color modelPrimaryColor
             ]
-            [ -- Dark
-              demoCard (rgb255 25 20 20) (rgb255 29 185 84)
-            , demoCard (rgb255 32 38 46) (rgb255 205 88 136)
-            , demoCard (rgb255 3 0 28) (rgb255 182 234 218)
-            , demoCard (rgb255 0 24 14) (rgb255 255 170 207)
-            , demoCard (rgb255 42 45 52) (rgb255 48 197 255)
-            , demoCard (rgb255 51 44 57) (rgb255 240 238 237)
-            , demoCard (rgb255 49 51 56) white
-            , demoCard (rgb255 57 50 50) (rgb255 228 130 87)
-            , demoCard (rgb255 205 88 136) (rgb255 32 38 46)
-            , demoCard (rgb255 1 127 1) (rgb255 22 22 22)
-            , demoCard (rgb255 120 1 22) (rgb255 247 181 56)
-            , demoCard (rgb255 88 101 242) black
-            , demoCard (rgb255 235 69 95) (rgb255 43 52 103)
-            , demoCard (rgb255 36 55 99) (rgb255 255 110 49)
-            , demoCard (rgb255 13 0 90) (rgb255 3 201 136)
-            , demoCard (rgb255 43 52 103) (rgb255 235 69 95)
-            , demoCard (rgb255 69 60 103) (rgb255 242 247 161)
-            , demoCard (rgb255 22 22 22) (rgb255 0 165 0)
-            , demoCard (rgb255 155 188 15) (rgb255 15 56 15)
-            , demoCard black white
+            ([ -- Dark
+               ( rgb255 25 20 20, rgb255 29 185 84 )
+             , ( rgb255 32 38 46, rgb255 205 88 136 )
+             , ( rgb255 3 0 28, rgb255 182 234 218 )
+             , ( rgb255 0 24 14, rgb255 255 170 207 )
+             , ( rgb255 42 45 52, rgb255 48 197 255 )
+             , ( rgb255 51 44 57, rgb255 240 238 237 )
+             , ( rgb255 49 51 56, white )
+             , ( rgb255 57 50 50, rgb255 228 130 87 )
+             , ( rgb255 205 88 136, rgb255 32 38 46 )
+             , ( rgb255 1 127 1, rgb255 22 22 22 )
+             , ( rgb255 120 1 22, rgb255 247 181 56 )
+             , ( rgb255 88 101 242, black )
+             , ( rgb255 235 69 95, rgb255 43 52 103 )
+             , ( rgb255 36 55 99, rgb255 255 110 49 )
+             , ( rgb255 13 0 90, rgb255 3 201 136 )
+             , ( rgb255 43 52 103, rgb255 235 69 95 )
+             , ( rgb255 69 60 103, rgb255 242 247 161 )
+             , ( rgb255 22 22 22, rgb255 0 165 0 )
+             , ( rgb255 155 188 15, rgb255 15 56 15 )
+             , ( black, white )
 
-            -- Light
-            , demoCard defaultPrimary black
-            , demoCard (rgb255 66 198 255) black
-            , demoCard (rgb255 255 101 212) black
-            , demoCard white black
-            , demoCard (rgb255 240 238 237) (rgb255 201 44 109)
-            , demoCard (rgb255 249 245 231) (rgb255 167 114 125)
-            , demoCard (rgb255 238 233 218) (rgb255 96 150 180)
-            , demoCard (rgb255 167 114 125) (rgb255 249 245 231)
-            , demoCard (rgb255 96 150 180) (rgb255 238 233 218)
-            , demoCard (rgb255 239 0 0) black
-            , demoCard (rgb255 212 246 204) (rgb255 239 91 12)
-            , demoCard (rgb255 255 170 207) (rgb255 0 24 14)
-            , demoCard (rgb255 255 27 143) (rgb255 242 227 241)
-            , demoCard (rgb255 255 227 244) (rgb255 255 27 143)
-            , demoCard (rgb255 240 238 237) (rgb255 51 44 57)
-            , demoCard (rgb255 29 155 240) white
-            , demoCard (rgb255 59 89 153) (rgb255 248 248 248)
-            ]
+             -- Light
+             , ( defaultPrimary, black )
+             , ( rgb255 66 198 255, black )
+             , ( rgb255 255 101 212, black )
+             , ( white, black )
+             , ( rgb255 240 238 237, rgb255 201 44 109 )
+             , ( rgb255 249 245 231, rgb255 167 114 125 )
+             , ( rgb255 238 233 218, rgb255 96 150 180 )
+             , ( rgb255 167 114 125, rgb255 249 245 231 )
+             , ( rgb255 96 150 180, rgb255 238 233 218 )
+             , ( rgb255 239 0 0, black )
+             , ( rgb255 212 246 204, rgb255 239 91 12 )
+             , ( rgb255 255 170 207, rgb255 0 24 14 )
+             , ( rgb255 255 27 143, rgb255 242 227 241 )
+             , ( rgb255 255 227 244, rgb255 255 27 143 )
+             , ( rgb255 240 238 237, rgb255 51 44 57 )
+             , ( rgb255 29 155 240, white )
+             , ( rgb255 59 89 153, rgb255 248 248 248 )
+             ]
+                |> List.map
+                    (\demoCardColors ->
+                        case customThemeColors of
+                            Just { originalThemeColors, customizingTheme } ->
+                                if demoCardColors == originalThemeColors then
+                                    demoCard demoCardColors (Just customizingTheme)
+
+                                else
+                                    demoCard demoCardColors Nothing
+
+                            Nothing ->
+                                demoCard demoCardColors Nothing
+                    )
+            )
         ]
 
 
