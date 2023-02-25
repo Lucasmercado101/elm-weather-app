@@ -49,6 +49,7 @@ addressDecoder =
     map3
         (\country maybeState maybeCity ->
             let
+                ifEmptyThenNone : String -> Maybe String
                 ifEmptyThenNone v =
                     if v == "" then
                         Nothing
@@ -56,9 +57,11 @@ addressDecoder =
                     else
                         Just v
 
+                state : Maybe String
                 state =
                     maybeState |> Maybe.andThen ifEmptyThenNone
 
+                city : Maybe String
                 city =
                     maybeCity |> Maybe.andThen ifEmptyThenNone
             in
@@ -112,15 +115,19 @@ getWeatherDataAsTask { latitude, longitude } =
         |> Task.andThen
             (\( zone, posix ) ->
                 let
+                    startDate : Posix
                     startDate =
                         posix
 
+                    lat : String
                     lat =
                         String.fromFloat latitude
 
+                    lon : String
                     lon =
                         String.fromFloat longitude
 
+                    endDate : Posix
                     endDate =
                         startDate |> add Day 7 zone
 
@@ -151,11 +158,13 @@ getWeatherDataAsTask { latitude, longitude } =
                                        )
                                )
 
+                    startDateString : String
                     startDateString =
                         startDate
                             |> posixToParts zone
                             |> dateToStr
 
+                    endDateStrings : String
                     endDateStrings =
                         endDate
                             |> posixToParts zone
@@ -237,6 +246,7 @@ dailyDecoder =
     map3
         (\times weatherCodes maxWeather ->
             let
+                wmoCodes : List WMOCode
                 wmoCodes =
                     List.map codeToDescription weatherCodes
             in

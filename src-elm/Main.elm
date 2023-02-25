@@ -246,6 +246,7 @@ cachedWeatherAndAddressDataDecoder =
     JD.map8
         (\time weatherData country maybeState maybeCity usingGeo language theme ->
             let
+                ifEmptyThenNone : String -> Maybe String
                 ifEmptyThenNone v =
                     if v == "" then
                         Nothing
@@ -253,9 +254,11 @@ cachedWeatherAndAddressDataDecoder =
                     else
                         Just v
 
+                state : Maybe String
                 state =
                     maybeState |> Maybe.andThen ifEmptyThenNone
 
+                city : Maybe String
                 city =
                     maybeCity |> Maybe.andThen ifEmptyThenNone
             in
@@ -305,6 +308,7 @@ main =
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
     let
+        langParse : String -> Language
         langParse langStr =
             if langStr == "es" || String.contains "es-" langStr then
                 Spanish
@@ -616,6 +620,7 @@ update topMsg topModel =
                                 { latitude, longitude } =
                                     manualCoordinates
 
+                                setManualLocationError : Maybe Localizations.LatAndLongManualError -> ( Model, Cmd Msg )
                                 setManualLocationError error =
                                     { model
                                         | optionMenu =
@@ -827,6 +832,7 @@ view model =
                     (case modelData.optionMenu of
                         Open isEnteringManualCoordinates ->
                             let
+                                divider : Element msg
                                 divider =
                                     el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
                             in
@@ -1230,12 +1236,14 @@ loadingScreenView { fetchingStatus } =
 mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen model =
     let
+        hasHourlyDataOfToday : Maybe (Nonempty Hourly)
         hasHourlyDataOfToday =
             apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList
 
         -- NOTE: this is just accounting for the brief moment
         -- if and when I don't have the user's time zone
         -- TODO: could be made better by cache through flags
+        zone : Time.Zone
         zone =
             Maybe.withDefault Time.utc model.zone
 
@@ -1259,6 +1267,7 @@ mainScreen model =
                                 |> Time.toMonth zone
                             )
 
+                    day : String
                     day =
                         currentTime
                             |> Time.toDay zone
@@ -1375,18 +1384,21 @@ mainScreen model =
         statCards : Element MainScreenMsg
         statCards =
             let
+                windCard : String -> Element msg
                 windCard v =
                     statCard model.primaryColor
                         Icons.air
                         (Localizations.wind model.language)
                         v
 
+                humidityCard : String -> Element msg
                 humidityCard v =
                     statCard model.primaryColor
                         Icons.water_drop
                         (Localizations.humidity model.language)
                         v
 
+                visibilityCard : String -> Element msg
                 visibilityCard v =
                     statCard model.primaryColor
                         Icons.visibility
@@ -1408,6 +1420,7 @@ mainScreen model =
                     (case hasHourlyDataOfToday of
                         Just (Nonempty firstHourly restHourly) ->
                             let
+                                hourlyClosestToMine : Hourly
                                 hourlyClosestToMine =
                                     timeClosestToMine zone currentTime firstHourly restHourly
                             in
@@ -1531,6 +1544,7 @@ mainScreen model =
                     (case model.currentAddress of
                         Just address ->
                             let
+                                title : String -> Element msg
                                 title val =
                                     paragraph
                                         [ centerX
@@ -1541,6 +1555,7 @@ mainScreen model =
                                         ]
                                         [ text val ]
 
+                                subtitle : String -> Element msg
                                 subtitle val =
                                     paragraph
                                         [ centerX
@@ -1667,24 +1682,30 @@ weeklyForecastCard borderColor date max code =
 hourlyDataOfToday : Zone -> Posix -> List Hourly -> List Hourly
 hourlyDataOfToday myZone currTime list =
     let
+        year : Int
         year =
             Time.toYear myZone currTime
 
+        month : Int
         month =
             Time.toMonth myZone currTime |> monthToInt
 
+        day : Int
         day =
             Time.toDay myZone currTime
     in
     List.filter
         (\hourly ->
             let
+                hourlyYear : Int
                 hourlyYear =
                     Time.toYear myZone hourly.time
 
+                hourlyMonth : Int
                 hourlyMonth =
                     Time.toMonth myZone hourly.time |> monthToInt
 
+                hourlyDay : Int
                 hourlyDay =
                     Time.toDay myZone hourly.time
             in
@@ -1711,36 +1732,46 @@ timeClosestToMine zone time firstItem list =
     -- function that checks that it's a few hours before
     -- the user time, at most, and returns a Maybe Hourly instead
     let
+        year : Int
         year =
             Time.toYear zone time
 
+        month : Int
         month =
             Time.toMonth zone time |> monthToInt
 
+        day : Int
         day =
             Time.toDay zone time
 
+        hour : Int
         hour =
             Time.toHour zone time
 
+        minute : Int
         minute =
             Time.toMinute zone time
     in
     List.foldl
         (\a b ->
             let
+                y : Int
                 y =
                     Time.toYear zone a.time
 
+                m : Int
                 m =
                     Time.toMonth zone a.time |> monthToInt
 
+                d : Int
                 d =
                     Time.toDay zone a.time
 
+                h : Int
                 h =
                     Time.toHour zone a.time
 
+                min : Int
                 min =
                     Time.toMinute zone a.time
             in
