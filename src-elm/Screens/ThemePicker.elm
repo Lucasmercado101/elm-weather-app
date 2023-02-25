@@ -36,14 +36,6 @@ type ThemePickerMsg
 -- MODEL
 
 
-type CustomizingTheme
-    = NotCustomizingTheme
-    | CustomizingTheme
-        { originalTheme : Theme
-        , customTheme : Theme
-        }
-
-
 type alias ThemePickerModel =
     { language : Language
     , currentTheme : Theme
@@ -54,7 +46,11 @@ type alias ThemePickerModel =
     , currentAddress : Maybe Api.Address
 
     --
-    , customizingTheme : CustomizingTheme
+    , customizingTheme :
+        Maybe
+            { originalTheme : Theme
+            , customTheme : Theme
+            }
 
     -- Parent will check this
     , exitScreen : Bool
@@ -84,7 +80,7 @@ themePickerUpdate msg model =
         BeginEditingTheme ( primary, secondary ) ->
             { model
                 | customizingTheme =
-                    CustomizingTheme
+                    Just
                         { originalTheme = ( primary, secondary )
                         , customTheme = ( primary, secondary )
                         }
@@ -93,13 +89,13 @@ themePickerUpdate msg model =
 
         ChangedPrimaryColor newPrimaryColor ->
             case model.customizingTheme of
-                NotCustomizingTheme ->
+                Nothing ->
                     model |> pure
 
-                CustomizingTheme { originalTheme, customTheme } ->
+                Just { originalTheme, customTheme } ->
                     { model
                         | customizingTheme =
-                            CustomizingTheme
+                            Just
                                 { originalTheme = originalTheme
                                 , customTheme =
                                     ( newPrimaryColor |> hexToColor |> Result.withDefault (Tuple.first originalTheme)
@@ -111,14 +107,14 @@ themePickerUpdate msg model =
 
         ChangedSecondaryColor newSecondaryColor ->
             case model.customizingTheme of
-                NotCustomizingTheme ->
+                Nothing ->
                     model
                         |> pure
 
-                CustomizingTheme { originalTheme, customTheme } ->
+                Just { originalTheme, customTheme } ->
                     { model
                         | customizingTheme =
-                            CustomizingTheme
+                            Just
                                 { originalTheme = originalTheme
                                 , customTheme =
                                     ( Tuple.first customTheme
@@ -129,7 +125,7 @@ themePickerUpdate msg model =
                         |> pure
 
         CancelCustomizingTheme ->
-            { model | customizingTheme = NotCustomizingTheme }
+            { model | customizingTheme = Nothing }
                 |> pure
 
         ApplyTheme ( primary, secondary ) isCustomTheme ->
@@ -144,7 +140,7 @@ themePickerUpdate msg model =
             in
             ( { model
                 | currentTheme = ( primary, secondary )
-                , customizingTheme = NotCustomizingTheme
+                , customizingTheme = Nothing
                 , customThemes =
                     if isCustomTheme then
                         case model.customThemes of
@@ -195,7 +191,7 @@ themePickerInit lang currentTheme zone location apiData currentAddress customThe
     { language = lang
     , currentTheme = currentTheme
     , customThemes = customThemes
-    , customizingTheme = NotCustomizingTheme
+    , customizingTheme = Nothing
     , location = location
     , zone = zone
     , apiData = apiData
@@ -426,14 +422,14 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                         ]
                             in
                             case model.customizingTheme of
-                                CustomizingTheme { customTheme, originalTheme } ->
+                                Just { customTheme, originalTheme } ->
                                     if themeColors == originalTheme then
                                         themePreviewCard model.language customTheme (currentlyCustomizingTheme customTheme)
 
                                     else
                                         themePreviewCard model.language themeColors initialButtons
 
-                                NotCustomizingTheme ->
+                                Nothing ->
                                     themePreviewCard model.language themeColors initialButtons
                         )
              in
