@@ -3,7 +3,7 @@ module Screens.ThemePicker exposing (..)
 import Api
 import Cmd.Extra exposing (pure)
 import Components exposing (statCard)
-import Element exposing (Color, Element, centerX, centerY, column, el, fill, height, none, padding, paragraph, px, rgb255, row, scrollbarY, spacing, text, toRgb, width)
+import Element exposing (Color, Element, centerX, centerY, column, el, fill, height, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -279,7 +279,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                 currentlyCustomizingTheme : ( Color, Color ) -> Element ThemePickerMsg
                                 currentlyCustomizingTheme ( customFirstColor, customSecondColor ) =
                                     column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
-                                        [ row [ Font.bold, padding 8, width fill ]
+                                        [ row [ Font.bold, paddingXY 15 8, width fill ]
                                             [ el [ width fill ] (text (Localizations.primaryColor model.language ++ ":"))
                                             , Html.input
                                                 [ Html.Attributes.type_ "color"
@@ -309,7 +309,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 []
                                                 |> Element.html
                                             ]
-                                        , row [ Font.bold, padding 8, width fill ]
+                                        , row [ Font.bold, paddingXY 15 8, width fill ]
                                             [ el [ width fill ] (text (Localizations.secondaryColor model.language ++ ":"))
                                             , Html.input
                                                 [ Html.Attributes.type_ "color"
