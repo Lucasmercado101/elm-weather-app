@@ -5,7 +5,7 @@ import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, es
 import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, minimum, moveRight, none, onRight, padding, paddingEach, paddingXY, paragraph, px, rgb, rgb255, rotate, row, scrollbarX, scrollbarY, spaceEvenly, spacing, text, toRgb, width)
+import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -23,7 +23,6 @@ import Material.Icons.Types exposing (Coloring(..))
 import Ports
 import Screens.ThemePicker as ThemePicker
 import Screens.Welcome as Welcome
-import Task
 import Time exposing (Posix, Zone)
 import Utils exposing (..)
 
