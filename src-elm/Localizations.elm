@@ -325,3 +325,43 @@ manualLatitudeAndLongitudeError lang errType =
 
                 OutOfRangeLongitude ->
                     "Longitud debe estar entre -180 y 180"
+
+
+edit : Language -> String
+edit lang =
+    case lang of
+        English ->
+            "edit"
+
+        Spanish ->
+            "editar"
+
+
+apply : Language -> String
+apply lang =
+    case lang of
+        English ->
+            "apply"
+
+        Spanish ->
+            "aplicar"
+
+
+primaryColor : Language -> String
+primaryColor lang =
+    case lang of
+        English ->
+            "Primary Color"
+
+        Spanish ->
+            "Color Primario"
+
+
+secondaryColor : Language -> String
+secondaryColor lang =
+    case lang of
+        English ->
+            "Secondary Color"
+
+        Spanish ->
+            "Color Secundario"

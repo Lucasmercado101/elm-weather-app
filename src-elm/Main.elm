@@ -1755,7 +1755,7 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                 customize first second =
                     column [ width fill, Border.widthEach { bottom = 0, top = 2, left = 0, right = 0 } ]
                         [ row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text "Primary color:")
+                            [ el [ width fill ] (text (Localizations.primaryColor model.language ++ ":"))
                             , Html.input
                                 [ Html.Attributes.type_ "color"
                                 , Html.Attributes.style "all" "unset"
@@ -1784,7 +1784,7 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                 |> Element.html
                             ]
                         , row [ Font.bold, padding 8, width fill ]
-                            [ el [ width fill ] (text "Secondary color:")
+                            [ el [ width fill ] (text (Localizations.secondaryColor model.language ++ ":"))
                             , Html.input
                                 [ Html.Attributes.type_ "color"
                                 , Html.Attributes.style "all" "unset"
@@ -1823,7 +1823,7 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                 { label = text "cancel", onPress = Just (OnMainScreenMsg CancelCustomizingTheme) }
                             , verticalDivider
                             , button [ width fill, height fill ]
-                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
+                                { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
                                 , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
                                 }
                             ]
@@ -1845,8 +1845,8 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                             [ column
                                 [ width fill ]
                                 [ paragraph [ Font.size 42, Font.heavy, paddingBottom 18 ] [ text "21°" ]
-                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text "Daily Summary" ]
-                                , paragraph [ Font.size 16, width fill ] [ text "Now it feels like 33.4°, it's actually 31.9°" ]
+                                , paragraph [ Font.heavy, width fill, paddingBottom 8 ] [ text (Localizations.dailySummary model.language) ]
+                                , paragraph [ Font.size 16, width fill ] [ Localizations.nowItFeels model.language (Just 33.4) (Just 21.1) ]
                                 ]
                             , el [ Background.color secondaryColor, Border.rounded 12, padding 12 ]
                                 (statCard primaryColor
@@ -1868,10 +1868,10 @@ themeSelectorScreen ({ language } as model) customThemeColors =
                                         , Font.center
                                         , height fill
                                         ]
-                                        { label = text "edit", onPress = Just (OnMainScreenMsg (CustomizingTheme ( primaryColor, secondaryColor ))) }
+                                        { label = text (Localizations.edit model.language), onPress = Just (OnMainScreenMsg (CustomizingTheme ( primaryColor, secondaryColor ))) }
                                     , verticalDivider
                                     , button [ width fill, height fill ]
-                                        { label = el [ centerX, Font.size 22, Font.center, width fill ] (text "apply")
+                                        { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
                                         , onPress = Just (OnMainScreenMsg (ApplyTheme primaryColor secondaryColor))
                                         }
                                     ]
