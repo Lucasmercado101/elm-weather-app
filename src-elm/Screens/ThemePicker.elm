@@ -1,5 +1,6 @@
 module Screens.ThemePicker exposing (..)
 
+import Api
 import Cmd.Extra exposing (pure)
 import Components exposing (statCard)
 import Element exposing (Color, Element, centerX, centerY, column, el, fill, height, none, padding, paragraph, px, rgb255, row, scrollbarY, spacing, text, toRgb, width)
@@ -14,6 +15,7 @@ import Localizations exposing (Language)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..))
 import Ports
+import Time exposing (Posix, Zone)
 import Utils exposing (..)
 
 
@@ -57,6 +59,10 @@ type CustomizingTheme
 type alias ThemePickerModel =
     { language : Language
     , currentTheme : Theme
+    , location : Location
+    , zone : Zone
+    , apiData : ( Api.ResponseData, Posix )
+    , currentAddress : Maybe Api.Address
 
     --
     , customizingTheme : CustomizingTheme
@@ -153,11 +159,15 @@ themePickerUpdate msg model =
             )
 
 
-themePickerInit : Language -> Theme -> ThemePickerModel
-themePickerInit lang currentTheme =
+themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> ThemePickerModel
+themePickerInit lang currentTheme zone location apiData currentAddress =
     { language = lang
     , currentTheme = currentTheme
     , customizingTheme = NotCustomizingTheme
+    , location = location
+    , zone = zone
+    , apiData = apiData
+    , currentAddress = currentAddress
 
     -- Parent will check this
     , exitScreen = False

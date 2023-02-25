@@ -292,3 +292,8 @@ roundToPlaces places number =
 toHex : Int -> String
 toHex i =
     ParseInt.toRadix 16 i |> Result.withDefault "" >> String.padLeft 2 '0'
+
+
+type Location
+    = UsingGeoLocation Coordinates
+    | FixedCoordinates Coordinates

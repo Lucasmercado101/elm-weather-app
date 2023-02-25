@@ -81,11 +81,6 @@ animator =
             )
 
 
-type Location
-    = UsingGeoLocation Coordinates
-    | FixedCoordinates Coordinates
-
-
 type alias EnteringManualCoordinates =
     { latitude : String
     , longitude : String
@@ -111,10 +106,10 @@ type ThemePage
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
-    , location : Location
     , primaryColor : Color
     , secondaryColor : Color
     , optionMenu : OptionMenu
+    , location : Location
     , zone : Maybe Zone
     , language : Language
 
@@ -512,9 +507,16 @@ update topMsg topModel =
 
                 -- Options menu
                 GoToThemePickerScreen ->
-                    ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor )
-                        |> pure
-                        |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
+                    case model.zone of
+                        Just zone ->
+                            ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor ) zone model.location model.apiData model.currentAddress
+                                |> pure
+                                |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
+
+                        Nothing ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
 
                 ToggleLanguage ->
                     { model
@@ -797,7 +799,35 @@ update topMsg topModel =
 
         ( OnThemePickerScreenMsg ms, ThemePickerScreen md ) ->
             ThemePicker.themePickerUpdate ms md
-                |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
+                |> (\( a, b ) ->
+                        let
+                            t : ThemePicker.ThemePickerModel
+                            t =
+                                a
+                        in
+                        if a.exitScreen == True then
+                            let
+                                ( primary, secondary ) =
+                                    a.currentTheme
+                            in
+                            MainScreen
+                                { apiData = a.apiData
+                                , currentRefetchingStatus = NotRefetching
+                                , currentRefetchingAnim = Animator.init NotRefetching
+                                , language = a.language
+                                , location = a.location
+                                , primaryColor = primary
+                                , secondaryColor = secondary
+                                , optionMenu = Closed
+                                , currentAddress = a.currentAddress
+                                , countryAndStateVisibility = Animator.init True
+                                , zone = Just a.zone
+                                }
+                                |> pure
+
+                        else
+                            ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg )
+                   )
 
         ( _, _ ) ->
             topModel |> pure
@@ -1723,19 +1753,19 @@ timeClosestToMine zone time firstItem list =
         (\a b ->
             let
                 y =
-                    Time.toYear Time.utc a.time
+                    Time.toYear zone a.time
 
                 m =
-                    Time.toMonth Time.utc a.time |> monthToInt
+                    Time.toMonth zone a.time |> monthToInt
 
                 d =
-                    Time.toDay Time.utc a.time
+                    Time.toDay zone a.time
 
                 h =
-                    Time.toHour Time.utc a.time
+                    Time.toHour zone a.time
 
                 min =
-                    Time.toMinute Time.utc a.time
+                    Time.toMinute zone a.time
             in
             if
                 (y == year && m == month && d == day && h == hour && min == minute)

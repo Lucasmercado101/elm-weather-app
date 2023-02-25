@@ -252,10 +252,10 @@ cancel : Language -> String
 cancel lang =
     case lang of
         English ->
-            "Cancel"
+            "cancel"
 
         Spanish ->
-            "Cancelar"
+            "cancelar"
 
 
 confirm : Language -> String
