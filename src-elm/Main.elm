@@ -101,7 +101,7 @@ type alias MainScreenModel =
     , location : Location
     , zone : Maybe Zone
     , language : Language
-    , customThemes : Maybe (List Theme)
+    , customThemes : Maybe (Nonempty Theme)
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else

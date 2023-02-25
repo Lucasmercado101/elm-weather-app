@@ -3,6 +3,7 @@ module Flags exposing (..)
 import Api
 import Element exposing (Color)
 import Json.Decode exposing (..)
+import List.Nonempty as NEList exposing (Nonempty)
 import Utils exposing (Theme)
 
 
@@ -14,7 +15,7 @@ type Flags
         , usingGeoLocation : Bool
         , language : String
         , theme : Maybe Theme
-        , customThemes : Maybe (List Theme)
+        , customThemes : Maybe (Nonempty Theme)
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
@@ -27,7 +28,7 @@ type Flags
         , usingGeoLocation : Bool
         , language : String
         , theme : Maybe Theme
-        , customThemes : Maybe (List Theme)
+        , customThemes : Maybe (Nonempty Theme)
         }
 
 
@@ -71,7 +72,7 @@ cachedWeatherDataFlagDecoder =
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" (list themeColorsDecoder)))
+        (maybe (field "customThemes" (list themeColorsDecoder)) |> map (Maybe.andThen NEList.fromList))
 
 
 cachedWeatherAndAddressDataDecoder : Decoder Flags
@@ -109,7 +110,7 @@ cachedWeatherAndAddressDataDecoder =
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" (list themeColorsDecoder)))
+        (maybe (field "customThemes" (list themeColorsDecoder)) |> map (Maybe.andThen NEList.fromList))
 
 
 flagsDecoders : Value -> Result Error Flags

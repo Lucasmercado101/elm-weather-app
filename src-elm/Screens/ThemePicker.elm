@@ -11,6 +11,7 @@ import Element.Input exposing (button)
 import Html
 import Html.Attributes
 import Html.Events
+import List.Nonempty as NEList exposing (Nonempty)
 import Localizations exposing (Language)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..))
@@ -39,7 +40,7 @@ type ThemePickerMsg
 type alias ThemePickerModel =
     { language : Language
     , currentTheme : Theme
-    , customThemes : Maybe (List Theme)
+    , customThemes : Maybe CustomThemes
     , location : Location
     , zone : Zone
     , apiData : ( Api.ResponseData, Posix )
@@ -145,29 +146,17 @@ themePickerUpdate msg model =
                     if isCustomTheme then
                         case model.customThemes of
                             Just allCustomThemes ->
-                                (if List.member ( primary, secondary ) allCustomThemes then
-                                    Debug.log "do nothing" <|
-                                        allCustomThemes
-
-                                 else if List.length allCustomThemes == 10 then
-                                    Debug.log "reached max" <|
-                                        (List.drop 1 allCustomThemes
-                                            |> (::) ( primary, secondary )
-                                        )
-
-                                 else
-                                    Debug.log "adding one" <|
-                                        ( primary, secondary )
-                                            :: allCustomThemes
-                                )
+                                ( primary, secondary )
+                                    |> addCustomTheme allCustomThemes
                                     |> Just
 
                             Nothing ->
-                                Just [ ( primary, secondary ) ]
+                                ( primary, secondary )
+                                    |> NEList.singleton
+                                    |> Just
 
                     else
-                        Debug.log "is not a custom theme" <|
-                            model.customThemes
+                        model.customThemes
               }
             , Cmd.batch
                 [ Ports.changedTheme
@@ -186,7 +175,7 @@ themePickerUpdate msg model =
             )
 
 
-themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> Maybe (List Theme) -> ThemePickerModel
+themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> Maybe (Nonempty Theme) -> ThemePickerModel
 themePickerInit lang currentTheme zone location apiData currentAddress customThemes =
     { language = lang
     , currentTheme = currentTheme
@@ -442,7 +431,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
              )
                 ++ ((case customThemes of
                         Just val ->
-                            List.reverse val
+                            NEList.reverse val |> NEList.toList
 
                         Nothing ->
                             []
@@ -498,3 +487,25 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
                 ]
             ]
         )
+
+
+
+-- Helpers
+
+
+type alias CustomThemes =
+    Nonempty Theme
+
+
+addCustomTheme : CustomThemes -> Theme -> Nonempty Theme
+addCustomTheme themes theme =
+    if NEList.length themes == 10 then
+        themes |> NEList.pop |> unshift theme
+
+    else
+        unshift theme themes
+
+
+unshift : a -> Nonempty a -> Nonempty a
+unshift item list =
+    NEList.reverse list |> NEList.cons item |> NEList.reverse
