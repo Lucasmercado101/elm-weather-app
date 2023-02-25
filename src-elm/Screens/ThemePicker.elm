@@ -382,13 +382,12 @@ themePickerView ({ language, currentTheme, customizingTheme, customThemes } as m
             , scrollbarY
             , Background.color currentPrimaryColor
             ]
-            ((Debug.log "custom themes" <|
-                case customThemes of
-                    Just val ->
-                        val
+            ((case customThemes of
+                Just val ->
+                    val
 
-                    Nothing ->
-                        []
+                Nothing ->
+                    []
              )
                 ++ [ -- Dark
                      ( rgb255 25 20 20, rgb255 29 185 84 )
