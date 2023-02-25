@@ -106,7 +106,6 @@ getWeatherDataEndpoint { latitude, longitude, startDate, endDate } =
         ++ startDate
         ++ "&end_date="
         ++ endDate
-        ++ ""
 
 
 getWeatherDataAsTask : Coordinates -> Task Http.Error ( ResponseData, Posix, Zone )
