@@ -227,6 +227,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
             , Background.color currentPrimaryColor
             ]
             (let
+                defaultThemes : List ( Color, Color )
                 defaultThemes =
                     [ -- Dark
                       ( rgb255 25 20 20, rgb255 29 185 84 )
@@ -270,6 +271,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                     , ( rgb255 59 89 153, rgb255 248 248 248 )
                     ]
 
+                toDemoCards : List ( Color, Color ) -> List (Element ThemePickerMsg)
                 toDemoCards =
                     List.map
                         (\themeColors ->

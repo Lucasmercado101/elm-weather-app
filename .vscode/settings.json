@@ -1,10 +1,12 @@
 {
   "cSpell.words": [
+    "concat",
     "foldl",
     "foldr",
     "Geolocalización",
     "geolocation",
     "Geolocation",
-    "millis"
+    "millis",
+    "unshift"
   ]
 }
