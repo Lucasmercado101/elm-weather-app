@@ -365,3 +365,13 @@ secondaryColor lang =
 
         Spanish ->
             "Color Secundario"
+
+
+applied : Language -> String
+applied lang =
+    case lang of
+        English ->
+            "applied"
+
+        Spanish ->
+            "aplicado"

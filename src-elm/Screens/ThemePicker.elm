@@ -186,8 +186,8 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
         ( currentPrimaryColor, currentSecondaryColor ) =
             currentTheme
 
-        demoCard : Theme -> Maybe Theme -> Element ThemePickerMsg
-        demoCard ( cardThemePrimaryColor, cardThemeSecondaryColor ) customizingColors =
+        demoCard : Theme -> Maybe Theme -> Bool -> Element ThemePickerMsg
+        demoCard ( cardThemePrimaryColor, cardThemeSecondaryColor ) customizingColors themeApplied =
             let
                 currentlyEditingPrimaryColor : Color
                 currentlyEditingPrimaryColor =
@@ -322,10 +322,27 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                                         , onPress = Just (BeginEditingTheme ( cardThemePrimaryColor, cardThemeSecondaryColor ))
                                         }
                                     , verticalDivider
-                                    , button [ width fill, height fill ]
-                                        { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
-                                        , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
-                                        }
+                                    , if themeApplied then
+                                        el
+                                            [ width fill
+                                            , height fill
+                                            , Font.color cardThemePrimaryColor
+                                            , Background.color cardThemeSecondaryColor
+                                            ]
+                                            (el
+                                                [ centerX
+                                                , centerY
+                                                , Font.size 22
+                                                , Font.center
+                                                ]
+                                                (text (Localizations.applied model.language))
+                                            )
+
+                                      else
+                                        button [ width fill, height fill ]
+                                            { label = el [ centerX, Font.size 22, Font.center, width fill ] (text (Localizations.apply model.language))
+                                            , onPress = Just (ApplyTheme ( currentlyEditingPrimaryColor, currentlyEditingSecondaryColor ))
+                                            }
                                     ]
                         ]
                     ]
@@ -399,16 +416,29 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
              ]
                 |> List.map
                     (\demoCardColors ->
+                        let
+                            card : Maybe Theme -> Bool -> Element ThemePickerMsg
+                            card =
+                                demoCard demoCardColors
+
+                            defaultCard : Bool -> Element ThemePickerMsg
+                            defaultCard =
+                                card Nothing
+                        in
                         case customizingTheme of
                             CustomizingTheme { originalTheme, customTheme } ->
                                 if demoCardColors == originalTheme then
-                                    demoCard demoCardColors (Just customTheme)
+                                    card (Just customTheme) False
 
                                 else
-                                    demoCard demoCardColors Nothing
+                                    defaultCard False
 
                             NotCustomizingTheme ->
-                                demoCard demoCardColors Nothing
+                                if demoCardColors == currentTheme then
+                                    card Nothing True
+
+                                else
+                                    defaultCard False
                     )
             )
         ]
