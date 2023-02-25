@@ -11,6 +11,7 @@ when inside the directory containing this file.
 
 -}
 
+import NoEtaReducibleLambdas
 import NoConfusingPrefixOperator
 import NoDebug.Log
 import NoDebug.TodoOrToString
@@ -51,4 +52,8 @@ config =
     , NoUnused.Variables.rule
     , NoSinglePatternCase.rule NoSinglePatternCase.fixInArgument
     , Simplify.rule Simplify.defaults
+    , NoEtaReducibleLambdas.rule
+        { lambdaReduceStrategy = NoEtaReducibleLambdas.OnlyWhenSingleArgument
+        , argumentNamePredicate = always True
+        }
     ]

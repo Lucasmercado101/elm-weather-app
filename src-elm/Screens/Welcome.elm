@@ -203,7 +203,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         [ width fill
                         , Background.color defaultPrimary
                         ]
-                        { onChange = \l -> OnChangeLatitude l
+                        { onChange = OnChangeLatitude
                         , text = lat
                         , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "-150.58")))
                         , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Latitude:")
@@ -212,7 +212,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         [ width fill
                         , Background.color defaultPrimary
                         ]
-                        { onChange = \l -> OnChangeLongitude l
+                        { onChange = OnChangeLongitude
                         , text = lon
                         , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "75.88")))
                         , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Longitude:")
