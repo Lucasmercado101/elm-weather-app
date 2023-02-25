@@ -38,7 +38,7 @@ subscriptions model =
             Sub.batch
                 [ Ports.locationReceiver ReceivedGeoLocation
                 , Ports.errorObtainingCurrentPosition RequestLocationPermsApiError
-                , Ports.noGeoLocationApiAvailableReceiver NoGeoLocationApi
+                , Ports.noGeoLocationApiAvailableReceiver (\_ -> NoGeoLocationApi)
                 , animator |> Animator.toSubscription Tick modelData
                 ]
                 |> Sub.map OnMainScreenMsg
@@ -92,16 +92,6 @@ type OptionMenu
     | Open (Maybe EnteringManualCoordinates)
 
 
-type ThemePage
-    = NotOnThemePage
-    | OnThemePage
-        (Maybe
-            { originalThemeColors : ( Color, Color )
-            , customizingTheme : ( Color, Color )
-            }
-        )
-
-
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
@@ -149,8 +139,7 @@ type LoadingScreenMsg
 
 
 type MainScreenMsg
-    = ChangedPrimaryColor String
-    | RefetchDataOnBackground
+    = RefetchDataOnBackground
     | GotRefetchingWeatherResp (Result Http.Error ( ResponseData, Posix, Zone ))
     | Tick Time.Posix
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
@@ -161,7 +150,7 @@ type MainScreenMsg
     | CloseOptionsMenu
     | ToggleGeoLocation
     | RequestLocationPermsApiError Int
-    | NoGeoLocationApi ()
+    | NoGeoLocationApi
     | ShowManualCoordinatesForm
     | OnChangeLatitude String
     | OnChangeLongitude String
@@ -529,11 +518,6 @@ update topMsg topModel =
                         |> pure
                         |> mapToMainScreen
 
-                ChangedPrimaryColor hexColor ->
-                    { model | primaryColor = hexColor |> hexToColor |> Result.withDefault model.primaryColor }
-                        |> pure
-                        |> mapToMainScreen
-
                 OpenOptionsMenu ->
                     { model | optionMenu = Open Nothing }
                         |> pure
@@ -697,11 +681,12 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 RequestLocationPermsApiError _ ->
+                    -- TODO:
                     model
                         |> pure
                         |> mapToMainScreen
 
-                NoGeoLocationApi _ ->
+                NoGeoLocationApi ->
                     -- NOTE: prevent the user from changing the
                     -- Geolocation perms in the future as they
                     -- don't have a Geolocation api?
@@ -798,11 +783,6 @@ update topMsg topModel =
         ( OnThemePickerScreenMsg ms, ThemePickerScreen md ) ->
             ThemePicker.themePickerUpdate ms md
                 |> (\( a, b ) ->
-                        let
-                            t : ThemePicker.ThemePickerModel
-                            t =
-                                a
-                        in
                         if a.exitScreen == True then
                             let
                                 ( primary, secondary ) =
@@ -827,7 +807,7 @@ update topMsg topModel =
                             ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg )
                    )
 
-        ( _, _ ) ->
+        _ ->
             topModel |> pure
 
 

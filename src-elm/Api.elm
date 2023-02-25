@@ -2,7 +2,7 @@ module Api exposing (..)
 
 import Http
 import Iso8601
-import Json.Decode exposing (Decoder, decodeString, field, float, int, list, map, map2, map3, map4, map7, maybe, string)
+import Json.Decode exposing (Decoder, decodeString, field, float, int, list, map, map3, map4, map7, maybe, string)
 import MIcons exposing (foggy, partlyCloudy, rainy, snowing, weatherSnowy)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Icon)
