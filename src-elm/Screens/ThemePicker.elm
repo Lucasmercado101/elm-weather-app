@@ -11,7 +11,7 @@ import Element.Input exposing (button)
 import Html
 import Html.Attributes
 import Html.Events
-import List.Nonempty as NEList exposing (Nonempty)
+import List.Nonempty as NEList exposing (Nonempty(..))
 import Localizations exposing (Language)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Coloring(..))
@@ -31,6 +31,7 @@ type ThemePickerMsg
     | ChangedSecondaryColor String
     | ApplyTheme Theme Bool
     | CancelCustomizingTheme
+    | MoveCustomThemeAbove Theme
 
 
 
@@ -77,6 +78,14 @@ themePickerUpdate msg model =
         GoToMainScreen ->
             { model | exitScreen = True }
                 |> pure
+
+        MoveCustomThemeAbove theme ->
+            case model.customThemes of
+                Just customThemes ->
+                    { model | customThemes = Just (moveLeft (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
+
+                Nothing ->
+                    model |> pure
 
         BeginEditingTheme ( primary, secondary ) ->
             { model
@@ -409,17 +418,29 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                                 , onPress = Just applyPreExistingTheme
                                                 }
                                         ]
+
+                                customThemeTopButtons : Maybe (Element ThemePickerMsg)
+                                customThemeTopButtons =
+                                    model.customThemes
+                                        |> Maybe.andThen
+                                            (\themes ->
+                                                if NEList.member themeColors themes then
+                                                    Just (topButtons (MoveCustomThemeAbove themeColors))
+
+                                                else
+                                                    Nothing
+                                            )
                             in
                             case model.customizingTheme of
                                 Just { customTheme, originalTheme } ->
                                     if themeColors == originalTheme then
-                                        themePreviewCard model.language customTheme (currentlyCustomizingTheme customTheme)
+                                        themePreviewCard model.language customTheme (currentlyCustomizingTheme customTheme) customThemeTopButtons
 
                                     else
-                                        themePreviewCard model.language themeColors initialButtons
+                                        themePreviewCard model.language themeColors initialButtons customThemeTopButtons
 
                                 Nothing ->
-                                    themePreviewCard model.language themeColors initialButtons
+                                    themePreviewCard model.language themeColors initialButtons customThemeTopButtons
                         )
              in
              (case customThemes of
@@ -450,8 +471,8 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
         ]
 
 
-themePreviewCard : Language -> Theme -> Element ThemePickerMsg -> Element ThemePickerMsg
-themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bottomElements =
+themePreviewCard : Language -> Theme -> Element ThemePickerMsg -> Maybe (Element ThemePickerMsg) -> Element ThemePickerMsg
+themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bottomElements topElements =
     el [ padding 8, width fill ]
         (column
             [ width fill
@@ -460,7 +481,8 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
             , Border.width 2
             , Border.color cardThemeSecondaryColor
             ]
-            [ row
+            [ topElements |> Maybe.withDefault none
+            , row
                 [ padding 15
                 , spacing 8
                 ]
@@ -480,6 +502,48 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
             , bottomElements
             ]
         )
+
+
+topButtons : ThemePickerMsg -> Element ThemePickerMsg
+topButtons onMoveUp =
+    row
+        [ width fill
+        , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
+        ]
+        [ el
+            [ padding 6
+            , Font.size 22
+            , Font.center
+            , height fill
+            , Border.widthEach { bottom = 0, top = 0, left = 0, right = 2 }
+            ]
+            (Icons.arrow_downward 30 Inherit |> Element.html)
+        , button [ height fill ]
+            { label =
+                el
+                    [ padding 6
+                    , Font.size 22
+                    , Font.center
+                    , height fill
+                    , Border.widthEach { bottom = 0, top = 0, left = 0, right = 2 }
+                    ]
+                    (Icons.arrow_upward 30 Inherit |> Element.html)
+            , onPress = Just onMoveUp
+            }
+        , el [ width fill ] none
+        , el
+            [ height fill
+            , Border.widthEach { bottom = 0, top = 0, left = 2, right = 0 }
+            , paddingX 8
+            ]
+            (el
+                [ centerX
+                , centerY
+                , Font.heavy
+                ]
+                (Icons.close 30 Inherit |> Element.html)
+            )
+        ]
 
 
 
@@ -502,3 +566,28 @@ addCustomTheme themes theme =
 unshift : a -> Nonempty a -> Nonempty a
 unshift item list =
     NEList.reverse list |> NEList.cons item |> NEList.reverse
+
+
+moveLeft : Nonempty a -> a -> Nonempty a
+moveLeft (Nonempty first rest) needle =
+    if first == needle then
+        Nonempty first rest
+
+    else
+        case rest of
+            [] ->
+                NEList.singleton first
+
+            [ second ] ->
+                if second == needle then
+                    Nonempty second [ first ]
+
+                else
+                    Nonempty first [ second ]
+
+            second :: restItems ->
+                if second == needle then
+                    Nonempty second (first :: restItems)
+
+                else
+                    Nonempty first (moveLeft (Nonempty second restItems) needle |> NEList.toList)
