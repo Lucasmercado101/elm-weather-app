@@ -218,16 +218,9 @@ type alias Daily =
 dailyDecoder : Decoder Daily
 dailyDecoder =
     map3
-        (\times weatherCodes maxWeather ->
-            let
-                wmoCodes : List WMOCode
-                wmoCodes =
-                    List.map codeToDescription weatherCodes
-            in
-            List.map3 (\t w m -> ( t, w, m )) times wmoCodes maxWeather
-        )
+        (List.map3 (\t w m -> ( t, w, m )))
         (field "time" (list string) |> map timesToPosix)
-        (field "weathercode" (list int))
+        (field "weathercode" (list (int |> map codeToDescription)))
         (field "temperature_2m_max" (list float))
 
 
