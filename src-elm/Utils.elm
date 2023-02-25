@@ -231,6 +231,7 @@ hexToColor =
                 _ ->
                     token
 
+        pattern : String
         pattern =
             ""
                 ++ "^"
@@ -277,6 +278,7 @@ hexToColor =
 roundToPlaces : Int -> Float -> Float
 roundToPlaces places number =
     let
+        multiplier : Float
         multiplier =
             toFloat (10 ^ places)
     in

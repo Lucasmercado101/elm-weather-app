@@ -145,9 +145,11 @@ themePickerUpdate msg model =
 
         ApplyTheme ( primary, secondary ) ->
             let
+                primaryColors : { red : Float, green : Float, blue : Float, alpha : Float }
                 primaryColors =
                     Element.toRgb primary
 
+                secondaryColors : { red : Float, green : Float, blue : Float, alpha : Float }
                 secondaryColors =
                     Element.toRgb secondary
             in
@@ -195,6 +197,7 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                 currentlyEditingSecondaryColor =
                     customizingColors |> Maybe.map Tuple.second |> Maybe.withDefault cardThemeSecondaryColor
 
+                verticalDivider : Element msg
                 verticalDivider =
                     el [ width fill, height fill, width (px 2), Background.color currentlyEditingSecondaryColor ] none
 
@@ -222,7 +225,7 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                                                     -- , round (alpha * 255)
                                                     ]
                                                     |> (::) "#"
-                                                    |> String.join ""
+                                                    |> String.concat
                                            )
                                     )
                                 , Html.Events.onInput ChangedPrimaryColor
@@ -251,7 +254,7 @@ themePickerView ({ language, currentTheme, customizingTheme } as model) =
                                                     -- , round (alpha * 255)
                                                     ]
                                                     |> (::) "#"
-                                                    |> String.join ""
+                                                    |> String.concat
                                            )
                                     )
                                 , Html.Events.onInput ChangedSecondaryColor
