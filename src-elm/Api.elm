@@ -127,7 +127,7 @@ getWeatherDataAsTask { latitude, longitude } =
 
                     endDate : Posix
                     endDate =
-                        startDate |> add Day 7 zone
+                        startDate |> add Day 6 zone
 
                     startDateString : String
                     startDateString =
