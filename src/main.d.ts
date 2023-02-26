@@ -9,7 +9,7 @@ const enum localStorageKeys {
 // -----------------
 // ELM
 // NOTE: 1 to 1 mapping to elm flags
-type InitialFlag = { language: string; timezone: string };
+type InitialFlag = string;
 
 type CachedWeatherDataFlag = {
   posixTimeNow: number;
@@ -33,7 +33,7 @@ interface CachedWeatherAndAddressDataFlag {
 }
 
 type ElmFlags =
-  | LanguageFlag
+  | InitialFlag
   | CachedWeatherDataFlag
   | CachedWeatherAndAddressDataFlag;
 // -----------------

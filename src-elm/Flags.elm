@@ -8,7 +8,7 @@ import Utils exposing (Theme)
 
 
 type Flags
-    = Initial { language : String, timezone : String }
+    = Initial String
     | CachedWeatherData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
@@ -109,15 +109,7 @@ customThemeColorsDecoder =
 
 initialFlagDecoder : Decoder Flags
 initialFlagDecoder =
-    map2
-        (\language timezone ->
-            Initial
-                { language = language
-                , timezone = timezone
-                }
-        )
-        (field "language" string)
-        (field "timezone" string)
+    string |> map Initial
 
 
 cachedWeatherDataFlagDecoder : Decoder Flags

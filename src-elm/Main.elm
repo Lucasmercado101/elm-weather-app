@@ -318,20 +318,15 @@ init val =
                     )
                         |> mapToMainScreen
 
-                Flags.Initial { language, timezone } ->
-                    WelcomeScreen
-                        (Welcome.welcomeScreenInit (langParse language)
-                            (TimeZone.zones
-                                |> Dict.get timezone
-                                |> Maybe.map (\l -> l ())
-                                |> Maybe.withDefault Time.utc
-                            )
-                        )
-                        |> pure
+                Flags.Initial language ->
+                    Debug.log "language" <|(
+                        WelcomeScreen
+                            (Welcome.welcomeScreenInit (langParse language))
+                            |> pure)
 
         Err _ ->
             -- NOTE: this will never happen unless the flags are screwed up
-            WelcomeScreen (Welcome.welcomeScreenInit English Time.utc)
+            WelcomeScreen (Welcome.welcomeScreenInit English)
                 |> pure
 
 

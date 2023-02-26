@@ -29,10 +29,8 @@ const startAppWFlags = (flags) => Elm.Main.init({
 });
 const freshAppStart = () => Elm.Main.init({
     node: document.getElementById("root"),
-    flags: {
-        language: navigator.language || navigator.userLanguage,
-        timezone: timeZone
-    }
+    flags: (navigator.language ||
+        navigator.userLanguage)
 });
 const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");

@@ -14,7 +14,6 @@ import Utils exposing (..)
 type alias WelcomeScreenModel =
     { geoLocationApiError : String
     , language : Language
-    , timezone : Time.Zone
 
     -- manual location form
     , manualLocation : ( String, String )
@@ -46,13 +45,12 @@ welcomeScreenSubscriptions _ =
         ]
 
 
-welcomeScreenInit : Language -> Time.Zone -> WelcomeScreenModel
-welcomeScreenInit lang timezone =
+welcomeScreenInit : Language -> WelcomeScreenModel
+welcomeScreenInit lang =
     { geoLocationApiError = ""
     , receivedLocation = Nothing
     , usingGeoLocation = False
     , language = lang
-    , timezone = timezone
 
     --
     , manualLocation = ( "", "" )
