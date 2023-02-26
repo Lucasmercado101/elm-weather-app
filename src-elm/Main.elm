@@ -227,7 +227,7 @@ init val =
                       , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
 
-                      --  TODO:
+                      --  NOTE: JS immediately checks if online or offline
                       , isOnline = True
 
                       -- TODO: handle zone, when refreshing there's no good initial value
@@ -276,7 +276,7 @@ init val =
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
 
-                      --  TODO:
+                      --  NOTE: JS immediately checks if online or offline
                       , isOnline = True
 
                       -- TODO: handle zone, when refreshing there's no good initial value
