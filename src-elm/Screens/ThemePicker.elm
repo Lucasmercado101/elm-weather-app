@@ -84,7 +84,7 @@ themePickerUpdate msg model =
         MoveCustomThemeAbove theme ->
             case model.customThemes of
                 Just customThemes ->
-                    { model | customThemes = Just (moveLeft (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
+                    { model | customThemes = Just (moveLeft customThemes theme) } |> pure
 
                 Nothing ->
                     model |> pure
@@ -92,7 +92,7 @@ themePickerUpdate msg model =
         MoveCustomThemeBelow theme ->
             case model.customThemes of
                 Just customThemes ->
-                    { model | customThemes = Just (moveRight (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
+                    { model | customThemes = Just (moveRight customThemes theme) } |> pure
 
                 Nothing ->
                     model |> pure
@@ -496,7 +496,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
              )
                 ++ ((case customThemes of
                         Just val ->
-                            NEList.reverse val |> NEList.toList
+                            val |> NEList.toList
 
                         Nothing ->
                             []
@@ -609,10 +609,10 @@ type alias CustomThemes =
 addCustomTheme : CustomThemes -> Theme -> Nonempty Theme
 addCustomTheme themes theme =
     if NEList.length themes == 10 then
-        themes |> NEList.pop |> unshift theme
+        themes |> NEList.pop |> NEList.cons theme
 
     else
-        unshift theme themes
+        NEList.cons theme themes
 
 
 {-| Add element to the tail of the list
