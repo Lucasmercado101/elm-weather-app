@@ -319,10 +319,7 @@ init val =
                         |> mapToMainScreen
 
                 Flags.Initial language ->
-                    Debug.log "language" <|(
-                        WelcomeScreen
-                            (Welcome.welcomeScreenInit (langParse language))
-                            |> pure)
+                    WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
 
         Err _ ->
             -- NOTE: this will never happen unless the flags are screwed up
