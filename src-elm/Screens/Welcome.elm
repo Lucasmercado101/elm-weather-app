@@ -18,7 +18,7 @@ type alias WelcomeScreenModel =
 
     -- manual location form
     , manualLocation : ( String, String )
-    , manualLocationErr : String
+    , manualLocationErr : Maybe Localizations.LatAndLongManualError
 
     -- parent will intercept to check this
     , receivedLocation : Maybe { latitude : Float, longitude : Float }
@@ -56,7 +56,7 @@ welcomeScreenInit lang timezone =
 
     --
     , manualLocation = ( "", "" )
-    , manualLocationErr = ""
+    , manualLocationErr = Nothing
     }
 
 
@@ -71,9 +71,9 @@ welcomeScreenUpdate msg model =
         exitScreen val usingGeo =
             { model | receivedLocation = Just val, usingGeoLocation = usingGeo }
 
-        setManualLocationError : String -> WelcomeScreenModel
-        setManualLocationError errStr =
-            { model | manualLocationErr = errStr }
+        setManualLocationError : Maybe Localizations.LatAndLongManualError -> WelcomeScreenModel
+        setManualLocationError err =
+            { model | manualLocationErr = err }
     in
     case msg of
         ReceivedGeoLocation coords ->
@@ -107,28 +107,28 @@ welcomeScreenUpdate msg model =
             (case String.toFloat lat of
                 Just latFloat ->
                     if latFloat < -90 || latFloat > 90 then
-                        setManualLocationError "Latitude must be between -90 and 90"
+                        setManualLocationError (Just Localizations.OutOfRangeLatitude)
 
                     else
                         case String.toFloat lon of
                             Just lonFloat ->
                                 if lonFloat < -180 || lonFloat > 180 then
-                                    setManualLocationError "Longitude must be between -180 and 180"
+                                    setManualLocationError (Just Localizations.OutOfRangeLongitude)
 
                                 else
                                     exitScreen { latitude = latFloat, longitude = lonFloat } False
 
                             Nothing ->
-                                setManualLocationError "Longitude must be a valid number"
+                                setManualLocationError (Just Localizations.InvalidLongitude)
 
                 Nothing ->
-                    setManualLocationError "Latitude must be a valid number"
+                    setManualLocationError (Just Localizations.InvalidLatitude)
             )
                 |> pure
 
 
 welcomeScreenView : WelcomeScreenModel -> Element WelcomeScreenMsg
-welcomeScreenView { manualLocationErr, manualLocation } =
+welcomeScreenView { manualLocationErr, manualLocation, language } =
     let
         ( lat, lon ) =
             manualLocation
@@ -152,14 +152,9 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                     , Font.bold
                     , paddingXY 24 12
                     , Font.size 22
-                    , if manualLocationErr == noGeoApiAvailableErrStr then
-                        Font.strike
-
-                      else
-                        Font.bold
                     ]
                     -- NOTE: no good way to show "fetching location" message
-                    { label = text "Enable Location Permission", onPress = Just RequestLocationPerms }
+                    { label = text (Localizations.enableLocationPermission language), onPress = Just RequestLocationPerms }
                 )
             , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
             , column
@@ -167,34 +162,35 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                 , Background.color defaultSecondary
                 ]
                 [ -- Error message
-                  if manualLocationErr /= "" then
-                    column [ width fill ]
-                        [ paragraph
-                            [ paddingXY 24 12
-                            , Font.center
-                            , spacing 8
-                            , Font.color defaultPrimary
-                            ]
-                            [ el
-                                [ centerX
-                                , Font.heavy
-                                , Font.underline
-                                , Font.size 22
+                  case manualLocationErr of
+                    Just err ->
+                        column [ width fill ]
+                            [ paragraph
+                                [ paddingXY 24 12
+                                , Font.center
+                                , spacing 8
+                                , Font.color defaultPrimary
                                 ]
-                                (text "Error")
-                            , br
-                            , el
-                                [ centerX
-                                , Font.light
-                                , Font.size 18
+                                [ el
+                                    [ centerX
+                                    , Font.heavy
+                                    , Font.underline
+                                    , Font.size 22
+                                    ]
+                                    (text "Error")
+                                , br
+                                , el
+                                    [ centerX
+                                    , Font.light
+                                    , Font.size 18
+                                    ]
+                                    (text (Localizations.manualLatitudeAndLongitudeError language err))
                                 ]
-                                (text manualLocationErr)
+                            , el [ width fill, height (px 1), Background.color defaultPrimary ] none
                             ]
-                        , el [ width fill, height (px 1), Background.color defaultPrimary ] none
-                        ]
 
-                  else
-                    none
+                    Nothing ->
+                        none
 
                 -- Latitude and Longitude form
                 , column
@@ -209,7 +205,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         { onChange = OnChangeLatitude
                         , text = lat
                         , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "-150.58")))
-                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Latitude:")
+                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text (Localizations.latitude language ++ ":"))
                         }
                     , Input.text
                         [ width fill
@@ -218,7 +214,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                         { onChange = OnChangeLongitude
                         , text = lon
                         , placeholder = Just (Input.placeholder [] (el [ Font.color defaultSecondary, alpha 0.65 ] (text "75.88")))
-                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text "Longitude:")
+                        , label = Input.labelAbove [ Font.color defaultPrimary ] (text (Localizations.latitude language ++ ":"))
                         }
                     ]
                 , divider
@@ -229,7 +225,7 @@ welcomeScreenView { manualLocationErr, manualLocation } =
                     , Font.bold
                     , Font.size 22
                     ]
-                    { label = text "Enter coordinates manually", onPress = Just SubmitManualLocationForm }
+                    { label = paragraph [ Font.center ] [ text (Localizations.enterCoordinatesManually language) ], onPress = Just SubmitManualLocationForm }
                 ]
             ]
         )

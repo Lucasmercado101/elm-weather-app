@@ -441,3 +441,23 @@ deviceDoesNotSupportGeolocation lang =
 
         Spanish ->
             "Su dispositivo no soporta geolocalización"
+
+
+enterCoordinatesManually : Language -> String
+enterCoordinatesManually lang =
+    case lang of
+        English ->
+            "Enter coordinates manually"
+
+        Spanish ->
+            "Introduzca las coordenadas manualmente"
+
+
+enableLocationPermission : Language -> String
+enableLocationPermission lang =
+    case lang of
+        English ->
+            "Enable location permission"
+
+        Spanish ->
+            "Habilitar permiso de ubicación"
