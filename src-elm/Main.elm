@@ -559,8 +559,7 @@ update topMsg topModel =
                 ToggleGeoLocation ->
                     case model.location of
                         UsingGeoLocation fixedCoordinates ->
-                            { model | location = FixedCoordinates fixedCoordinates }
-                                |> pure
+                            ( { model | location = FixedCoordinates fixedCoordinates }, Ports.notUsingGeo )
                                 |> mapToMainScreen
 
                         FixedCoordinates _ ->

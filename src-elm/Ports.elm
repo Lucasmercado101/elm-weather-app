@@ -1,4 +1,4 @@
-port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc, saveCustomThemes)
+port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, notUsingGeo, requestLoc, saveCustomThemes)
 
 import Utils exposing (RGB)
 
@@ -30,3 +30,11 @@ port changedTheme : ThemeColorTuple -> Cmd msg
 
 
 port saveCustomThemes : List ThemeColorTuple -> Cmd msg
+
+
+port setNotUsingGeoLocation : () -> Cmd msg
+
+
+notUsingGeo : Cmd msg
+notUsingGeo =
+    setNotUsingGeoLocation ()

@@ -2,7 +2,8 @@ const enum localStorageKeys {
   WEATHER_DATA = "WEATHER_DATA",
   ADDRESS_DATA = "ADDRESS_DATA",
   THEME = "THEME",
-  THEMES = "THEMES"
+  THEMES = "THEMES",
+  USING_GEOLOCATION = "USING_GEOLOCATION"
 }
 
 // -----------------
@@ -39,19 +40,22 @@ type ElmFlags =
 type colorTuple = [number, number, number];
 type themeTuple = [colorTuple, colorTuple];
 
+type SignalSenderPort = { send: () => void };
 type DataSenderPort<T> = { send: (data: T) => void };
 type DataReceiverPort<T> = { subscribe(cb: (data: T) => void) };
+type SignalReceiverPort = { subscribe(cb: () => void) };
 
 interface ElmApp {
   ports: {
-    requestLocation: { subscribe(cb: () => void) };
+    requestLocation: SignalReceiverPort;
+    setNotUsingGeoLocation: SignalReceiverPort;
     changedTheme: DataReceiverPort<themeTuple>;
     saveCustomThemes: DataReceiverPort<themeTuple[]>;
     locationReceiver: DataSenderPort<GeolocationCoordinates>;
     errorObtainingCurrentPosition: DataSenderPort<
       errorObtainingCurrentPosition["code"]
     >;
-    noGeoLocationApiAvailableReceiver: { send: () => void };
+    noGeoLocationApiAvailableReceiver: SignalSenderPort;
   };
 }
 

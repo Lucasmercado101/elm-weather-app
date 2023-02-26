@@ -35,8 +35,10 @@ const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
 const theme = localStorage.getItem("THEME");
 const customThemes = localStorage.getItem("THEMES");
+const usingGeo = localStorage.getItem("USING_GEOLOCATION");
 let parsedTheme = null;
 let parsedCustomThemes = null;
+let usingGeoLocation = false;
 try {
     if (theme) {
         parsedTheme = JSON.parse(theme);
@@ -48,96 +50,36 @@ try {
     if (customThemes) {
         parsedCustomThemes = JSON.parse(customThemes);
     }
+    if (usingGeo) {
+        usingGeoLocation = JSON.parse(usingGeo);
+    }
     if (cachedWeatherData && cachedAddressData) {
         const parsedWeatherData = JSON.parse(cachedWeatherData);
         const parsedAddressData = JSON.parse(cachedAddressData);
-        if (navigator.permissions) {
-            navigator.permissions.query({ name: "geolocation" }).then((result) => {
-                var _a, _b, _c, _d;
-                if (result.state === "granted") {
-                    main(startAppWFlags({
-                        posixTimeNow: Date.now(),
-                        cachedWeatherData: parsedWeatherData,
-                        addressData: {
-                            country: parsedAddressData.address.country,
-                            city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
-                            state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null
-                        },
-                        usingGeoLocation: true,
-                        language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme,
-                        customThemes: parsedCustomThemes
-                    }));
-                }
-                else {
-                    main(startAppWFlags({
-                        posixTimeNow: Date.now(),
-                        cachedWeatherData: parsedWeatherData,
-                        addressData: {
-                            country: parsedAddressData.address.country,
-                            city: (_c = parsedAddressData.address.city) !== null && _c !== void 0 ? _c : null,
-                            state: (_d = parsedAddressData.address.state) !== null && _d !== void 0 ? _d : null
-                        },
-                        usingGeoLocation: false,
-                        language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme,
-                        customThemes: parsedCustomThemes
-                    }));
-                }
-            });
-        }
-        else {
-            main(startAppWFlags({
-                posixTimeNow: Date.now(),
-                cachedWeatherData: parsedWeatherData,
-                addressData: {
-                    country: parsedAddressData.address.country,
-                    city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
-                    state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null
-                },
-                usingGeoLocation: false,
-                language: navigator.language || navigator.userLanguage,
-                theme: parsedTheme,
-                customThemes: parsedCustomThemes
-            }));
-        }
+        main(startAppWFlags({
+            posixTimeNow: Date.now(),
+            cachedWeatherData: parsedWeatherData,
+            addressData: {
+                country: parsedAddressData.address.country,
+                city: (_a = parsedAddressData.address.city) !== null && _a !== void 0 ? _a : null,
+                state: (_b = parsedAddressData.address.state) !== null && _b !== void 0 ? _b : null
+            },
+            usingGeoLocation: usingGeoLocation,
+            language: navigator.language || navigator.userLanguage,
+            theme: parsedTheme,
+            customThemes: parsedCustomThemes
+        }));
     }
     else if (cachedWeatherData) {
         const parsedData = JSON.parse(cachedWeatherData);
-        if (navigator.permissions) {
-            navigator.permissions.query({ name: "geolocation" }).then((result) => {
-                if (result.state === "granted") {
-                    main(startAppWFlags({
-                        posixTimeNow: Date.now(),
-                        cachedWeatherData: parsedData,
-                        usingGeoLocation: true,
-                        language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme,
-                        customThemes: parsedCustomThemes
-                    }));
-                }
-                else {
-                    main(startAppWFlags({
-                        posixTimeNow: Date.now(),
-                        cachedWeatherData: parsedData,
-                        usingGeoLocation: false,
-                        language: navigator.language || navigator.userLanguage,
-                        theme: parsedTheme,
-                        customThemes: parsedCustomThemes
-                    }));
-                }
-            });
-        }
-        else {
-            main(startAppWFlags({
-                posixTimeNow: Date.now(),
-                cachedWeatherData: parsedData,
-                usingGeoLocation: false,
-                language: navigator.language || navigator.userLanguage,
-                theme: parsedTheme,
-                customThemes: parsedCustomThemes
-            }));
-        }
+        main(startAppWFlags({
+            posixTimeNow: Date.now(),
+            cachedWeatherData: parsedData,
+            usingGeoLocation: usingGeoLocation,
+            language: navigator.language || navigator.userLanguage,
+            theme: parsedTheme,
+            customThemes: parsedCustomThemes
+        }));
     }
     else {
         main(freshAppStart());
@@ -149,11 +91,17 @@ catch (_c) {
 function main(app) {
     app.ports.requestLocation.subscribe(() => {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => app.ports.locationReceiver.send(position.coords), (error) => app.ports.errorObtainingCurrentPosition.send(error.code));
+            navigator.geolocation.getCurrentPosition((position) => {
+                localStorage.setItem("USING_GEOLOCATION", "true");
+                app.ports.locationReceiver.send(position.coords);
+            }, (error) => app.ports.errorObtainingCurrentPosition.send(error.code));
         }
         else {
             app.ports.noGeoLocationApiAvailableReceiver.send();
         }
+    });
+    app.ports.setNotUsingGeoLocation.subscribe(() => {
+        localStorage.removeItem("USING_GEOLOCATION");
     });
     app.ports.changedTheme.subscribe((data) => {
         const [pr, pg, pb] = data[0];
