@@ -531,6 +531,7 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
             , row
                 [ padding 15
                 , spacing 8
+                , width fill
                 ]
                 [ column
                     [ width fill ]
