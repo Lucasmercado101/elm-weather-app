@@ -795,22 +795,21 @@ view model =
 
                                     Nothing ->
                                         none
-                                , row
-                                    [ width fill
-                                    , height (px 52)
-                                    , paddingX 15
-                                    ]
-                                    [ el
-                                        [ width fill
-                                        , Font.color modelData.primaryColor
-                                        , Font.heavy
-                                        ]
-                                        (text (Localizations.geolocation modelData.language))
-                                    , button
-                                        []
-                                        (case modelData.location of
-                                            UsingGeoLocation _ ->
-                                                { label =
+                                , button [ width fill ]
+                                    { label =
+                                        row
+                                            [ width fill
+                                            , height (px 52)
+                                            , paddingX 15
+                                            ]
+                                            [ el
+                                                [ width fill
+                                                , Font.color modelData.primaryColor
+                                                , Font.heavy
+                                                ]
+                                                (text (Localizations.geolocation modelData.language))
+                                            , case modelData.location of
+                                                UsingGeoLocation _ ->
                                                     row
                                                         [ Border.color modelData.primaryColor
                                                         , Border.width 3
@@ -829,11 +828,8 @@ view model =
                                                             ]
                                                             (text "OFF")
                                                         ]
-                                                , onPress = Just ToggleGeoLocation
-                                                }
 
-                                            FixedCoordinates _ ->
-                                                { label =
+                                                FixedCoordinates _ ->
                                                     row
                                                         [ Border.color modelData.primaryColor
                                                         , Border.width 3
@@ -854,10 +850,9 @@ view model =
                                                             ]
                                                             (text "OFF")
                                                         ]
-                                                , onPress = Just ToggleGeoLocation
-                                                }
-                                        )
-                                    ]
+                                            ]
+                                    , onPress = Just ToggleGeoLocation
+                                    }
                                 , row
                                     [ width fill
                                     , height (px 52)
