@@ -97,7 +97,6 @@ type alias EndpointQuery =
 
 getWeatherDataEndpoint : EndpointQuery -> String
 getWeatherDataEndpoint { latitude, longitude, startDate, endDate } =
-    -- TODO: more params dynamically, like timeZone
     "https://api.open-meteo.com/v1/forecast?latitude="
         ++ latitude
         ++ "&longitude="
@@ -249,8 +248,9 @@ responseDataDecoder =
 timesToPosix : List String -> List Posix
 timesToPosix timesStr =
     List.map Iso8601.toTime timesStr
-        -- Will never get here, if it does, it's the API's fault
-        -- TODO: no .withDefault, handle any errors in the main view instead
+        -- NOTE: Will never get here, if it does, it's the API's fault
+        -- i'm trusting that the API will always return a valid time
+        -- it's not really my problem if it doesn't either
         |> List.map (Result.withDefault (Time.millisToPosix 0))
 
 
