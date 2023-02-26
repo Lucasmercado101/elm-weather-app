@@ -196,6 +196,40 @@ init val =
     in
     case Flags.flagsDecoders val of
         Ok flags ->
+            let
+                mainDefaults :
+                    { apiData : ( ResponseData, Posix )
+                    , currentAddress : Maybe Api.Address
+                    , customThemes : Maybe (Nonempty Theme)
+                    , language : Language
+                    , location : Location
+                    , primaryColor : Color
+                    , secondaryColor : Color
+                    }
+                    -> MainScreenModel
+                mainDefaults { apiData, currentAddress, customThemes, language, location, primaryColor, secondaryColor } =
+                    { apiData = apiData
+                    , currentAddress = currentAddress
+                    , customThemes = customThemes
+                    , language = language
+                    , location = location
+                    , primaryColor = primaryColor
+                    , secondaryColor = secondaryColor
+                    , --
+                      currentRefetchingStatus = Refetching
+                    , currentRefetchingAnim = Animator.init Refetching
+                    , optionMenu = Nothing
+                    , countryAndStateVisibility = Animator.init True
+
+                    --  NOTE: JS immediately checks if online or offline
+                    , isOnline = True
+
+                    -- TODO: handle zone, when refreshing there's no good initial value
+                    -- TODO: send zone when I have it and cache it
+                    -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
+                    , zone = Just Time.utc
+                    }
+            in
             case flags of
                 Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, addressData, usingGeoLocation, language, theme, customThemes } ->
                     let
@@ -211,8 +245,6 @@ init val =
                             theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                      , currentRefetchingStatus = Refetching
-                      , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
                       , location =
                             if usingGeoLocation then
@@ -222,19 +254,10 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
-                      , optionMenu = Nothing
                       , currentAddress = Just addressData
-                      , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
-
-                      --  NOTE: JS immediately checks if online or offline
-                      , isOnline = True
-
-                      -- TODO: handle zone, when refreshing there's no good initial value
-                      -- TODO: send zone when I have it and cache it
-                      -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                      , zone = Just Time.utc
                       }
+                        |> mainDefaults
                     , if usingGeoLocation then
                         Ports.requestLoc
 
@@ -260,8 +283,6 @@ init val =
                             theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                      , currentRefetchingStatus = Refetching
-                      , currentRefetchingAnim = Animator.init Refetching
                       , language = langParse language
                       , location =
                             if usingGeoLocation then
@@ -272,18 +293,9 @@ init val =
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
                       , customThemes = customThemes
-                      , optionMenu = Nothing
                       , currentAddress = Nothing
-                      , countryAndStateVisibility = Animator.init False
-
-                      --  NOTE: JS immediately checks if online or offline
-                      , isOnline = True
-
-                      -- TODO: handle zone, when refreshing there's no good initial value
-                      -- TODO: send zone when I have it and cache it
-                      -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                      , zone = Just Time.utc
                       }
+                        |> mainDefaults
                     , if usingGeoLocation then
                         Ports.requestLoc
 
