@@ -33,6 +33,7 @@ type ThemePickerMsg
     | CancelCustomizingTheme
     | MoveCustomThemeAbove Theme
     | MoveCustomThemeBelow Theme
+    | DeleteCustomTheme Theme
 
 
 
@@ -92,6 +93,30 @@ themePickerUpdate msg model =
             case model.customThemes of
                 Just customThemes ->
                     { model | customThemes = Just (moveRight (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
+
+                Nothing ->
+                    model |> pure
+
+        DeleteCustomTheme theme ->
+            case model.customThemes of
+                Just customThemes ->
+                    let
+                        newCustomThemes =
+                            if NEList.length customThemes == 1 then
+                                Nothing
+
+                            else
+                                Just
+                                    (NEList.filter
+                                        (\( primary, secondary ) ->
+                                            not (primary == Tuple.first theme && secondary == Tuple.second theme)
+                                        )
+                                        theme
+                                        customThemes
+                                    )
+                    in
+                    { model | customThemes = newCustomThemes }
+                        |> pure
 
                 Nothing ->
                     model |> pure
@@ -434,7 +459,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                         |> Maybe.andThen
                                             (\themes ->
                                                 if NEList.member themeColors themes then
-                                                    Just (topButtons (MoveCustomThemeBelow themeColors) (MoveCustomThemeAbove themeColors))
+                                                    Just (topButtons (MoveCustomThemeBelow themeColors) (MoveCustomThemeAbove themeColors) (DeleteCustomTheme themeColors))
 
                                                 else
                                                     Nothing
@@ -513,8 +538,8 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
         )
 
 
-topButtons : ThemePickerMsg -> ThemePickerMsg -> Element ThemePickerMsg
-topButtons onMoveDown onMoveUp =
+topButtons : ThemePickerMsg -> ThemePickerMsg -> ThemePickerMsg -> Element ThemePickerMsg
+topButtons onMoveDown onMoveUp onDelete =
     row
         [ width fill
         , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
@@ -544,18 +569,22 @@ topButtons onMoveDown onMoveUp =
             , onPress = Just onMoveUp
             }
         , el [ width fill ] none
-        , el
-            [ height fill
-            , Border.widthEach { bottom = 0, top = 0, left = 2, right = 0 }
-            , paddingX 8
-            ]
-            (el
-                [ centerX
-                , centerY
-                , Font.heavy
-                ]
-                (Icons.close 30 Inherit |> Element.html)
-            )
+        , button [ height fill ]
+            { label =
+                el
+                    [ height fill
+                    , Border.widthEach { bottom = 0, top = 0, left = 2, right = 0 }
+                    , paddingX 8
+                    ]
+                    (el
+                        [ centerX
+                        , centerY
+                        , Font.heavy
+                        ]
+                        (Icons.close 30 Inherit |> Element.html)
+                    )
+            , onPress = Just onDelete
+            }
         ]
 
 
