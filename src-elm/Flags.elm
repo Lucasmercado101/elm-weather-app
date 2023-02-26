@@ -52,7 +52,7 @@ themeColorsDecoder =
 
 customThemeColorsDecoder : Decoder (Nonempty Theme)
 customThemeColorsDecoder =
-    list (list float)
+    list (list (list float))
         |> andThen
             (\l ->
                 let
@@ -75,40 +75,32 @@ customThemeColorsDecoder =
                                 Nothing
 
                     -- recursive
-                    decodeValidThemes : List Theme -> List (List Float) -> Decoder (Nonempty Theme)
+                    decodeValidThemes : List Theme -> List (List (List Float)) -> Decoder (Nonempty Theme)
                     decodeValidThemes acc nextColors =
                         case nextColors of
                             -- Base case: we have no more colors
                             [] ->
                                 case acc of
                                     [] ->
-                                        fail "Invalid custom theme colors"
+                                        fail "No theme colors"
 
                                     -- We have a minimum of one theme
                                     x :: xs ->
                                         succeed (Nonempty x xs)
 
-                            -- There's at least one pair of colors
-                            [ primaryColorArr, secondaryColorArr ] ->
-                                case isValidTheme primaryColorArr secondaryColorArr of
-                                    Just themeColor ->
-                                        -- We have exactly least one theme
-                                        succeed (Nonempty themeColor [])
-
-                                    Nothing ->
-                                        fail "Invalid custom theme colors"
-
                             -- We have at least one theme
-                            primaryColorArr :: secondaryColorArr :: restColors ->
-                                case isValidTheme primaryColorArr secondaryColorArr of
-                                    Just themeColor ->
-                                        decodeValidThemes (themeColor :: acc) restColors
+                            possibleTheme :: restColors ->
+                                case possibleTheme of
+                                    [ primaryColorArr, secondaryColorArr ] ->
+                                        case isValidTheme primaryColorArr secondaryColorArr of
+                                            Just themeColor ->
+                                                decodeValidThemes (themeColor :: acc) restColors
 
-                                    Nothing ->
-                                        fail "Invalid custom theme colors"
+                                            Nothing ->
+                                                fail "Invalid custom theme colors, either missing RGB values or invalid RGB values"
 
-                            _ ->
-                                fail "Invalid custom theme colors"
+                                    _ ->
+                                        fail "Invalid Theme color"
                 in
                 decodeValidThemes [] l
             )
