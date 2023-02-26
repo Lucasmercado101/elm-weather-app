@@ -101,6 +101,7 @@ themePickerUpdate msg model =
             case model.customThemes of
                 Just customThemes ->
                     let
+                        newCustomThemes : Maybe (Nonempty ( PrimaryColor, SecondaryColor ))
                         newCustomThemes =
                             if NEList.length customThemes == 1 then
                                 Nothing
@@ -623,9 +624,11 @@ customThemesToPort themes =
         |> List.map
             (\( a, b ) ->
                 let
+                    primary : { red : Float, green : Float, blue : Float, alpha : Float }
                     primary =
                         Element.toRgb a
 
+                    secondary : { red : Float, green : Float, blue : Float, alpha : Float }
                     secondary =
                         Element.toRgb b
                 in
