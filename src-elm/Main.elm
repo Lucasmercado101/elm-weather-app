@@ -871,14 +871,17 @@ view model =
                                         (text (Localizations.coordinates modelData.language))
                                     , case modelData.location of
                                         FixedCoordinates coordinates ->
-                                            -- TODO: not very intuitive, change design
                                             button
                                                 [ Background.color modelData.primaryColor
                                                 , Font.heavy
                                                 , Font.color modelData.secondaryColor
-                                                , paddingXY 5 5
                                                 ]
-                                                { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
+                                                { label =
+                                                    row []
+                                                        [ el [ paddingXY 5 5 ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
+                                                        , el [ width (px 2), height fill, Background.color modelData.secondaryColor ] none
+                                                        , el [ paddingXY 5 5 ] (Icons.edit 22 Inherit |> Element.html)
+                                                        ]
                                                 , onPress = Just ShowManualCoordinatesForm
                                                 }
 
