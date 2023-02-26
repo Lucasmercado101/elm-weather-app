@@ -49,6 +49,9 @@ try {
         const green = parsedTheme.primary.b * 255;
         document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
     }
+    else {
+        document.body.style.background = `rgb(254, 225, 66)`;
+    }
     if (customThemes) {
         parsedCustomThemes = JSON.parse(customThemes);
     }
@@ -130,6 +133,7 @@ function main(app) {
             primary: { r: pr, g: pg, b: pb },
             secondary: { r: sr, g: sg, b: sb }
         }));
+        document.body.style.background = `rgb(${pr * 255}, ${pg * 255}, ${pb * 255})`;
     });
     app.ports.saveCustomThemes.subscribe((data) => {
         localStorage.setItem("THEMES", JSON.stringify(data));

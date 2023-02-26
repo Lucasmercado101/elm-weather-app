@@ -58,6 +58,9 @@ try {
     const blue = parsedTheme.primary.g * 255;
     const green = parsedTheme.primary.b * 255;
     document.body.style.background = `rgb(${red}, ${blue}, ${green})`;
+  } else {
+    // default primary
+    document.body.style.background = `rgb(254, 225, 66)`;
   }
 
   if (customThemes) {
@@ -156,6 +159,9 @@ function main(app: ElmApp) {
         secondary: { r: sr, g: sg, b: sb }
       })
     );
+    document.body.style.background = `rgb(${pr * 255}, ${pg * 255}, ${
+      pb * 255
+    })`;
   });
 
   app.ports.saveCustomThemes.subscribe((data) => {
