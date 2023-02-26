@@ -823,6 +823,7 @@ view model =
                                         (text (Localizations.coordinates modelData.language))
                                     , case modelData.location of
                                         FixedCoordinates coordinates ->
+                                            -- TODO: not very intuitive, change design
                                             button
                                                 [ Background.color modelData.primaryColor
                                                 , Font.heavy
