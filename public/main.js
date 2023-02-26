@@ -163,33 +163,7 @@ function main(app) {
             secondary: { r: sr, g: sg, b: sb }
         }));
     });
-    app.ports.saveCustomTheme.subscribe((data) => {
-        const [pr, pg, pb] = data[0];
-        const [sr, sg, sb] = data[1];
-        const currentCustomThemes = localStorage.getItem("THEMES");
-        let parsedCustomThemes = [];
-        try {
-            if (currentCustomThemes) {
-                parsedCustomThemes = JSON.parse(currentCustomThemes);
-            }
-            if (parsedCustomThemes.length > 10) {
-                parsedCustomThemes.shift();
-            }
-            if (parsedCustomThemes.some((theme) => theme.primary.r === pr &&
-                theme.primary.g === pg &&
-                theme.primary.b === pb &&
-                theme.secondary.r === sr &&
-                theme.secondary.g === sg &&
-                theme.secondary.b === sb)) {
-                return;
-            }
-            parsedCustomThemes.push({
-                primary: { r: pr, g: pg, b: pb },
-                secondary: { r: sr, g: sg, b: sb }
-            });
-            localStorage.setItem("THEMES", JSON.stringify(parsedCustomThemes));
-        }
-        catch (_a) {
-        }
+    app.ports.saveCustomThemes.subscribe((data) => {
+        localStorage.setItem("THEMES", JSON.stringify(data));
     });
 }

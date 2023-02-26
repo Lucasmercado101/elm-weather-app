@@ -207,10 +207,20 @@ themePickerUpdate msg model =
                     , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
                     )
                 , if isCustomTheme then
-                    Ports.saveCustomTheme
-                        ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
-                        , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
-                        )
+                    case model.customThemes of
+                        Just themes ->
+                            Ports.saveCustomThemes
+                                [ ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
+                                  , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
+                                  )
+                                ]
+
+                        Nothing ->
+                            Ports.saveCustomThemes
+                                [ ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
+                                  , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
+                                  )
+                                ]
 
                   else
                     Cmd.none

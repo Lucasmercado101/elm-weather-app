@@ -35,18 +35,18 @@ type ElmFlags =
   | CachedWeatherAndAddressDataFlag;
 // -----------------
 
+// RGB
+type colorTuple = [number, number, number];
+type themeTuple = [colorTuple, colorTuple];
+
 type DataSenderPort<T> = { send: (data: T) => void };
 type DataReceiverPort<T> = { subscribe(cb: (data: T) => void) };
 
 interface ElmApp {
   ports: {
     requestLocation: { subscribe(cb: () => void) };
-    changedTheme: DataReceiverPort<
-      [[number, number, number], [number, number, number]]
-    >;
-    saveCustomTheme: DataReceiverPort<
-      [[number, number, number], [number, number, number]]
-    >;
+    changedTheme: DataReceiverPort<themeTuple>;
+    saveCustomThemes: DataReceiverPort<themeTuple[]>;
     locationReceiver: DataSenderPort<GeolocationCoordinates>;
     errorObtainingCurrentPosition: DataSenderPort<
       errorObtainingCurrentPosition["code"]

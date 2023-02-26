@@ -3,7 +3,8 @@ module Flags exposing (..)
 import Api
 import Element exposing (Color)
 import Json.Decode exposing (..)
-import List.Nonempty as NEList exposing (Nonempty)
+import List.Nonempty as NEList exposing (Nonempty(..))
+import Ports
 import Utils exposing (Theme)
 
 
@@ -49,6 +50,70 @@ themeColorsDecoder =
         (field "secondary" colorDecoder)
 
 
+customThemeColorsDecoder : Decoder (Nonempty Theme)
+customThemeColorsDecoder =
+    list (list float)
+        |> andThen
+            (\l ->
+                let
+                    isThemeColor : List Float -> Maybe Color
+                    isThemeColor colors =
+                        case colors of
+                            [ red, green, blue ] ->
+                                Just (Element.rgb red green blue)
+
+                            _ ->
+                                Nothing
+
+                    isValidTheme : List Float -> List Float -> Maybe Theme
+                    isValidTheme primaryColors secondaryColors =
+                        case ( isThemeColor primaryColors, isThemeColor secondaryColors ) of
+                            ( Just primary, Just secondary ) ->
+                                Just ( primary, secondary )
+
+                            _ ->
+                                Nothing
+
+                    -- recursive
+                    decodeValidThemes : List Theme -> List (List Float) -> Decoder (Nonempty Theme)
+                    decodeValidThemes acc nextColors =
+                        case nextColors of
+                            -- Base case: we have no more colors
+                            [] ->
+                                case acc of
+                                    [] ->
+                                        fail "Invalid custom theme colors"
+
+                                    -- We have a minimum of one theme
+                                    x :: xs ->
+                                        succeed (Nonempty x xs)
+
+                            -- There's at least one pair of colors
+                            [ primaryColorArr, secondaryColorArr ] ->
+                                case isValidTheme primaryColorArr secondaryColorArr of
+                                    Just themeColor ->
+                                        -- We have exactly least one theme
+                                        succeed (Nonempty themeColor [])
+
+                                    Nothing ->
+                                        fail "Invalid custom theme colors"
+
+                            -- We have at least one theme
+                            primaryColorArr :: secondaryColorArr :: restColors ->
+                                case isValidTheme primaryColorArr secondaryColorArr of
+                                    Just themeColor ->
+                                        decodeValidThemes (themeColor :: acc) restColors
+
+                                    Nothing ->
+                                        fail "Invalid custom theme colors"
+
+                            _ ->
+                                fail "Invalid custom theme colors"
+                in
+                decodeValidThemes [] l
+            )
+
+
 languageOnlyDecoder : Decoder Flags
 languageOnlyDecoder =
     string |> map LanguageOnly
@@ -72,7 +137,7 @@ cachedWeatherDataFlagDecoder =
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" (list themeColorsDecoder)) |> map (Maybe.andThen NEList.fromList))
+        (maybe (field "customThemes" customThemeColorsDecoder))
 
 
 cachedWeatherAndAddressDataDecoder : Decoder Flags
@@ -110,7 +175,7 @@ cachedWeatherAndAddressDataDecoder =
         (field "usingGeoLocation" bool)
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" (list themeColorsDecoder)) |> map (Maybe.andThen NEList.fromList))
+        (maybe (field "customThemes" customThemeColorsDecoder))
 
 
 flagsDecoders : Value -> Result Error Flags

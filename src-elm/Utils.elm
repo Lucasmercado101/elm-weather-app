@@ -401,3 +401,7 @@ type alias SecondaryColor =
 
 type alias Theme =
     ( PrimaryColor, SecondaryColor )
+
+
+type alias RGB =
+    ( Float, Float, Float )

@@ -1,4 +1,6 @@
-port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc, saveCustomTheme)
+port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, requestLoc, saveCustomThemes)
+
+import Utils exposing (RGB)
 
 
 port requestLocation : () -> Cmd nothing
@@ -20,11 +22,11 @@ port noGeoLocationApiAvailableReceiver : (() -> msg) -> Sub msg
 port locationReceiver : ({ latitude : Float, longitude : Float } -> msg) -> Sub msg
 
 
-type alias RGB =
-    ( ( Float, Float, Float ), ( Float, Float, Float ) )
+type alias ThemeColorTuple =
+    ( RGB, RGB )
 
 
-port changedTheme : RGB -> Cmd msg
+port changedTheme : ThemeColorTuple -> Cmd msg
 
 
-port saveCustomTheme : RGB -> Cmd msg
+port saveCustomThemes : List ThemeColorTuple -> Cmd msg
