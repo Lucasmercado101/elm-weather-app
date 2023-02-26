@@ -626,13 +626,18 @@ update topMsg topModel =
 
                         Err _ ->
                             -- NOTE: not doing something with the error on purpose
-                            { model
-                                | currentAddress = Nothing
-                                , countryAndStateVisibility =
-                                    model.countryAndStateVisibility
-                                        |> Animator.go Animator.slowly False
-                            }
-                                |> pure
+                            (if model.isOnline then
+                                { model
+                                    | currentAddress = Nothing
+                                    , countryAndStateVisibility =
+                                        model.countryAndStateVisibility
+                                            |> Animator.go Animator.slowly False
+                                }
+                                    |> pure
+
+                             else
+                                model |> pure
+                            )
                                 |> mapToMainScreen
 
                 RefetchDataOnBackground ->
