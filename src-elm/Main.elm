@@ -5,7 +5,7 @@ import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, es
 import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
-import Element exposing (Color, Element, alpha, centerX, centerY, column, el, fill, height, htmlAttribute, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, htmlAttribute, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1468,13 +1468,14 @@ mainScreen model =
             [ width fill
             , height fill
             ]
-            [ row [ width fill, paddingY 15 ]
+            [ row [ width fill ]
                 [ -- Refresh Button
                   button
-                    [ padding 15
+                    [ padding 18
                     , Font.color model.secondaryColor
                     , Font.heavy
                     , Font.center
+                    , alignTop
                     ]
                     { label =
                         el
@@ -1523,6 +1524,7 @@ mainScreen model =
                     [ Font.color model.secondaryColor
                     , width fill
                     , spacing 6
+                    , paddingY 15
                     , alpha
                         (Animator.move model.countryAndStateVisibility <|
                             \state ->
@@ -1578,9 +1580,10 @@ mainScreen model =
 
                 -- Menu button
                 , button
-                    [ padding 15
+                    [ padding 18
                     , Font.color model.secondaryColor
                     , Font.heavy
+                    , alignTop
                     , Font.center
                     ]
                     { label = Icons.menu 28 Inherit |> Element.html, onPress = Just OpenOptionsMenu }
