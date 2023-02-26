@@ -203,10 +203,10 @@ attribution : Language -> String
 attribution language =
     case language of
         English ->
-            "Weather data by "
+            "Weather data by"
 
         Spanish ->
-            "Datos meteorológicos por "
+            "Datos meteorológicos por"
 
 
 attributionAddress : Language -> String
