@@ -208,9 +208,10 @@ init val =
                     , primaryColor : Color
                     , secondaryColor : Color
                     , zone : Time.Zone
+                    , countryAndStateVisibility : Animator.Timeline Bool
                     }
                     -> MainScreenModel
-                mainDefaults { apiData, currentAddress, customThemes, language, location, primaryColor, secondaryColor, zone } =
+                mainDefaults { apiData, currentAddress, customThemes, language, location, primaryColor, secondaryColor, zone, countryAndStateVisibility } =
                     { apiData = apiData
                     , currentAddress = currentAddress
                     , customThemes = customThemes
@@ -219,13 +220,13 @@ init val =
                     , primaryColor = primaryColor
                     , secondaryColor = secondaryColor
                     , zone = zone
+                    , countryAndStateVisibility = countryAndStateVisibility
 
                     --
                     , geolocationApiError = Nothing
                     , currentRefetchingStatus = Refetching
                     , currentRefetchingAnim = Animator.init Refetching
                     , optionMenu = Nothing
-                    , countryAndStateVisibility = Animator.init True
 
                     --  NOTE: JS immediately checks if online or offline
                     , isOnline = True
@@ -256,6 +257,7 @@ init val =
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
                       , currentAddress = Just addressData
+                      , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
                       , zone =
                             TimeZone.zones
@@ -299,6 +301,7 @@ init val =
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
                       , customThemes = customThemes
+                      , countryAndStateVisibility = Animator.init False
                       , currentAddress = Nothing
                       , zone =
                             TimeZone.zones
