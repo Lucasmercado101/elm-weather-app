@@ -2,6 +2,7 @@ module Utils exposing (..)
 
 import Element exposing (Color, Element)
 import Html
+import Html.Attributes
 import ParseInt
 import Regex
 import Time
@@ -392,3 +393,13 @@ type alias Theme =
 
 type alias RGB =
     ( Float, Float, Float )
+
+
+noPointerEvents : Element.Attribute msg
+noPointerEvents =
+    Element.htmlAttribute (Html.Attributes.style "pointer-events" "none")
+
+
+autoPointerEvents : Element.Attribute msg
+autoPointerEvents =
+    Element.htmlAttribute (Html.Attributes.style "pointer-events" "auto")
