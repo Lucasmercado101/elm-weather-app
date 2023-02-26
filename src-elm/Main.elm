@@ -6,7 +6,7 @@ import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
 import Dict
-import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -779,393 +779,403 @@ update topMsg topModel =
 
 view : Model -> Html Msg
 view model =
+    let
+        maxAppWidth =
+            550
+    in
     layout
         [ Font.family
             [ Font.typeface "Inter"
             , Font.sansSerif
             ]
+        , width fill
         , inFront
-            (case model of
-                MainScreen modelData ->
-                    column [ width fill, noPointerEvents, height fill ]
-                        [ el [ autoPointerEvents, width fill ]
-                            (case modelData.optionMenu of
-                                Just ( isEnteringManualCoordinates, geoApiError ) ->
-                                    let
-                                        divider : Element msg
-                                        divider =
-                                            el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
-                                    in
-                                    column
-                                        [ width fill
-                                        , Background.color modelData.secondaryColor
-                                        ]
-                                        [ button [ width fill ]
-                                            { label =
-                                                row
-                                                    [ width fill
-                                                    , height (px 52)
-                                                    , paddingX 15
-                                                    ]
-                                                    [ el
-                                                        [ width fill
-                                                        , Font.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        ]
-                                                        (text (Localizations.theme modelData.language))
-                                                    , el
-                                                        [ Font.color modelData.primaryColor ]
-                                                        (Icons.chevron_right 40 Inherit |> Element.html)
-                                                    ]
-                                            , onPress = Just GoToThemePickerScreen
-                                            }
-                                        , divider
-
-                                        -- Geo location
-                                        , case geoApiError of
-                                            Just err ->
-                                                paragraph
-                                                    [ width fill
-                                                    , padding 15
-                                                    , Font.medium
-                                                    , Font.color modelData.secondaryColor
-                                                    , Background.color modelData.primaryColor
-                                                    ]
-                                                    [ el [ Font.heavy ] (text "Error: ")
-                                                    , text err
-                                                    ]
-
-                                            Nothing ->
-                                                none
-                                        , button [ width fill ]
-                                            { label =
-                                                row
-                                                    [ width fill
-                                                    , height (px 52)
-                                                    , paddingX 15
-                                                    ]
-                                                    [ el
-                                                        [ width fill
-                                                        , Font.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        ]
-                                                        (text (Localizations.geolocation modelData.language))
-                                                    , case modelData.location of
-                                                        UsingGeoLocation _ ->
-                                                            row
-                                                                [ Border.color modelData.primaryColor
-                                                                , Border.width 3
-                                                                ]
-                                                                [ el
-                                                                    [ paddingXY 8 5
-                                                                    , Font.color modelData.primaryColor
-                                                                    , Font.heavy
-                                                                    ]
-                                                                    (text "ON")
-                                                                , el
-                                                                    [ Background.color modelData.primaryColor
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.secondaryColor
-                                                                    , paddingXY 8 5
-                                                                    ]
-                                                                    (text "OFF")
-                                                                ]
-
-                                                        FixedCoordinates _ ->
-                                                            row
-                                                                [ Border.color modelData.primaryColor
-                                                                , Border.width 3
-                                                                ]
-                                                                [ el
-                                                                    [ Background.color modelData.primaryColor
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.secondaryColor
-                                                                    , paddingXY 8 5
-                                                                    ]
-                                                                    (text "ON")
-                                                                , el
-                                                                    [ Font.color modelData.primaryColor
-                                                                    , paddingXY 8 5
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.primaryColor
-                                                                    , centerX
-                                                                    ]
-                                                                    (text "OFF")
-                                                                ]
-                                                    ]
-                                            , onPress = Just ToggleGeoLocation
-                                            }
-                                        , row
+            (el [ centerX, width (fill |> maximum maxAppWidth) ]
+                (case model of
+                    MainScreen modelData ->
+                        column [ width fill, noPointerEvents, height fill ]
+                            [ el [ autoPointerEvents, width fill ]
+                                (case modelData.optionMenu of
+                                    Just ( isEnteringManualCoordinates, geoApiError ) ->
+                                        let
+                                            divider : Element msg
+                                            divider =
+                                                el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
+                                        in
+                                        column
                                             [ width fill
-                                            , height (px 52)
-                                            , paddingX 15
+                                            , Background.color modelData.secondaryColor
                                             ]
-                                            [ el
-                                                [ width fill
-                                                , Font.color modelData.primaryColor
-                                                , Font.heavy
-                                                ]
-                                                (text (Localizations.coordinates modelData.language))
-                                            , case modelData.location of
-                                                FixedCoordinates coordinates ->
-                                                    button
-                                                        [ Background.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        , Font.color modelData.secondaryColor
+                                            [ button [ width fill ]
+                                                { label =
+                                                    row
+                                                        [ width fill
+                                                        , height (px 52)
+                                                        , paddingX 15
                                                         ]
-                                                        { label =
-                                                            row []
-                                                                [ el [ paddingXY 5 5 ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
-                                                                , el [ width (px 2), height fill, Background.color modelData.secondaryColor ] none
-                                                                , el [ paddingXY 5 5 ] (Icons.edit 22 Inherit |> Element.html)
-                                                                ]
-                                                        , onPress = Just ShowManualCoordinatesForm
-                                                        }
+                                                        [ el
+                                                            [ width fill
+                                                            , Font.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            ]
+                                                            (text (Localizations.theme modelData.language))
+                                                        , el
+                                                            [ Font.color modelData.primaryColor ]
+                                                            (Icons.chevron_right 40 Inherit |> Element.html)
+                                                        ]
+                                                , onPress = Just GoToThemePickerScreen
+                                                }
+                                            , divider
 
-                                                UsingGeoLocation coordinates ->
-                                                    el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
-                                            ]
-                                        , case isEnteringManualCoordinates of
-                                            Just manualCoordinates ->
-                                                column
-                                                    [ centerX
-                                                    , Background.color modelData.secondaryColor
-                                                    , width fill
-                                                    ]
-                                                    [ --  Error message
-                                                      case manualCoordinates.error of
-                                                        Just err ->
-                                                            column [ width fill ]
-                                                                [ paragraph
-                                                                    [ paddingXY 24 12
-                                                                    , Font.center
-                                                                    , spacing 8
-                                                                    , Font.color modelData.primaryColor
+                                            -- Geo location
+                                            , case geoApiError of
+                                                Just err ->
+                                                    paragraph
+                                                        [ width fill
+                                                        , padding 15
+                                                        , Font.medium
+                                                        , Font.color modelData.secondaryColor
+                                                        , Background.color modelData.primaryColor
+                                                        ]
+                                                        [ el [ Font.heavy ] (text "Error: ")
+                                                        , text err
+                                                        ]
+
+                                                Nothing ->
+                                                    none
+                                            , button [ width fill ]
+                                                { label =
+                                                    row
+                                                        [ width fill
+                                                        , height (px 52)
+                                                        , paddingX 15
+                                                        ]
+                                                        [ el
+                                                            [ width fill
+                                                            , Font.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            ]
+                                                            (text (Localizations.geolocation modelData.language))
+                                                        , case modelData.location of
+                                                            UsingGeoLocation _ ->
+                                                                row
+                                                                    [ Border.color modelData.primaryColor
+                                                                    , Border.width 3
                                                                     ]
                                                                     [ el
-                                                                        [ centerX
+                                                                        [ paddingXY 8 5
+                                                                        , Font.color modelData.primaryColor
                                                                         , Font.heavy
-                                                                        , Font.underline
-                                                                        , Font.size 22
                                                                         ]
-                                                                        (text "Error")
-                                                                    , br
+                                                                        (text "ON")
                                                                     , el
-                                                                        [ centerX
-                                                                        , Font.light
-                                                                        , Font.size 18
+                                                                        [ Background.color modelData.primaryColor
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.secondaryColor
+                                                                        , paddingXY 8 5
                                                                         ]
-                                                                        (text (Localizations.manualLatitudeAndLongitudeError modelData.language err))
+                                                                        (text "OFF")
                                                                     ]
-                                                                , el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
-                                                                ]
 
-                                                        Nothing ->
-                                                            none
-
-                                                    --   Latitude and Longitude form
-                                                    , row
-                                                        [ paddingEach
-                                                            { top = 8
-                                                            , bottom = 15
-                                                            , left = 15
-                                                            , right = 15
-                                                            }
-                                                        , width fill
-                                                        , spacing 24
-                                                        ]
-                                                        [ Input.text
-                                                            [ width fill
-                                                            , Background.color modelData.primaryColor
-                                                            , Font.color modelData.secondaryColor
-                                                            ]
-                                                            { onChange = OnChangeLatitude
-                                                            , text = manualCoordinates.latitude
-                                                            , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.latitude)))
-                                                            , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.latitude modelData.language ++ ":"))
-                                                            }
-                                                        , Input.text
-                                                            [ width fill
-                                                            , Background.color modelData.primaryColor
-                                                            , Font.color modelData.secondaryColor
-                                                            ]
-                                                            { onChange = OnChangeLongitude
-                                                            , text = manualCoordinates.longitude
-                                                            , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.longitude)))
-                                                            , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.longitude modelData.language ++ ":"))
-                                                            }
-                                                        ]
-                                                    , row
-                                                        [ width fill
-                                                        , Font.color modelData.primaryColor
-                                                        ]
-                                                        [ button
-                                                            [ paddingXY 24 12
-                                                            , Font.center
-                                                            , Font.bold
-                                                            , Font.size 22
-                                                            , width fill
-                                                            ]
-                                                            { label = text (Localizations.cancel modelData.language), onPress = Just CancelManualForm }
-                                                        , el [ width (px 1), height fill, Background.color modelData.primaryColor ] none
-                                                        , button
-                                                            [ paddingXY 24 12
-                                                            , Font.center
-                                                            , Font.bold
-                                                            , Font.size 22
-                                                            , width fill
-                                                            ]
-                                                            { label = text (Localizations.confirm modelData.language), onPress = Just SubmitManualLocationForm }
-                                                        ]
-                                                    ]
-
-                                            Nothing ->
-                                                none
-                                        , divider
-                                        , button [ width fill ]
-                                            { label =
-                                                row
-                                                    [ width fill
-                                                    , height (px 52)
-                                                    , paddingX 15
-                                                    ]
-                                                    [ el
-                                                        [ width fill
-                                                        , Font.color modelData.primaryColor
-                                                        , Font.heavy
-                                                        ]
-                                                        (text (Localizations.languagePicker modelData.language))
-                                                    , case modelData.language of
-                                                        English ->
-                                                            row
-                                                                [ Border.color modelData.primaryColor
-                                                                , Border.width 3
-                                                                ]
-                                                                [ el
-                                                                    [ Font.color modelData.primaryColor
-                                                                    , paddingXY 8 5
-                                                                    , Font.heavy
+                                                            FixedCoordinates _ ->
+                                                                row
+                                                                    [ Border.color modelData.primaryColor
+                                                                    , Border.width 3
                                                                     ]
-                                                                    (text "EN")
-                                                                , el
-                                                                    [ Background.color modelData.primaryColor
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.secondaryColor
-                                                                    , paddingXY 8 5
+                                                                    [ el
+                                                                        [ Background.color modelData.primaryColor
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.secondaryColor
+                                                                        , paddingXY 8 5
+                                                                        ]
+                                                                        (text "ON")
+                                                                    , el
+                                                                        [ Font.color modelData.primaryColor
+                                                                        , paddingXY 8 5
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.primaryColor
+                                                                        , centerX
+                                                                        ]
+                                                                        (text "OFF")
                                                                     ]
-                                                                    (text "ES")
-                                                                ]
-
-                                                        Spanish ->
-                                                            row
-                                                                [ Border.color modelData.primaryColor
-                                                                , Border.width 3
-                                                                ]
-                                                                [ el
-                                                                    [ Background.color modelData.primaryColor
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.secondaryColor
-                                                                    , paddingXY 8 5
-                                                                    ]
-                                                                    (text "EN")
-                                                                , el
-                                                                    [ Font.color modelData.primaryColor
-                                                                    , paddingXY 8 5
-                                                                    , Font.heavy
-                                                                    , Font.color modelData.primaryColor
-                                                                    , centerX
-                                                                    ]
-                                                                    (text "ES")
-                                                                ]
-                                                    ]
-                                            , onPress = Just ToggleLanguage
-                                            }
-                                        , divider
-                                        , row [ width fill ]
-                                            [ button
+                                                        ]
+                                                , onPress = Just ToggleGeoLocation
+                                                }
+                                            , row
                                                 [ width fill
-                                                , Font.color modelData.primaryColor
-                                                , padding 15
-                                                , Font.heavy
-                                                , Font.center
+                                                , height (px 52)
+                                                , paddingX 15
                                                 ]
-                                                { label = text "X", onPress = Just CloseOptionsMenu }
-                                            ]
-                                        , divider
-                                        ]
+                                                [ el
+                                                    [ width fill
+                                                    , Font.color modelData.primaryColor
+                                                    , Font.heavy
+                                                    ]
+                                                    (text (Localizations.coordinates modelData.language))
+                                                , case modelData.location of
+                                                    FixedCoordinates coordinates ->
+                                                        button
+                                                            [ Background.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            , Font.color modelData.secondaryColor
+                                                            ]
+                                                            { label =
+                                                                row []
+                                                                    [ el [ paddingXY 5 5 ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
+                                                                    , el [ width (px 2), height fill, Background.color modelData.secondaryColor ] none
+                                                                    , el [ paddingXY 5 5 ] (Icons.edit 22 Inherit |> Element.html)
+                                                                    ]
+                                                            , onPress = Just ShowManualCoordinatesForm
+                                                            }
 
-                                Nothing ->
-                                    none
-                            )
-                        , el [ height fill, noPointerEvents ] none
-                        , el [ autoPointerEvents ]
-                            (if modelData.isOnline then
-                                case modelData.geolocationApiError of
-                                    Just err ->
-                                        column []
-                                            [ el [ width fill, height (px 2), Background.color modelData.primaryColor ] none
-                                            , row [ width fill, Background.color modelData.secondaryColor, Font.size 21, Font.bold ]
-                                                [ paragraph [ padding 8 ]
-                                                    [ el [ Font.heavy ] (text "Error: "), text (Localizations.geoLocationApiError modelData.language err) ]
-                                                , button [ height fill, paddingX 12 ]
-                                                    { label =
-                                                        el [ centerX ]
-                                                            (Icons.close 28 Inherit
-                                                                |> Element.html
-                                                            )
-                                                    , onPress = Just CloseErrorMessage
-                                                    }
+                                                    UsingGeoLocation coordinates ->
+                                                        el [ Font.color modelData.primaryColor, Font.heavy ] (text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude))
                                                 ]
+                                            , case isEnteringManualCoordinates of
+                                                Just manualCoordinates ->
+                                                    column
+                                                        [ centerX
+                                                        , Background.color modelData.secondaryColor
+                                                        , width fill
+                                                        ]
+                                                        [ --  Error message
+                                                          case manualCoordinates.error of
+                                                            Just err ->
+                                                                column [ width fill ]
+                                                                    [ paragraph
+                                                                        [ paddingXY 24 12
+                                                                        , Font.center
+                                                                        , spacing 8
+                                                                        , Font.color modelData.primaryColor
+                                                                        ]
+                                                                        [ el
+                                                                            [ centerX
+                                                                            , Font.heavy
+                                                                            , Font.underline
+                                                                            , Font.size 22
+                                                                            ]
+                                                                            (text "Error")
+                                                                        , br
+                                                                        , el
+                                                                            [ centerX
+                                                                            , Font.light
+                                                                            , Font.size 18
+                                                                            ]
+                                                                            (text (Localizations.manualLatitudeAndLongitudeError modelData.language err))
+                                                                        ]
+                                                                    , el [ width fill, height (px 1), Background.color modelData.primaryColor ] none
+                                                                    ]
+
+                                                            Nothing ->
+                                                                none
+
+                                                        --   Latitude and Longitude form
+                                                        , row
+                                                            [ paddingEach
+                                                                { top = 8
+                                                                , bottom = 15
+                                                                , left = 15
+                                                                , right = 15
+                                                                }
+                                                            , width fill
+                                                            , spacing 24
+                                                            ]
+                                                            [ Input.text
+                                                                [ width fill
+                                                                , Background.color modelData.primaryColor
+                                                                , Font.color modelData.secondaryColor
+                                                                ]
+                                                                { onChange = OnChangeLatitude
+                                                                , text = manualCoordinates.latitude
+                                                                , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.latitude)))
+                                                                , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.latitude modelData.language ++ ":"))
+                                                                }
+                                                            , Input.text
+                                                                [ width fill
+                                                                , Background.color modelData.primaryColor
+                                                                , Font.color modelData.secondaryColor
+                                                                ]
+                                                                { onChange = OnChangeLongitude
+                                                                , text = manualCoordinates.longitude
+                                                                , placeholder = Just (Input.placeholder [] (el [ Font.color modelData.secondaryColor, alpha 0.65 ] (text manualCoordinates.longitude)))
+                                                                , label = Input.labelAbove [ Font.color modelData.primaryColor ] (text (Localizations.longitude modelData.language ++ ":"))
+                                                                }
+                                                            ]
+                                                        , row
+                                                            [ width fill
+                                                            , Font.color modelData.primaryColor
+                                                            ]
+                                                            [ button
+                                                                [ paddingXY 24 12
+                                                                , Font.center
+                                                                , Font.bold
+                                                                , Font.size 22
+                                                                , width fill
+                                                                ]
+                                                                { label = text (Localizations.cancel modelData.language), onPress = Just CancelManualForm }
+                                                            , el [ width (px 1), height fill, Background.color modelData.primaryColor ] none
+                                                            , button
+                                                                [ paddingXY 24 12
+                                                                , Font.center
+                                                                , Font.bold
+                                                                , Font.size 22
+                                                                , width fill
+                                                                ]
+                                                                { label = text (Localizations.confirm modelData.language), onPress = Just SubmitManualLocationForm }
+                                                            ]
+                                                        ]
+
+                                                Nothing ->
+                                                    none
+                                            , divider
+                                            , button [ width fill ]
+                                                { label =
+                                                    row
+                                                        [ width fill
+                                                        , height (px 52)
+                                                        , paddingX 15
+                                                        ]
+                                                        [ el
+                                                            [ width fill
+                                                            , Font.color modelData.primaryColor
+                                                            , Font.heavy
+                                                            ]
+                                                            (text (Localizations.languagePicker modelData.language))
+                                                        , case modelData.language of
+                                                            English ->
+                                                                row
+                                                                    [ Border.color modelData.primaryColor
+                                                                    , Border.width 3
+                                                                    ]
+                                                                    [ el
+                                                                        [ Font.color modelData.primaryColor
+                                                                        , paddingXY 8 5
+                                                                        , Font.heavy
+                                                                        ]
+                                                                        (text "EN")
+                                                                    , el
+                                                                        [ Background.color modelData.primaryColor
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.secondaryColor
+                                                                        , paddingXY 8 5
+                                                                        ]
+                                                                        (text "ES")
+                                                                    ]
+
+                                                            Spanish ->
+                                                                row
+                                                                    [ Border.color modelData.primaryColor
+                                                                    , Border.width 3
+                                                                    ]
+                                                                    [ el
+                                                                        [ Background.color modelData.primaryColor
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.secondaryColor
+                                                                        , paddingXY 8 5
+                                                                        ]
+                                                                        (text "EN")
+                                                                    , el
+                                                                        [ Font.color modelData.primaryColor
+                                                                        , paddingXY 8 5
+                                                                        , Font.heavy
+                                                                        , Font.color modelData.primaryColor
+                                                                        , centerX
+                                                                        ]
+                                                                        (text "ES")
+                                                                    ]
+                                                        ]
+                                                , onPress = Just ToggleLanguage
+                                                }
+                                            , divider
+                                            , row [ width fill ]
+                                                [ button
+                                                    [ width fill
+                                                    , Font.color modelData.primaryColor
+                                                    , padding 15
+                                                    , Font.heavy
+                                                    , Font.center
+                                                    ]
+                                                    { label = text "X", onPress = Just CloseOptionsMenu }
+                                                ]
+                                            , divider
                                             ]
 
                                     Nothing ->
                                         none
+                                )
+                            , el [ height fill, noPointerEvents ] none
+                            , el [ autoPointerEvents, width fill ]
+                                (if modelData.isOnline then
+                                    case modelData.geolocationApiError of
+                                        Just err ->
+                                            column []
+                                                [ el [ width fill, height (px 2), Background.color modelData.primaryColor ] none
+                                                , row [ width fill, Background.color modelData.secondaryColor, Font.size 21, Font.bold ]
+                                                    [ paragraph [ padding 8 ]
+                                                        [ el [ Font.heavy ] (text "Error: "), text (Localizations.geoLocationApiError modelData.language err) ]
+                                                    , button [ height fill, paddingX 12 ]
+                                                        { label =
+                                                            el [ centerX ]
+                                                                (Icons.close 28 Inherit
+                                                                    |> Element.html
+                                                                )
+                                                        , onPress = Just CloseErrorMessage
+                                                        }
+                                                    ]
+                                                ]
 
-                             else
-                                row [ width fill, Background.color modelData.secondaryColor, padding 8, Font.size 21, Font.bold ]
-                                    [ paragraph []
-                                        [ text (Localizations.noInternet modelData.language) ]
-                                    , Icons.wifi_off 28 Inherit
-                                        |> Element.html
-                                    ]
-                            )
-                        ]
-                        |> Element.map OnMainScreenMsg
+                                        Nothing ->
+                                            none
 
-                ThemePickerScreen _ ->
-                    none
-
-                LoadingScreen _ ->
-                    none
-
-                WelcomeScreen noLocationDataModel ->
-                    if noLocationDataModel.geoLocationApiError /= "" then
-                        paragraph
-                            [ Background.color defaultSecondary
-                            , Font.color defaultPrimary
-                            , Font.bold
-                            , paddingXY 24 12
-                            , Font.size 22
+                                 else
+                                    row [ width fill, Background.color modelData.secondaryColor, padding 8, Font.size 21, Font.bold ]
+                                        [ paragraph []
+                                            [ text (Localizations.noInternet modelData.language) ]
+                                        , Icons.wifi_off 28 Inherit
+                                            |> Element.html
+                                        ]
+                                )
                             ]
-                            [ text "Error: ", el [ Font.light ] (text noLocationDataModel.geoLocationApiError) ]
+                            |> Element.map OnMainScreenMsg
 
-                    else
+                    ThemePickerScreen _ ->
                         none
+
+                    LoadingScreen _ ->
+                        none
+
+                    WelcomeScreen noLocationDataModel ->
+                        if noLocationDataModel.geoLocationApiError /= "" then
+                            paragraph
+                                [ Background.color defaultSecondary
+                                , Font.color defaultPrimary
+                                , Font.bold
+                                , paddingXY 24 12
+                                , Font.size 22
+                                ]
+                                [ text "Error: ", el [ Font.light ] (text noLocationDataModel.geoLocationApiError) ]
+
+                        else
+                            none
+                )
             )
         ]
-        (case model of
-            WelcomeScreen m ->
-                Welcome.welcomeScreenView m
-                    |> Element.map OnWelcomeScreenMsg
+        (el
+            [ centerX, width (fill |> maximum maxAppWidth), height fill ]
+            (case model of
+                WelcomeScreen m ->
+                    Welcome.welcomeScreenView m
+                        |> Element.map OnWelcomeScreenMsg
 
-            LoadingScreen m ->
-                loadingScreenView m
+                LoadingScreen m ->
+                    loadingScreenView m
 
-            MainScreen m ->
-                mainScreen m |> Element.map OnMainScreenMsg
+                MainScreen m ->
+                    mainScreen m |> Element.map OnMainScreenMsg
 
-            ThemePickerScreen m ->
-                ThemePicker.themePickerView m |> Element.map OnThemePickerScreenMsg
+                ThemePickerScreen m ->
+                    ThemePicker.themePickerView m |> Element.map OnThemePickerScreenMsg
+            )
         )
 
 
