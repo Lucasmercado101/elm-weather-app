@@ -980,22 +980,21 @@ view model =
                                     Nothing ->
                                         none
                                 , divider
-                                , row
-                                    [ width fill
-                                    , height (px 52)
-                                    , paddingX 15
-                                    ]
-                                    [ el
-                                        [ width fill
-                                        , Font.color modelData.primaryColor
-                                        , Font.heavy
-                                        ]
-                                        (text (Localizations.languagePicker modelData.language))
-                                    , button
-                                        []
-                                        (case modelData.language of
-                                            English ->
-                                                { label =
+                                , button [ width fill ]
+                                    { label =
+                                        row
+                                            [ width fill
+                                            , height (px 52)
+                                            , paddingX 15
+                                            ]
+                                            [ el
+                                                [ width fill
+                                                , Font.color modelData.primaryColor
+                                                , Font.heavy
+                                                ]
+                                                (text (Localizations.languagePicker modelData.language))
+                                            , case modelData.language of
+                                                English ->
                                                     row
                                                         [ Border.color modelData.primaryColor
                                                         , Border.width 3
@@ -1014,11 +1013,8 @@ view model =
                                                             ]
                                                             (text "ES")
                                                         ]
-                                                , onPress = Just ToggleLanguage
-                                                }
 
-                                            Spanish ->
-                                                { label =
+                                                Spanish ->
                                                     row
                                                         [ Border.color modelData.primaryColor
                                                         , Border.width 3
@@ -1039,10 +1035,9 @@ view model =
                                                             ]
                                                             (text "ES")
                                                         ]
-                                                , onPress = Just ToggleLanguage
-                                                }
-                                        )
-                                    ]
+                                            ]
+                                    , onPress = Just ToggleLanguage
+                                    }
                                 , divider
                                 , row [ width fill ]
                                     [ button
