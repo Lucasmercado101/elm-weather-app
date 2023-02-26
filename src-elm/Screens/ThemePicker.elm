@@ -210,10 +210,11 @@ themePickerUpdate msg model =
                     case model.customThemes of
                         Just themes ->
                             Ports.saveCustomThemes
-                                [ ( ( primaryColors.red, primaryColors.green, primaryColors.blue )
-                                  , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
-                                  )
-                                ]
+                                (( ( primaryColors.red, primaryColors.green, primaryColors.blue )
+                                 , ( secondaryColors.red, secondaryColors.green, secondaryColors.blue )
+                                 )
+                                    :: customThemesToPort themes
+                                )
 
                         Nothing ->
                             Ports.saveCustomThemes
@@ -613,6 +614,28 @@ addCustomTheme themes theme =
 
     else
         NEList.cons theme themes
+
+
+customThemesToPort : CustomThemes -> List ( RGB, RGB )
+customThemesToPort themes =
+    themes
+        |> NEList.toList
+        |> List.map
+            (\( a, b ) ->
+                let
+                    primary =
+                        Element.toRgb a
+
+                    secondary =
+                        Element.toRgb b
+                in
+                ( ( primary.red, primary.green, primary.blue )
+                , ( secondary.red
+                  , secondary.green
+                  , secondary.blue
+                  )
+                )
+            )
 
 
 {-| Add element to the tail of the list
