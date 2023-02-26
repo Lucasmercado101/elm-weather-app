@@ -40,7 +40,7 @@ type ElmFlags =
 type colorTuple = [number, number, number];
 type themeTuple = [colorTuple, colorTuple];
 
-type SignalSenderPort = { send: () => void };
+type SignalSenderPort = { send: (data: null) => void };
 type DataSenderPort<T> = { send: (data: T) => void };
 type DataReceiverPort<T> = { subscribe(cb: (data: T) => void) };
 type SignalReceiverPort = { subscribe(cb: () => void) };
@@ -56,6 +56,9 @@ interface ElmApp {
       errorObtainingCurrentPosition["code"]
     >;
     noGeoLocationApiAvailableReceiver: SignalSenderPort;
+    wentOffline: SignalSenderPort;
+    wentOnline: SignalSenderPort;
+    checkIfIsOnline: SignalReceiverPort;
   };
 }
 

@@ -1,4 +1,15 @@
-port module Ports exposing (changedTheme, errorObtainingCurrentPosition, locationReceiver, noGeoLocationApiAvailableReceiver, notUsingGeo, requestLoc, saveCustomThemes)
+port module Ports exposing
+    ( changedTheme
+    , checkIfOnline
+    , errorObtainingCurrentPosition
+    , locationReceiver
+    , noGeoLocationApiAvailableReceiver
+    , notUsingGeo
+    , requestLoc
+    , saveCustomThemes
+    , wentOffline
+    , wentOnline
+    )
 
 import Utils exposing (RGB)
 
@@ -38,3 +49,17 @@ port setNotUsingGeoLocation : () -> Cmd msg
 notUsingGeo : Cmd msg
 notUsingGeo =
     setNotUsingGeoLocation ()
+
+
+port wentOnline : (() -> msg) -> Sub msg
+
+
+port wentOffline : (() -> msg) -> Sub msg
+
+
+port checkIfIsOnline : () -> Cmd msg
+
+
+checkIfOnline : Cmd msg
+checkIfOnline =
+    checkIfIsOnline ()

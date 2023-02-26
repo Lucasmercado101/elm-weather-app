@@ -39,6 +39,8 @@ subscriptions model =
                 [ Ports.locationReceiver ReceivedGeoLocation
                 , Ports.errorObtainingCurrentPosition RequestLocationPermsApiError
                 , Ports.noGeoLocationApiAvailableReceiver (\_ -> NoGeoLocationApi)
+                , Ports.wentOffline (\_ -> WentOffline)
+                , Ports.wentOnline (\_ -> WentOnline)
                 , animator |> Animator.toSubscription Tick modelData
                 ]
                 |> Sub.map OnMainScreenMsg
@@ -97,6 +99,7 @@ type alias MainScreenModel =
     , zone : Maybe Zone
     , language : Language
     , customThemes : Maybe (Nonempty Theme)
+    , isOnline : Bool
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -141,6 +144,8 @@ type MainScreenMsg
     | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
     | GoToThemePickerScreen
+    | WentOnline
+    | WentOffline
       -- Options menu
     | OpenOptionsMenu
     | CloseOptionsMenu
@@ -222,6 +227,9 @@ init val =
                       , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
 
+                      --  TODO:
+                      , isOnline = True
+
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
                       -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
@@ -267,6 +275,9 @@ init val =
                       , optionMenu = Nothing
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
+
+                      --  TODO:
+                      , isOnline = True
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -350,6 +361,7 @@ update topMsg topModel =
                                 , optionMenu = Nothing
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
+                                , isOnline = True
                                 }
                             , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
                                 |> Cmd.map OnMainScreenMsg
@@ -368,6 +380,16 @@ update topMsg topModel =
             case msg of
                 Tick newTime ->
                     (model |> Animator.update newTime animator)
+                        |> pure
+                        |> mapToMainScreen
+
+                WentOnline ->
+                    { model | isOnline = True }
+                        |> pure
+                        |> mapToMainScreen
+
+                WentOffline ->
+                    { model | isOnline = False }
                         |> pure
                         |> mapToMainScreen
 
@@ -683,7 +705,7 @@ update topMsg topModel =
                                 ( primary, secondary ) =
                                     a.currentTheme
                             in
-                            MainScreen
+                            ( MainScreen
                                 { apiData = a.apiData
                                 , currentRefetchingStatus = NotRefetching
                                 , currentRefetchingAnim = Animator.init NotRefetching
@@ -696,8 +718,12 @@ update topMsg topModel =
                                 , currentAddress = a.currentAddress
                                 , countryAndStateVisibility = Animator.init True
                                 , zone = Just a.zone
+
+                                -- NOTE: immediately check
+                                , isOnline = True
                                 }
-                                |> pure
+                            , Ports.checkIfOnline
+                            )
 
                         else
                             ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg )
@@ -1372,13 +1398,24 @@ mainScreen model =
         [ width fill
         , height fill
         , Background.color model.primaryColor
-        , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
+        , paddingEach { top = 0, bottom = 16, left = 0, right = 0 }
         ]
         (column
             [ width fill
             , height fill
             ]
-            [ row [ width fill, paddingBottom 15 ]
+            [ if model.isOnline then
+                none
+
+              else
+                row [ width fill, Background.color model.secondaryColor, padding 8, Font.size 21 ]
+                    [ paragraph []
+                        [ text "You are offline."
+                        ]
+                    , Icons.wifi_off 28 Inherit
+                        |> Element.html
+                    ]
+            , row [ width fill, paddingY 15 ]
                 [ -- Refresh Button
                   button
                     [ padding 15

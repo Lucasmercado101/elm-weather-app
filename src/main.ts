@@ -105,6 +105,23 @@ try {
   main(freshAppStart());
 }
 function main(app: ElmApp) {
+  if (navigator.onLine) {
+    app.ports.wentOnline.send(null);
+  } else {
+    app.ports.wentOffline.send(null);
+  }
+
+  window.addEventListener("online", () => app.ports.wentOnline.send(null));
+  window.addEventListener("offline", () => app.ports.wentOffline.send(null));
+
+  app.ports.checkIfIsOnline.subscribe(() => {
+    if (navigator.onLine) {
+      app.ports.wentOnline.send(null);
+    } else {
+      app.ports.wentOffline.send(null);
+    }
+  });
+
   app.ports.requestLocation.subscribe(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -117,7 +134,7 @@ function main(app: ElmApp) {
         (error) => app.ports.errorObtainingCurrentPosition.send(error.code)
       );
     } else {
-      app.ports.noGeoLocationApiAvailableReceiver.send();
+      app.ports.noGeoLocationApiAvailableReceiver.send(null);
     }
   });
 
