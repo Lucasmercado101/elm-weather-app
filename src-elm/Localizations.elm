@@ -431,3 +431,13 @@ noInternet lang =
 
         Spanish ->
             "Sin conexión a internet"
+
+
+deviceDoesNotSupportGeolocation : Language -> String
+deviceDoesNotSupportGeolocation lang =
+    case lang of
+        English ->
+            "Your device doesn't support geolocation"
+
+        Spanish ->
+            "Su dispositivo no soporta geolocalización"

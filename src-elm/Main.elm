@@ -94,7 +94,7 @@ type alias MainScreenModel =
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , primaryColor : Color
     , secondaryColor : Color
-    , optionMenu : Maybe ( Maybe EnteringManualCoordinates, Maybe GeoLocationApiError )
+    , optionMenu : Maybe ( Maybe EnteringManualCoordinates, Maybe String )
     , location : Location
     , zone : Maybe Zone
     , language : Language
@@ -606,7 +606,7 @@ update topMsg topModel =
                 RequestLocationPermsApiError err ->
                     case model.optionMenu of
                         Just ( manuallyCoords, _ ) ->
-                            { model | optionMenu = Just ( manuallyCoords, Just (codeToGeoLocationApiError err) ) }
+                            { model | optionMenu = Just ( manuallyCoords, Just (Localizations.geoLocationApiError model.language (codeToGeoLocationApiError err) ++ ".") ) }
                                 |> pure
                                 |> mapToMainScreen
 
@@ -616,12 +616,16 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 NoGeoLocationApi ->
-                    -- NOTE: prevent the user from changing the
-                    -- Geolocation perms in the future as they
-                    -- don't have a Geolocation api?
-                    model
-                        |> pure
-                        |> mapToMainScreen
+                    case model.optionMenu of
+                        Just ( manuallyCoords, _ ) ->
+                            { model | optionMenu = Just ( manuallyCoords, Just (Localizations.deviceDoesNotSupportGeolocation model.language ++ ".") ) }
+                                |> pure
+                                |> mapToMainScreen
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
 
                 -- Background refetching
                 GotCountryAndStateMainScreen countryAndState ->
@@ -807,7 +811,7 @@ view model =
                                             , Background.color modelData.primaryColor
                                             ]
                                             [ el [ Font.heavy ] (text "Error: ")
-                                            , text (Localizations.geoLocationApiError modelData.language err ++ ".")
+                                            , text err
                                             ]
 
                                     Nothing ->
