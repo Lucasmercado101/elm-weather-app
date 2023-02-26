@@ -8,7 +8,7 @@ import Utils exposing (Theme)
 
 
 type Flags
-    = LanguageOnly String
+    = Initial { language : String, timezone : String }
     | CachedWeatherData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
@@ -16,6 +16,7 @@ type Flags
         , language : String
         , theme : Maybe Theme
         , customThemes : Maybe (Nonempty Theme)
+        , timezone : String
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
@@ -29,6 +30,7 @@ type Flags
         , language : String
         , theme : Maybe Theme
         , customThemes : Maybe (Nonempty Theme)
+        , timezone : String
         }
 
 
@@ -105,15 +107,23 @@ customThemeColorsDecoder =
             )
 
 
-languageOnlyDecoder : Decoder Flags
-languageOnlyDecoder =
-    string |> map LanguageOnly
+initialFlagDecoder : Decoder Flags
+initialFlagDecoder =
+    map2
+        (\language timezone ->
+            Initial
+                { language = language
+                , timezone = timezone
+                }
+        )
+        (field "language" string)
+        (field "timezone" string)
 
 
 cachedWeatherDataFlagDecoder : Decoder Flags
 cachedWeatherDataFlagDecoder =
-    map6
-        (\time weatherData usingGeo language theme customThemes ->
+    map7
+        (\time weatherData usingGeo language theme customThemes timezone ->
             CachedWeatherData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
@@ -121,6 +131,7 @@ cachedWeatherDataFlagDecoder =
                 , language = language
                 , theme = theme
                 , customThemes = customThemes
+                , timezone = timezone
                 }
         )
         (field "posixTimeNow" int)
@@ -129,6 +140,7 @@ cachedWeatherDataFlagDecoder =
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
         (maybe (field "customThemes" customThemeColorsDecoder))
+        (field "timezone" string)
 
 
 cachedWeatherAndAddressDataDecoder : Decoder Flags
@@ -142,8 +154,8 @@ cachedWeatherAndAddressDataDecoder =
             else
                 Just v
     in
-    map7
-        (\time weatherData addressData usingGeo language theme customThemes ->
+    map8
+        (\time weatherData addressData usingGeo language theme customThemes timezone ->
             CachedWeatherAndAddressData
                 { posixTimeNow = time
                 , cachedWeatherData = weatherData
@@ -152,6 +164,7 @@ cachedWeatherAndAddressDataDecoder =
                 , language = language
                 , theme = theme
                 , customThemes = customThemes
+                , timezone = timezone
                 }
         )
         (field "posixTimeNow" int)
@@ -167,6 +180,7 @@ cachedWeatherAndAddressDataDecoder =
         (field "language" string)
         (maybe (field "theme" themeColorsDecoder))
         (maybe (field "customThemes" customThemeColorsDecoder))
+        (field "timezone" string)
 
 
 flagsDecoders : Value -> Result Error Flags
@@ -175,7 +189,7 @@ flagsDecoders value =
         (oneOf
             [ cachedWeatherAndAddressDataDecoder
             , cachedWeatherDataFlagDecoder
-            , languageOnlyDecoder
+            , initialFlagDecoder
             ]
         )
         value

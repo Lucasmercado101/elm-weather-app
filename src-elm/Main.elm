@@ -5,7 +5,8 @@ import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, es
 import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
-import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, htmlAttribute, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Dict
+import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -24,6 +25,7 @@ import Ports
 import Screens.ThemePicker as ThemePicker
 import Screens.Welcome as Welcome
 import Time exposing (Posix, Zone)
+import TimeZone
 import Utils exposing (..)
 
 
@@ -96,7 +98,7 @@ type alias MainScreenModel =
     , secondaryColor : Color
     , optionMenu : Maybe ( Maybe EnteringManualCoordinates, Maybe String )
     , location : Location
-    , zone : Maybe Zone
+    , zone : Zone
     , language : Language
     , customThemes : Maybe (Nonempty Theme)
     , isOnline : Bool
@@ -205,9 +207,10 @@ init val =
                     , location : Location
                     , primaryColor : Color
                     , secondaryColor : Color
+                    , zone : Time.Zone
                     }
                     -> MainScreenModel
-                mainDefaults { apiData, currentAddress, customThemes, language, location, primaryColor, secondaryColor } =
+                mainDefaults { apiData, currentAddress, customThemes, language, location, primaryColor, secondaryColor, zone } =
                     { apiData = apiData
                     , currentAddress = currentAddress
                     , customThemes = customThemes
@@ -215,24 +218,21 @@ init val =
                     , location = location
                     , primaryColor = primaryColor
                     , secondaryColor = secondaryColor
+                    , zone = zone
+
+                    --
                     , geolocationApiError = Nothing
-                    , --
-                      currentRefetchingStatus = Refetching
+                    , currentRefetchingStatus = Refetching
                     , currentRefetchingAnim = Animator.init Refetching
                     , optionMenu = Nothing
                     , countryAndStateVisibility = Animator.init True
 
                     --  NOTE: JS immediately checks if online or offline
                     , isOnline = True
-
-                    -- TODO: handle zone, when refreshing there's no good initial value
-                    -- TODO: send zone when I have it and cache it
-                    -- and get it from init https://package.elm-lang.org/packages/justinmimbs/timezone-data/latest/TimeZone#zones
-                    , zone = Just Time.utc
                     }
             in
             case flags of
-                Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, addressData, usingGeoLocation, language, theme, customThemes } ->
+                Flags.CachedWeatherAndAddressData { cachedWeatherData, posixTimeNow, addressData, usingGeoLocation, language, theme, customThemes, timezone } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -257,6 +257,11 @@ init val =
                       , secondaryColor = secondaryColor
                       , currentAddress = Just addressData
                       , customThemes = customThemes
+                      , zone =
+                            TimeZone.zones
+                                |> Dict.get timezone
+                                |> Maybe.map (\l -> l ())
+                                |> Maybe.withDefault Time.utc
                       }
                         |> mainDefaults
                     , if usingGeoLocation then
@@ -270,7 +275,7 @@ init val =
                     )
                         |> mapToMainScreen
 
-                Flags.CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme, customThemes } ->
+                Flags.CachedWeatherData { cachedWeatherData, posixTimeNow, usingGeoLocation, language, theme, customThemes, timezone } ->
                     let
                         { latitude, longitude } =
                             cachedWeatherData
@@ -295,6 +300,11 @@ init val =
                       , secondaryColor = secondaryColor
                       , customThemes = customThemes
                       , currentAddress = Nothing
+                      , zone =
+                            TimeZone.zones
+                                |> Dict.get timezone
+                                |> Maybe.map (\l -> l ())
+                                |> Maybe.withDefault Time.utc
                       }
                         |> mainDefaults
                     , if usingGeoLocation then
@@ -308,12 +318,20 @@ init val =
                     )
                         |> mapToMainScreen
 
-                Flags.LanguageOnly language ->
-                    WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
+                Flags.Initial { language, timezone } ->
+                    WelcomeScreen
+                        (Welcome.welcomeScreenInit (langParse language)
+                            (TimeZone.zones
+                                |> Dict.get timezone
+                                |> Maybe.map (\l -> l ())
+                                |> Maybe.withDefault Time.utc
+                            )
+                        )
+                        |> pure
 
         Err _ ->
-            -- NOTE: this will not happen unless i screw up the flags
-            WelcomeScreen (Welcome.welcomeScreenInit English)
+            -- NOTE: this will never happen unless the flags are screwed up
+            WelcomeScreen (Welcome.welcomeScreenInit English Time.utc)
                 |> pure
 
 
@@ -363,13 +381,13 @@ update topMsg topModel =
                                 , language = model.language
                                 , customThemes = Nothing
                                 , geolocationApiError = Nothing
+                                , zone = zone
                                 , location =
                                     if model.isUsingGeoLocation then
                                         UsingGeoLocation model.coordinates
 
                                     else
                                         FixedCoordinates model.coordinates
-                                , zone = Just zone
                                 , primaryColor = defaultPrimary
                                 , secondaryColor = defaultSecondary
                                 , optionMenu = Nothing
@@ -414,16 +432,9 @@ update topMsg topModel =
 
                 -- Options menu
                 GoToThemePickerScreen ->
-                    case model.zone of
-                        Just zone ->
-                            ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor ) zone model.location model.apiData model.currentAddress model.customThemes
-                                |> pure
-                                |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
-
-                        Nothing ->
-                            model
-                                |> pure
-                                |> mapToMainScreen
+                    ThemePicker.themePickerInit model.language ( model.primaryColor, model.secondaryColor ) model.zone model.location model.apiData model.currentAddress model.customThemes
+                        |> pure
+                        |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
 
                 ToggleLanguage ->
                     { model
@@ -716,7 +727,7 @@ update topMsg topModel =
                                     model.currentRefetchingAnim
                                         |> Animator.go Animator.immediately NotRefetching
                                 , currentRefetchingStatus = NotRefetching
-                                , zone = Just zone
+                                , zone = zone
                             }
 
                         Err _ ->
@@ -751,7 +762,7 @@ update topMsg topModel =
                                 , geolocationApiError = Nothing
                                 , currentAddress = a.currentAddress
                                 , countryAndStateVisibility = Animator.init True
-                                , zone = Just a.zone
+                                , zone = a.zone
 
                                 -- NOTE: immediately check
                                 , isOnline = True
@@ -1224,18 +1235,11 @@ loadingScreenView { fetchingStatus } =
 
 
 mainScreen : MainScreenModel -> Element MainScreenMsg
-mainScreen model =
+mainScreen ({ zone } as model) =
     let
         hasHourlyDataOfToday : Maybe (Nonempty Hourly)
         hasHourlyDataOfToday =
             apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList
-
-        -- NOTE: this is just accounting for the brief moment
-        -- if and when I don't have the user's time zone
-        -- TODO: could be made better by cache through flags
-        zone : Time.Zone
-        zone =
-            Maybe.withDefault Time.utc model.zone
 
         ( apiData, currentTime ) =
             model.apiData

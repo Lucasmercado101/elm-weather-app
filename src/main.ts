@@ -36,7 +36,10 @@ const startAppWFlags = (flags: ElmFlags) =>
 const freshAppStart = () =>
   Elm.Main.init({
     node: document.getElementById("root"),
-    flags: navigator.language || (navigator as any).userLanguage
+    flags: {
+      language: navigator.language || (navigator as any).userLanguage,
+      timezone: timeZone
+    } satisfies ElmFlags
   });
 
 const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
@@ -48,6 +51,7 @@ const usingGeo = localStorage.getItem(localStorageKeys.USING_GEOLOCATION);
 let parsedTheme: any = null;
 let parsedCustomThemes: any = null;
 let usingGeoLocation: boolean = false;
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 try {
   if (theme) {
@@ -80,7 +84,8 @@ try {
         usingGeoLocation: usingGeoLocation,
         language: navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
-        customThemes: parsedCustomThemes
+        customThemes: parsedCustomThemes,
+        timezone: timeZone
       })
     );
   } else if (cachedWeatherData) {
@@ -92,7 +97,8 @@ try {
         usingGeoLocation: usingGeoLocation,
         language: navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
-        customThemes: parsedCustomThemes
+        customThemes: parsedCustomThemes,
+        timezone: timeZone
       })
     );
   } else {
@@ -104,6 +110,7 @@ try {
   // i.e: undefined.country
   main(freshAppStart());
 }
+
 function main(app: ElmApp) {
   if (navigator.onLine) {
     app.ports.wentOnline.send(null);
@@ -121,7 +128,6 @@ function main(app: ElmApp) {
       app.ports.wentOffline.send(null);
     }
   });
-
   app.ports.requestLocation.subscribe(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(

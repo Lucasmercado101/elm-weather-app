@@ -7,12 +7,14 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Localizations exposing (Language)
 import Ports exposing (..)
+import Time
 import Utils exposing (..)
 
 
 type alias WelcomeScreenModel =
     { geoLocationApiError : String
     , language : Language
+    , timezone : Time.Zone
 
     -- manual location form
     , manualLocation : ( String, String )
@@ -44,12 +46,13 @@ welcomeScreenSubscriptions _ =
         ]
 
 
-welcomeScreenInit : Language -> WelcomeScreenModel
-welcomeScreenInit lang =
+welcomeScreenInit : Language -> Time.Zone -> WelcomeScreenModel
+welcomeScreenInit lang timezone =
     { geoLocationApiError = ""
     , receivedLocation = Nothing
     , usingGeoLocation = False
     , language = lang
+    , timezone = timezone
 
     --
     , manualLocation = ( "", "" )

@@ -29,7 +29,10 @@ const startAppWFlags = (flags) => Elm.Main.init({
 });
 const freshAppStart = () => Elm.Main.init({
     node: document.getElementById("root"),
-    flags: navigator.language || navigator.userLanguage
+    flags: {
+        language: navigator.language || navigator.userLanguage,
+        timezone: timeZone
+    }
 });
 const cachedWeatherData = localStorage.getItem("WEATHER_DATA");
 const cachedAddressData = localStorage.getItem("ADDRESS_DATA");
@@ -39,6 +42,7 @@ const usingGeo = localStorage.getItem("USING_GEOLOCATION");
 let parsedTheme = null;
 let parsedCustomThemes = null;
 let usingGeoLocation = false;
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 try {
     if (theme) {
         parsedTheme = JSON.parse(theme);
@@ -67,7 +71,8 @@ try {
             usingGeoLocation: usingGeoLocation,
             language: navigator.language || navigator.userLanguage,
             theme: parsedTheme,
-            customThemes: parsedCustomThemes
+            customThemes: parsedCustomThemes,
+            timezone: timeZone
         }));
     }
     else if (cachedWeatherData) {
@@ -78,7 +83,8 @@ try {
             usingGeoLocation: usingGeoLocation,
             language: navigator.language || navigator.userLanguage,
             theme: parsedTheme,
-            customThemes: parsedCustomThemes
+            customThemes: parsedCustomThemes,
+            timezone: timeZone
         }));
     }
     else {
