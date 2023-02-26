@@ -190,19 +190,6 @@ codeToGeoLocationApiError code =
             Timeout
 
 
-geoLocationApiErrorToString : GeoLocationApiError -> String
-geoLocationApiErrorToString error =
-    case error of
-        PermissionDenied ->
-            "Permission to access location information was denied"
-
-        PositionUnavailable ->
-            "The location information is unavailable"
-
-        Timeout ->
-            "The request to get user location timed out"
-
-
 type InitialWebRequest b
     = Loading
     | Failure b

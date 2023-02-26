@@ -2,7 +2,7 @@ module Localizations exposing (..)
 
 import Element exposing (Element, none, text)
 import Time exposing (Month(..), Weekday(..))
-import Utils exposing (dayToString, monthToString)
+import Utils exposing (GeoLocationApiError(..), dayToString, monthToString)
 
 
 type Language
@@ -395,3 +395,29 @@ themes lang =
 
         Spanish ->
             "Temas"
+
+
+geoLocationApiError : Language -> GeoLocationApiError -> String
+geoLocationApiError lang error =
+    case lang of
+        English ->
+            case error of
+                PermissionDenied ->
+                    "Permission to access location was denied"
+
+                PositionUnavailable ->
+                    "The location information is unavailable"
+
+                Timeout ->
+                    "The request to get user location timed out"
+
+        Spanish ->
+            case error of
+                PermissionDenied ->
+                    "Permiso para acceder a la ubicación denegado"
+
+                PositionUnavailable ->
+                    "La información de ubicación no está disponible"
+
+                Timeout ->
+                    "La solicitud para obtener la ubicación del usuario ha expirado"

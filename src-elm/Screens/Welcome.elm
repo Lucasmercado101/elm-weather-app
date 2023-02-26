@@ -85,7 +85,7 @@ welcomeScreenUpdate msg model =
                 | geoLocationApiError =
                     err
                         |> codeToGeoLocationApiError
-                        |> geoLocationApiErrorToString
+                        |> Localizations.geoLocationApiError model.language
             }
                 |> pure
 

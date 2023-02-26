@@ -102,6 +102,7 @@ type alias MainScreenModel =
     , zone : Maybe Zone
     , language : Language
     , customThemes : Maybe (Nonempty Theme)
+    , geolocationApiError : Maybe GeoLocationApiError
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -226,6 +227,7 @@ init val =
                       , currentAddress = Just addressData
                       , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
+                      , geolocationApiError = Nothing
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -272,6 +274,7 @@ init val =
                       , optionMenu = Closed
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
+                      , geolocationApiError = Nothing
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -355,6 +358,7 @@ update topMsg topModel =
                                 , optionMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
+                                , geolocationApiError = Nothing
                                 }
                             , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
                                 |> Cmd.map OnMainScreenMsg
@@ -403,7 +407,7 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 OpenOptionsMenu ->
-                    { model | optionMenu = Open Nothing }
+                    { model | optionMenu = Open Nothing, geolocationApiError = Nothing }
                         |> pure
                         |> mapToMainScreen
 
@@ -563,13 +567,11 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                         FixedCoordinates _ ->
-                            -- NOTE: not doing something with the error on purpose
-                            ( model, Ports.requestLoc )
+                            ( { model | geolocationApiError = Nothing }, Ports.requestLoc )
                                 |> mapToMainScreen
 
-                RequestLocationPermsApiError _ ->
-                    -- TODO:
-                    model
+                RequestLocationPermsApiError err ->
+                    { model | geolocationApiError = Just (codeToGeoLocationApiError err) }
                         |> pure
                         |> mapToMainScreen
 
@@ -688,6 +690,7 @@ update topMsg topModel =
                                 , currentAddress = a.currentAddress
                                 , countryAndStateVisibility = Animator.init True
                                 , zone = Just a.zone
+                                , geolocationApiError = Nothing
                                 }
                                 |> pure
 
@@ -746,6 +749,21 @@ view model =
                                 , divider
 
                                 -- Geo location
+                                , case modelData.geolocationApiError of
+                                    Just err ->
+                                        paragraph
+                                            [ width fill
+                                            , padding 15
+                                            , Font.medium
+                                            , Font.color modelData.secondaryColor
+                                            , Background.color modelData.primaryColor
+                                            ]
+                                            [ el [ Font.heavy ] (text "Error: ")
+                                            , text (Localizations.geoLocationApiError modelData.language err ++ ".")
+                                            ]
+
+                                    Nothing ->
+                                        none
                                 , row
                                     [ width fill
                                     , height (px 52)
