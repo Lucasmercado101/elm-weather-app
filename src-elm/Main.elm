@@ -553,6 +553,9 @@ update topMsg topModel =
 
                 -- NOTE: only changing if:
                 -- location allowed and no geo api errors
+                -- TODO: not storing if manually set to off,
+                -- always being overridden by "is perms allowed? then get geo current"
+                -- instead of manually set
                 ToggleGeoLocation ->
                     case model.location of
                         UsingGeoLocation fixedCoordinates ->
