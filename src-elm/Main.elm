@@ -171,8 +171,6 @@ type Msg
 
 
 -- MAIN
--- TODO: handle receiving error on
--- location: granted but error on attempting to get location
 
 
 main : Program JD.Value Model Msg
