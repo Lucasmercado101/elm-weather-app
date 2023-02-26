@@ -1,6 +1,7 @@
 module Localizations exposing (..)
 
 import Element exposing (Element, none, text)
+import Http
 import Time exposing (Month(..), Weekday(..))
 import Utils exposing (GeoLocationApiError(..), dayToString, monthToString)
 
@@ -461,3 +462,51 @@ enableLocationPermission lang =
 
         Spanish ->
             "Habilitar permiso de ubicación"
+
+
+loading : Language -> String
+loading lang =
+    case lang of
+        English ->
+            "Loading"
+
+        Spanish ->
+            "Cargando"
+
+
+httpError : Language -> Http.Error -> String
+httpError lang err =
+    case lang of
+        English ->
+            case err of
+                Http.BadUrl url ->
+                    "Bad URL: " ++ url
+
+                Http.Timeout ->
+                    "Timeout"
+
+                Http.NetworkError ->
+                    "Network Error"
+
+                Http.BadStatus response ->
+                    "Bad Status: " ++ String.fromInt response
+
+                Http.BadBody _ ->
+                    "Error parsing body"
+
+        Spanish ->
+            case err of
+                Http.BadUrl url ->
+                    "URL incorrecta: " ++ url
+
+                Http.Timeout ->
+                    "Tiempo de espera agotado"
+
+                Http.NetworkError ->
+                    "Error de red"
+
+                Http.BadStatus response ->
+                    "Estado incorrecto: " ++ String.fromInt response
+
+                Http.BadBody _ ->
+                    "Error al procesar el cuerpo"

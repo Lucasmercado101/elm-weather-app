@@ -1175,7 +1175,7 @@ view model =
 
 
 loadingScreenView : LoadingScreenModel -> Element Msg
-loadingScreenView { fetchingStatus } =
+loadingScreenView { fetchingStatus, language } =
     el
         [ width fill
         , height fill
@@ -1188,30 +1188,14 @@ loadingScreenView { fetchingStatus } =
             ]
             (case fetchingStatus of
                 Loading ->
-                    initialLoadingScreen
+                    initialLoadingScreen language
 
                 Failure err ->
                     column [ centerX, centerY ]
                         [ paragraph [ Font.center, Font.size 54, Font.semiBold ]
-                            [ el [ Font.center ] (text "Something went wrong:")
+                            [ el [ Font.center ] (text "Error:")
                             , br
-                            , el [ Font.heavy ]
-                                (case err of
-                                    Http.BadUrl url ->
-                                        text ("Bad URL: " ++ url)
-
-                                    Http.Timeout ->
-                                        text "Timeout"
-
-                                    Http.NetworkError ->
-                                        text "Network Error"
-
-                                    Http.BadStatus response ->
-                                        text ("Bad Status: " ++ String.fromInt response)
-
-                                    Http.BadBody _ ->
-                                        text "Error parsing body"
-                                )
+                            , el [ Font.heavy ] (text (Localizations.httpError language err))
                             ]
                         , el [ paddingTop 18, centerX ]
                             (button
@@ -1632,18 +1616,11 @@ mainScreen ({ zone } as model) =
         )
 
 
-initialLoadingScreen : Element msg
-initialLoadingScreen =
+initialLoadingScreen : Language -> Element msg
+initialLoadingScreen lang =
     column
         [ centerX, centerY, width fill ]
-        [ paragraph [ Font.center, paddingXY 32 0 ]
-            [ el [ Font.bold, Font.size 64 ] (text "LOADING")
-            , br
-            , br
-            , el [ Font.semiBold, Font.size 18 ] (text "Did you know: ")
-            , el [ Font.size 18 ] (text "Lightning strikes the Earth about 100 times per second.\n")
-            ]
-        ]
+        [ paragraph [ Font.center, paddingXY 32 0 ] [ el [ Font.bold, Font.size 64 ] (text (Localizations.loading lang)) ] ]
 
 
 weeklyForecastCard : Color -> Posix -> Float -> WMOCode -> Element msg
