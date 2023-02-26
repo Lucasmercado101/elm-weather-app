@@ -1401,10 +1401,9 @@ mainScreen model =
                 none
 
               else
-                row [ width fill, Background.color model.secondaryColor, padding 8, Font.size 21 ]
+                row [ width fill, Background.color model.secondaryColor, padding 8, Font.size 21, Font.bold ]
                     [ paragraph []
-                        [ text "You are offline."
-                        ]
+                        [ text (Localizations.noInternet model.language) ]
                     , Icons.wifi_off 28 Inherit
                         |> Element.html
                     ]

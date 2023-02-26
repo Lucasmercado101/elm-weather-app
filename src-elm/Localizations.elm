@@ -421,3 +421,13 @@ geoLocationApiError lang error =
 
                 Timeout ->
                     "La solicitud para obtener la ubicación del usuario ha expirado"
+
+
+noInternet : Language -> String
+noInternet lang =
+    case lang of
+        English ->
+            "No internet connection"
+
+        Spanish ->
+            "Sin conexión a internet"
