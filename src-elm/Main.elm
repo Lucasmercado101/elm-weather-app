@@ -87,22 +87,16 @@ type alias EnteringManualCoordinates =
     }
 
 
-type OptionMenu
-    = Closed
-    | Open (Maybe EnteringManualCoordinates)
-
-
 type alias MainScreenModel =
     { currentRefetchingAnim : Animator.Timeline (RefetchingStatus Http.Error)
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , primaryColor : Color
     , secondaryColor : Color
-    , optionMenu : OptionMenu
+    , optionMenu : Maybe ( Maybe EnteringManualCoordinates, Maybe GeoLocationApiError )
     , location : Location
     , zone : Maybe Zone
     , language : Language
     , customThemes : Maybe (Nonempty Theme)
-    , geolocationApiError : Maybe GeoLocationApiError
 
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
@@ -223,11 +217,10 @@ init val =
                                 FixedCoordinates { latitude = latitude, longitude = longitude }
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
-                      , optionMenu = Closed
+                      , optionMenu = Nothing
                       , currentAddress = Just addressData
                       , countryAndStateVisibility = Animator.init True
                       , customThemes = customThemes
-                      , geolocationApiError = Nothing
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -271,10 +264,9 @@ init val =
                       , primaryColor = primaryColor
                       , secondaryColor = secondaryColor
                       , customThemes = customThemes
-                      , optionMenu = Closed
+                      , optionMenu = Nothing
                       , currentAddress = Nothing
                       , countryAndStateVisibility = Animator.init False
-                      , geolocationApiError = Nothing
 
                       -- TODO: handle zone, when refreshing there's no good initial value
                       -- TODO: send zone when I have it and cache it
@@ -355,10 +347,9 @@ update topMsg topModel =
                                 , zone = Just zone
                                 , primaryColor = defaultPrimary
                                 , secondaryColor = defaultSecondary
-                                , optionMenu = Closed
+                                , optionMenu = Nothing
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
-                                , geolocationApiError = Nothing
                                 }
                             , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
                                 |> Cmd.map OnMainScreenMsg
@@ -407,12 +398,12 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 OpenOptionsMenu ->
-                    { model | optionMenu = Open Nothing, geolocationApiError = Nothing }
+                    { model | optionMenu = Just ( Nothing, Nothing ) }
                         |> pure
                         |> mapToMainScreen
 
                 CloseOptionsMenu ->
-                    { model | optionMenu = Closed }
+                    { model | optionMenu = Nothing }
                         |> pure
                         |> mapToMainScreen
 
@@ -421,12 +412,13 @@ update topMsg topModel =
                         UsingGeoLocation coords ->
                             { model
                                 | optionMenu =
-                                    Open
-                                        (Just
+                                    Just
+                                        ( Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
                                             , error = Nothing
                                             }
+                                        , Nothing
                                         )
                             }
                                 |> pure
@@ -435,12 +427,13 @@ update topMsg topModel =
                         FixedCoordinates coords ->
                             { model
                                 | optionMenu =
-                                    Open
-                                        (Just
+                                    Just
+                                        ( Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
                                             , error = Nothing
                                             }
+                                        , Nothing
                                         )
                             }
                                 |> pure
@@ -448,14 +441,15 @@ update topMsg topModel =
 
                 OnChangeLatitude newLatitude ->
                     case model.optionMenu of
-                        Open (Just isEditingCoordinatesManually) ->
+                        Just ( Just isEditingCoordinatesManually, err ) ->
                             { model
                                 | optionMenu =
-                                    Open
-                                        (Just
+                                    Just
+                                        ( Just
                                             { isEditingCoordinatesManually
                                                 | latitude = newLatitude
                                             }
+                                        , err
                                         )
                             }
                                 |> pure
@@ -468,14 +462,15 @@ update topMsg topModel =
 
                 OnChangeLongitude newLongitude ->
                     case model.optionMenu of
-                        Open (Just isEditingCoordinatesManually) ->
+                        Just ( Just isEditingCoordinatesManually, err ) ->
                             { model
                                 | optionMenu =
-                                    Open
-                                        (Just
+                                    Just
+                                        ( Just
                                             { isEditingCoordinatesManually
                                                 | longitude = newLongitude
                                             }
+                                        , err
                                         )
                             }
                                 |> pure
@@ -488,8 +483,8 @@ update topMsg topModel =
 
                 CancelManualForm ->
                     case model.optionMenu of
-                        Open (Just _) ->
-                            { model | optionMenu = Open Nothing }
+                        Just ( Just _, err ) ->
+                            { model | optionMenu = Just ( Nothing, err ) }
                                 |> pure
                                 |> mapToMainScreen
 
@@ -500,7 +495,7 @@ update topMsg topModel =
 
                 SubmitManualLocationForm ->
                     case model.optionMenu of
-                        Open (Just manualCoordinates) ->
+                        Just ( Just manualCoordinates, err ) ->
                             let
                                 { latitude, longitude } =
                                     manualCoordinates
@@ -509,11 +504,12 @@ update topMsg topModel =
                                 setManualLocationError error =
                                     { model
                                         | optionMenu =
-                                            Open
-                                                (Just
+                                            Just
+                                                ( Just
                                                     { manualCoordinates
                                                         | error = error
                                                     }
+                                                , err
                                                 )
                                     }
                                         |> pure
@@ -535,7 +531,7 @@ update topMsg topModel =
                                                         | location = FixedCoordinates { latitude = latFloat, longitude = lonFloat }
                                                         , currentRefetchingStatus = Refetching
                                                         , currentRefetchingAnim = Animator.init Refetching
-                                                        , optionMenu = Open Nothing
+                                                        , optionMenu = Just ( Nothing, Nothing )
                                                       }
                                                     , Cmd.batch
                                                         [ Api.getReverseGeocoding { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
@@ -557,9 +553,6 @@ update topMsg topModel =
 
                 -- NOTE: only changing if:
                 -- location allowed and no geo api errors
-                -- TODO: not storing if manually set to off,
-                -- always being overridden by "is perms allowed? then get geo current"
-                -- instead of manually set
                 ToggleGeoLocation ->
                     case model.location of
                         UsingGeoLocation fixedCoordinates ->
@@ -567,13 +560,26 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                         FixedCoordinates _ ->
-                            ( { model | geolocationApiError = Nothing }, Ports.requestLoc )
-                                |> mapToMainScreen
+                            case model.optionMenu of
+                                Just ( manualCoords, _ ) ->
+                                    ( { model | optionMenu = Just ( manualCoords, Nothing ) }, Ports.requestLoc )
+                                        |> mapToMainScreen
+
+                                _ ->
+                                    ( model, Ports.requestLoc )
+                                        |> mapToMainScreen
 
                 RequestLocationPermsApiError err ->
-                    { model | geolocationApiError = Just (codeToGeoLocationApiError err) }
-                        |> pure
-                        |> mapToMainScreen
+                    case model.optionMenu of
+                        Just ( manuallyCoords, _ ) ->
+                            { model | optionMenu = Just ( manuallyCoords, Just (codeToGeoLocationApiError err) ) }
+                                |> pure
+                                |> mapToMainScreen
+
+                        _ ->
+                            model
+                                |> pure
+                                |> mapToMainScreen
 
                 NoGeoLocationApi ->
                     -- NOTE: prevent the user from changing the
@@ -628,8 +634,8 @@ update topMsg topModel =
 
                 ReceivedGeoLocation coords ->
                     case model.optionMenu of
-                        Open (Just _) ->
-                            ( { model | optionMenu = Open Nothing, location = UsingGeoLocation coords }
+                        Just _ ->
+                            ( { model | optionMenu = Just ( Nothing, Nothing ), location = UsingGeoLocation coords }
                             , Cmd.batch
                                 [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
                                 , Api.getWeatherData coords GotRefetchingWeatherResp
@@ -686,11 +692,10 @@ update topMsg topModel =
                                 , primaryColor = primary
                                 , customThemes = a.customThemes
                                 , secondaryColor = secondary
-                                , optionMenu = Closed
+                                , optionMenu = Nothing
                                 , currentAddress = a.currentAddress
                                 , countryAndStateVisibility = Animator.init True
                                 , zone = Just a.zone
-                                , geolocationApiError = Nothing
                                 }
                                 |> pure
 
@@ -717,7 +722,7 @@ view model =
             (case model of
                 MainScreen modelData ->
                     (case modelData.optionMenu of
-                        Open isEnteringManualCoordinates ->
+                        Just ( isEnteringManualCoordinates, geoApiError ) ->
                             let
                                 divider : Element msg
                                 divider =
@@ -749,7 +754,7 @@ view model =
                                 , divider
 
                                 -- Geo location
-                                , case modelData.geolocationApiError of
+                                , case geoApiError of
                                     Just err ->
                                         paragraph
                                             [ width fill
@@ -848,13 +853,7 @@ view model =
                                                 , paddingXY 5 5
                                                 ]
                                                 { label = text (format usLocale coordinates.latitude ++ ", " ++ format usLocale coordinates.longitude)
-                                                , onPress =
-                                                    case modelData.optionMenu of
-                                                        Open (Just _) ->
-                                                            Nothing
-
-                                                        _ ->
-                                                            Just ShowManualCoordinatesForm
+                                                , onPress = Just ShowManualCoordinatesForm
                                                 }
 
                                         UsingGeoLocation coordinates ->
@@ -1034,7 +1033,7 @@ view model =
                                 , divider
                                 ]
 
-                        Closed ->
+                        Nothing ->
                             none
                     )
                         |> Element.map OnMainScreenMsg
