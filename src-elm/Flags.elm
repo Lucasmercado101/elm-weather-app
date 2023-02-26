@@ -94,7 +94,7 @@ customThemeColorsDecoder =
                                     [ primaryColorArr, secondaryColorArr ] ->
                                         case isValidTheme primaryColorArr secondaryColorArr of
                                             Just themeColor ->
-                                                decodeValidThemes (themeColor :: acc) restColors
+                                                decodeValidThemes (acc ++ [ themeColor ]) restColors
 
                                             Nothing ->
                                                 fail "Invalid custom theme colors, either missing RGB values or invalid RGB values"
