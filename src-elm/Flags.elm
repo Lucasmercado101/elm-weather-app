@@ -3,8 +3,7 @@ module Flags exposing (..)
 import Api
 import Element exposing (Color)
 import Json.Decode exposing (..)
-import List.Nonempty as NEList exposing (Nonempty(..))
-import Ports
+import List.Nonempty exposing (Nonempty(..))
 import Utils exposing (Theme)
 
 
