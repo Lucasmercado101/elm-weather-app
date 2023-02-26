@@ -32,6 +32,7 @@ type ThemePickerMsg
     | ApplyTheme Theme Bool
     | CancelCustomizingTheme
     | MoveCustomThemeAbove Theme
+    | MoveCustomThemeBelow Theme
 
 
 
@@ -83,6 +84,14 @@ themePickerUpdate msg model =
             case model.customThemes of
                 Just customThemes ->
                     { model | customThemes = Just (moveLeft (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
+
+                Nothing ->
+                    model |> pure
+
+        MoveCustomThemeBelow theme ->
+            case model.customThemes of
+                Just customThemes ->
+                    { model | customThemes = Just (moveRight (NEList.reverse customThemes) theme |> NEList.reverse) } |> pure
 
                 Nothing ->
                     model |> pure
@@ -425,7 +434,7 @@ themePickerView ({ language, currentTheme, customThemes } as model) =
                                         |> Maybe.andThen
                                             (\themes ->
                                                 if NEList.member themeColors themes then
-                                                    Just (topButtons (MoveCustomThemeAbove themeColors))
+                                                    Just (topButtons (MoveCustomThemeBelow themeColors) (MoveCustomThemeAbove themeColors))
 
                                                 else
                                                     Nothing
@@ -504,20 +513,24 @@ themePreviewCard language ( cardThemePrimaryColor, cardThemeSecondaryColor ) bot
         )
 
 
-topButtons : ThemePickerMsg -> Element ThemePickerMsg
-topButtons onMoveUp =
+topButtons : ThemePickerMsg -> ThemePickerMsg -> Element ThemePickerMsg
+topButtons onMoveDown onMoveUp =
     row
         [ width fill
         , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
         ]
-        [ el
-            [ padding 6
-            , Font.size 22
-            , Font.center
-            , height fill
-            , Border.widthEach { bottom = 0, top = 0, left = 0, right = 2 }
-            ]
-            (Icons.arrow_downward 30 Inherit |> Element.html)
+        [ button []
+            { label =
+                el
+                    [ padding 6
+                    , Font.size 22
+                    , Font.center
+                    , height fill
+                    , Border.widthEach { bottom = 0, top = 0, left = 0, right = 2 }
+                    ]
+                    (Icons.arrow_downward 30 Inherit |> Element.html)
+            , onPress = Just onMoveDown
+            }
         , button [ height fill ]
             { label =
                 el
@@ -563,6 +576,8 @@ addCustomTheme themes theme =
         unshift theme themes
 
 
+{-| Add element to the tail of the list
+-}
 unshift : a -> Nonempty a -> Nonempty a
 unshift item list =
     NEList.reverse list |> NEList.cons item |> NEList.reverse
@@ -591,3 +606,24 @@ moveLeft (Nonempty first rest) needle =
 
                 else
                     Nonempty first (moveLeft (Nonempty second restItems) needle |> NEList.toList)
+
+
+moveRight : Nonempty a -> a -> Nonempty a
+moveRight (Nonempty first rest) needle =
+    case rest of
+        [] ->
+            NEList.singleton first
+
+        [ second ] ->
+            if first == needle then
+                Nonempty second [ first ]
+
+            else
+                Nonempty first [ second ]
+
+        second :: restItems ->
+            if first == needle then
+                Nonempty second (needle :: restItems)
+
+            else
+                Nonempty first (moveRight (Nonempty second restItems) needle |> NEList.toList)
