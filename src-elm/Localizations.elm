@@ -406,7 +406,7 @@ geoLocationApiError lang error =
                     "Permission to access location was denied"
 
                 PositionUnavailable ->
-                    "The location information is unavailable"
+                    "Current location information is unavailable"
 
                 Timeout ->
                     "The request to get user location timed out"
@@ -417,7 +417,7 @@ geoLocationApiError lang error =
                     "Permiso para acceder a la ubicación denegado"
 
                 PositionUnavailable ->
-                    "La información de ubicación no está disponible"
+                    "La información de ubicación actual no está disponible"
 
                 Timeout ->
                     "La solicitud para obtener la ubicación del usuario ha expirado"
