@@ -351,7 +351,7 @@ update topMsg topModel =
                                         FixedCoordinates model.coordinates
                                 , zone = Just zone
                                 , primaryColor = defaultPrimary
-                                , secondaryColor = defaultPrimary
+                                , secondaryColor = defaultSecondary
                                 , optionMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
