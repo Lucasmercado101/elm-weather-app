@@ -209,6 +209,16 @@ attribution language =
             "Datos meteorológicos por "
 
 
+attributionAddress : Language -> String
+attributionAddress language =
+    case language of
+        English ->
+            "Address data by"
+
+        Spanish ->
+            "Datos de dirección por"
+
+
 geolocation : Language -> String
 geolocation language =
     case language of

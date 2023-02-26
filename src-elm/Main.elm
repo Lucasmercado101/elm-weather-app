@@ -1596,16 +1596,19 @@ mainScreen ({ zone } as model) =
                 )
 
             -- Attribution
-            , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 0, right = 8 } ]
-                [ el
-                    [ Font.color model.secondaryColor
+            , column [ width fill, spacing 8 ]
+                [ paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 8, right = 8 }, width fill ]
+                    [ el
+                        [ Font.color model.secondaryColor ]
+                        (text (Localizations.attribution model.language))
+                    , link [ Font.family [ Font.monospace ], Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open-Meteo", url = "https://open-meteo.com/" }
                     ]
-                    (text
-                        (Localizations.attribution model.language
-                            ++ " "
-                        )
-                    )
-                , link [ Font.family [ Font.monospace ], Font.color (rgb 0 0 1) ] { label = text "Open-Meteo.com", url = "https://open-meteo.com/" }
+                , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 8, right = 8 }, width fill ]
+                    [ el
+                        [ Font.color model.secondaryColor ]
+                        (text (Localizations.attributionAddress model.language))
+                    , link [ Font.family [ Font.monospace ], Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open Street map", url = "https://www.openstreetmap.org/" }
+                    ]
                 ]
             ]
         )
