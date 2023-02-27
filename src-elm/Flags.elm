@@ -4,16 +4,18 @@ import Api
 import Element exposing (Color)
 import Json.Decode exposing (..)
 import List.Nonempty exposing (Nonempty(..))
+import Localizations exposing (Language(..))
+import Ports
 import Utils exposing (Theme)
 
 
 type Flags
-    = Initial String
+    = Initial Language
     | CachedWeatherData
         { posixTimeNow : Int
         , cachedWeatherData : Api.ResponseData
         , usingGeoLocation : Bool
-        , language : String
+        , language : Language
         , theme : Maybe Theme
         , customThemes : Maybe (Nonempty Theme)
         , timezone : String
@@ -27,11 +29,28 @@ type Flags
             , city : Maybe String
             }
         , usingGeoLocation : Bool
-        , language : String
+        , language : Language
         , theme : Maybe Theme
         , customThemes : Maybe (Nonempty Theme)
         , timezone : String
         }
+
+
+langParse : String -> Language
+langParse langStr =
+    if langStr == "es" || String.contains "es-" langStr then
+        Spanish
+
+    else
+        English
+
+
+languageDecoder : Decoder Language
+languageDecoder =
+    oneOf
+        [ int |> map Ports.langFromInt
+        , string |> map langParse
+        ]
 
 
 colorDecoder : Decoder Color
@@ -109,7 +128,7 @@ customThemeColorsDecoder =
 
 initialFlagDecoder : Decoder Flags
 initialFlagDecoder =
-    string |> map Initial
+    languageDecoder |> map Initial
 
 
 cachedWeatherDataFlagDecoder : Decoder Flags
@@ -129,7 +148,7 @@ cachedWeatherDataFlagDecoder =
         (field "posixTimeNow" int)
         (field "cachedWeatherData" Api.responseDataDecoder)
         (field "usingGeoLocation" bool)
-        (field "language" string)
+        (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
         (maybe (field "customThemes" customThemeColorsDecoder))
         (field "timezone" string)
@@ -169,7 +188,7 @@ cachedWeatherAndAddressDataDecoder =
             )
         )
         (field "usingGeoLocation" bool)
-        (field "language" string)
+        (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
         (maybe (field "customThemes" customThemeColorsDecoder))
         (field "timezone" string)

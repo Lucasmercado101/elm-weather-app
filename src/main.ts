@@ -45,10 +45,12 @@ const cachedAddressData = localStorage.getItem(localStorageKeys.ADDRESS_DATA);
 const theme = localStorage.getItem(localStorageKeys.THEME);
 const customThemes = localStorage.getItem(localStorageKeys.THEMES);
 const usingGeo = localStorage.getItem(localStorageKeys.USING_GEOLOCATION);
+const lang = localStorage.getItem(localStorageKeys.LANGUAGE);
 
 let parsedTheme: any = null;
 let parsedCustomThemes: any = null;
 let usingGeoLocation: boolean = false;
+let language: number = appLanguage.ENGLISH;
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 try {
@@ -69,6 +71,9 @@ try {
   if (usingGeo) {
     usingGeoLocation = JSON.parse(usingGeo);
   }
+  if (lang) {
+    language = JSON.parse(lang);
+  }
 
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
@@ -83,7 +88,8 @@ try {
           state: parsedAddressData.address.state ?? null
         },
         usingGeoLocation: usingGeoLocation,
-        language: navigator.language || (navigator as any).userLanguage,
+        language:
+          language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
         customThemes: parsedCustomThemes,
         timezone: timeZone
@@ -96,7 +102,8 @@ try {
         posixTimeNow: Date.now(),
         cachedWeatherData: parsedData,
         usingGeoLocation: usingGeoLocation,
-        language: navigator.language || (navigator as any).userLanguage,
+        language:
+          language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
         customThemes: parsedCustomThemes,
         timezone: timeZone
@@ -166,5 +173,9 @@ function main(app: ElmApp) {
 
   app.ports.saveCustomThemes.subscribe((data) => {
     localStorage.setItem(localStorageKeys.THEMES, JSON.stringify(data));
+  });
+
+  app.ports.setAppLanguage.subscribe((data) => {
+    localStorage.setItem(localStorageKeys.LANGUAGE, JSON.stringify(data));
   });
 }

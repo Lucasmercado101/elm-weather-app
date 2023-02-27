@@ -2,15 +2,18 @@ port module Ports exposing
     ( changedTheme
     , checkIfOnline
     , errorObtainingCurrentPosition
+    , langFromInt
     , locationReceiver
     , noGeoLocationApiAvailableReceiver
     , notUsingGeo
     , requestLoc
     , saveCustomThemes
+    , userSetLanguage
     , wentOffline
     , wentOnline
     )
 
+import Localizations exposing (Language(..))
 import Utils exposing (RGB)
 
 
@@ -63,3 +66,29 @@ port checkIfIsOnline : () -> Cmd msg
 checkIfOnline : Cmd msg
 checkIfOnline =
     checkIfIsOnline ()
+
+
+port setAppLanguage : Int -> Cmd msg
+
+
+userSetLanguage : Language -> Cmd msg
+userSetLanguage lang =
+    case lang of
+        English ->
+            setAppLanguage 2
+
+        Spanish ->
+            setAppLanguage 1
+
+
+langFromInt : Int -> Language
+langFromInt i =
+    case i of
+        1 ->
+            English
+
+        2 ->
+            Spanish
+
+        _ ->
+            English

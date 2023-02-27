@@ -187,15 +187,6 @@ main =
 
 init : JD.Value -> ( Model, Cmd Msg )
 init val =
-    let
-        langParse : String -> Language
-        langParse langStr =
-            if langStr == "es" || String.contains "es-" langStr then
-                Spanish
-
-            else
-                English
-    in
     case Flags.flagsDecoders val of
         Ok flags ->
             let
@@ -247,7 +238,7 @@ init val =
                             theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                      , language = langParse language
+                      , language = language
                       , location =
                             if usingGeoLocation then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -291,7 +282,7 @@ init val =
                             theme |> Maybe.map Tuple.second |> Maybe.withDefault defaultSecondary
                     in
                     ( { apiData = ( cachedWeatherData, Time.millisToPosix posixTimeNow )
-                      , language = langParse language
+                      , language = language
                       , location =
                             if usingGeoLocation then
                                 UsingGeoLocation { latitude = latitude, longitude = longitude }
@@ -322,7 +313,7 @@ init val =
                         |> mapToMainScreen
 
                 Flags.Initial language ->
-                    WelcomeScreen (Welcome.welcomeScreenInit (langParse language)) |> pure
+                    WelcomeScreen (Welcome.welcomeScreenInit language) |> pure
 
         Err _ ->
             -- NOTE: this will never happen unless the flags are screwed up
@@ -432,7 +423,7 @@ update topMsg topModel =
                         |> (\( a, b ) -> ( ThemePickerScreen a, b |> Cmd.map OnThemePickerScreenMsg ))
 
                 ToggleLanguage ->
-                    { model
+                    ( { model
                         | language =
                             case model.language of
                                 English ->
@@ -440,8 +431,9 @@ update topMsg topModel =
 
                                 Spanish ->
                                     English
-                    }
-                        |> pure
+                      }
+                    , Ports.userSetLanguage model.language
+                    )
                         |> mapToMainScreen
 
                 OpenOptionsMenu ->

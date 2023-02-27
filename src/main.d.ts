@@ -3,7 +3,13 @@ const enum localStorageKeys {
   ADDRESS_DATA = "ADDRESS_DATA",
   THEME = "THEME",
   THEMES = "THEMES",
-  USING_GEOLOCATION = "USING_GEOLOCATION"
+  USING_GEOLOCATION = "USING_GEOLOCATION",
+  LANGUAGE = "LANGUAGE"
+}
+
+const enum appLanguage {
+  ENGLISH = 1,
+  SPANISH = 2
 }
 
 // -----------------
@@ -61,6 +67,7 @@ interface ElmApp {
     wentOffline: SignalSenderPort;
     wentOnline: SignalSenderPort;
     checkIfIsOnline: SignalReceiverPort;
+    setAppLanguage: DataReceiverPort<number>;
   };
 }
 
