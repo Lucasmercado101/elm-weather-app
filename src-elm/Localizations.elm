@@ -520,3 +520,23 @@ httpError lang err =
 
                 Http.BadBody _ ->
                     "Error al procesar el cuerpo"
+
+
+welcomeTo : Language -> String
+welcomeTo lang =
+    case lang of
+        English ->
+            "Welcome to"
+
+        Spanish ->
+            "Bienvenido a"
+
+
+or : Language -> String
+or lang =
+    case lang of
+        English ->
+            "or"
+
+        Spanish ->
+            "o"

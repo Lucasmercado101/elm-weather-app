@@ -138,7 +138,7 @@ welcomeScreenView { manualLocationErr, manualLocation, language } =
         ]
         (column [ width fill, centerX, centerY ]
             [ paragraph [ Font.center, Font.size 52, Font.semiBold ]
-                [ el [ Font.center ] (text "Welcome to")
+                [ el [ Font.center ] (text (Localizations.welcomeTo language))
                 , br
                 , el [ Font.heavy ] (text "WeatherMate")
                 ]
@@ -154,7 +154,7 @@ welcomeScreenView { manualLocationErr, manualLocation, language } =
                     -- NOTE: no good way to show "fetching location" message
                     { label = text (Localizations.enableLocationPermission language), onPress = Just RequestLocationPerms }
                 )
-            , el [ Font.bold, centerX, paddingXY 0 15 ] (text "or")
+            , el [ Font.bold, centerX, paddingXY 0 15 ] (text (Localizations.or language))
             , column
                 [ centerX
                 , Background.color defaultSecondary
