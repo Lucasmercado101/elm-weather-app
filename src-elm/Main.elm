@@ -1350,11 +1350,27 @@ mainScreen ({ zone } as model) =
                                     |> Maybe.withDefault ""
                                 )
                             )
-                        , el [ width fill, Font.center, Font.size 182, Font.medium ] (text (actualTemp ++ "°"))
+                        , el
+                            [ width fill
+                            , Font.center
+                            , if String.length actualTemp < 2 && not (String.contains "-" actualTemp) then
+                                Font.size 180
+
+                              else if String.length actualTemp < 3 && String.contains "-" actualTemp then
+                                Font.size 140
+
+                              else if String.contains "-" actualTemp then
+                                Font.size 115
+
+                              else
+                                Font.size 140
+                            , Font.medium
+                            ]
+                            (text (actualTemp ++ "°"))
                         ]
 
                 Nothing ->
-                    el [ width fill, Font.center, Font.size 182, Font.medium ] (text "--")
+                    el [ width fill, Font.center, Font.size 180, Font.medium ] (text "--")
 
         statCards : Element MainScreenMsg
         statCards =
