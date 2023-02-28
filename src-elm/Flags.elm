@@ -154,17 +154,17 @@ cachedWeatherDataFlagDecoder =
         (field "timezone" string)
 
 
+toNonEmptyStr : String -> Maybe String
+toNonEmptyStr v =
+    if v == "" then
+        Nothing
+
+    else
+        Just v
+
+
 cachedWeatherAndAddressDataDecoder : Decoder Flags
 cachedWeatherAndAddressDataDecoder =
-    let
-        ifEmptyThenNone : String -> Maybe String
-        ifEmptyThenNone v =
-            if v == "" then
-                Nothing
-
-            else
-                Just v
-    in
     map8
         (\time weatherData addressData usingGeo language theme customThemes timezone ->
             CachedWeatherAndAddressData
@@ -183,8 +183,8 @@ cachedWeatherAndAddressDataDecoder =
         (field "addressData"
             (map3 (\country state city -> { country = country, state = state, city = city })
                 (field "country" string)
-                (maybe (field "state" string) |> map (Maybe.andThen ifEmptyThenNone))
-                (maybe (field "city" string) |> map (Maybe.andThen ifEmptyThenNone))
+                (maybe (field "state" string) |> map (Maybe.andThen toNonEmptyStr))
+                (maybe (field "city" string) |> map (Maybe.andThen toNonEmptyStr))
             )
         )
         (field "usingGeoLocation" bool)
