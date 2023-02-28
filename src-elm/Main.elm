@@ -6,7 +6,7 @@ import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
 import Dict
-import Element exposing (Color, Element, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Element exposing (Color, Element, alignBottom, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -791,7 +791,7 @@ view model =
                 MainScreen modelData ->
                     el [ centerX, width (fill |> maximum maxAppWidth), height fill, noPointerEvents ]
                         (column [ width fill, noPointerEvents, height fill ]
-                            [ el [ autoPointerEvents, width fill ]
+                            [ el [ autoPointerEvents, width fill, alignTop ]
                                 (case modelData.optionsMenu of
                                     Open ( isEnteringManualCoordinates, geoApiError ) ->
                                         let
@@ -1034,8 +1034,7 @@ view model =
                                     Closed ->
                                         none
                                 )
-                            , el [ height fill, noPointerEvents ] none
-                            , el [ autoPointerEvents, width fill ]
+                            , el [ autoPointerEvents, width fill, alignBottom ]
                                 (if modelData.isOnline then
                                     case modelData.geolocationApiError of
                                         Just err ->
