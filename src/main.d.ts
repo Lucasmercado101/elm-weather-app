@@ -23,7 +23,7 @@ type CachedWeatherDataFlag = {
   posixTimeNow: number;
   cachedWeatherData: any;
   usingGeoLocation: localStorageJSONValue;
-  language: string;
+  language: string | number;
   theme: any;
   customThemes: localStorageJSONValue;
   timezone: string;
@@ -34,7 +34,7 @@ interface CachedWeatherAndAddressDataFlag {
   cachedWeatherData: any;
   addressData: { country: string; state?: string; city?: string };
   usingGeoLocation: localStorageJSONValue;
-  language: string;
+  language: string | number;
   theme: any;
   customThemes: localStorageJSONValue;
   timezone: string;

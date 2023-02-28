@@ -50,7 +50,7 @@ const usingGeolocation = localStorage.getItem(
 const lang = localStorage.getItem(localStorageKeys.LANGUAGE);
 
 let parsedTheme: any = null;
-let language: number = appLanguage.ENGLISH;
+let language: number | string = appLanguage.ENGLISH;
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 try {
@@ -69,6 +69,8 @@ try {
     language = JSON.parse(lang);
   }
 
+  language ??= navigator.language || (navigator as any).userLanguage;
+
   if (cachedWeatherData && cachedAddressData) {
     const parsedWeatherData = JSON.parse(cachedWeatherData);
     const parsedAddressData = JSON.parse(cachedAddressData);
@@ -82,8 +84,7 @@ try {
           state: parsedAddressData.address.state ?? null
         },
         usingGeoLocation: usingGeolocation,
-        language:
-          language || navigator.language || (navigator as any).userLanguage,
+        language: language,
         theme: parsedTheme,
         customThemes: customThemes,
         timezone: timeZone
@@ -96,8 +97,7 @@ try {
         posixTimeNow: Date.now(),
         cachedWeatherData: parsedData,
         usingGeoLocation: usingGeolocation,
-        language:
-          language || navigator.language || (navigator as any).userLanguage,
+        language: language,
         theme: parsedTheme,
         customThemes: customThemes,
         timezone: timeZone
