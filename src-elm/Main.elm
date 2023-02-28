@@ -853,48 +853,18 @@ view model =
                                                             , Font.heavy
                                                             ]
                                                             (text (Localizations.geolocation modelData.language))
-                                                        , case modelData.location of
-                                                            UsingGeoLocation _ ->
-                                                                row
-                                                                    [ Border.color modelData.primaryColor
-                                                                    , Border.width 3
-                                                                    ]
-                                                                    [ el
-                                                                        [ paddingXY 8 5
-                                                                        , Font.color modelData.primaryColor
-                                                                        , Font.heavy
-                                                                        ]
-                                                                        (text "ON")
-                                                                    , el
-                                                                        [ Background.color modelData.primaryColor
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.secondaryColor
-                                                                        , paddingXY 8 5
-                                                                        ]
-                                                                        (text "OFF")
-                                                                    ]
+                                                        , Components.toggle
+                                                            { primaryColor = modelData.primaryColor
+                                                            , secondaryColor = modelData.secondaryColor
+                                                            , isToggled =
+                                                                case modelData.location of
+                                                                    UsingGeoLocation _ ->
+                                                                        True
 
-                                                            FixedCoordinates _ ->
-                                                                row
-                                                                    [ Border.color modelData.primaryColor
-                                                                    , Border.width 3
-                                                                    ]
-                                                                    [ el
-                                                                        [ Background.color modelData.primaryColor
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.secondaryColor
-                                                                        , paddingXY 8 5
-                                                                        ]
-                                                                        (text "ON")
-                                                                    , el
-                                                                        [ Font.color modelData.primaryColor
-                                                                        , paddingXY 8 5
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.primaryColor
-                                                                        , centerX
-                                                                        ]
-                                                                        (text "OFF")
-                                                                    ]
+                                                                    FixedCoordinates _ ->
+                                                                        False
+                                                            , values = ( "ON", "OFF" )
+                                                            }
                                                         ]
                                                 , onPress = Just ToggleGeoLocation
                                                 }
