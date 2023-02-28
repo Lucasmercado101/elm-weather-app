@@ -63,6 +63,11 @@ subscriptions model =
 -- MODEL
 
 
+type Menu a
+    = Open a
+    | Closed
+
+
 type RefetchingStatus a
     = NotRefetching
     | Refetching
@@ -96,7 +101,7 @@ type alias MainScreenModel =
     , currentRefetchingStatus : RefetchingStatus Http.Error
     , primaryColor : Color
     , secondaryColor : Color
-    , optionMenu : Maybe ( Maybe EnteringManualCoordinates, Maybe String )
+    , optionsMenu : Menu ( Maybe EnteringManualCoordinates, Maybe String )
     , location : Location
     , zone : Zone
     , language : Language
@@ -217,7 +222,7 @@ init val =
                     , geolocationApiError = Nothing
                     , currentRefetchingStatus = Refetching
                     , currentRefetchingAnim = Animator.init Refetching
-                    , optionMenu = Nothing
+                    , optionsMenu = Closed
 
                     --  NOTE: JS immediately checks if online or offline
                     , isOnline = True
@@ -376,7 +381,7 @@ update topMsg topModel =
                                         FixedCoordinates model.coordinates
                                 , primaryColor = defaultPrimary
                                 , secondaryColor = defaultSecondary
-                                , optionMenu = Nothing
+                                , optionsMenu = Closed
                                 , currentAddress = Nothing
                                 , countryAndStateVisibility = Animator.init False
                                 , isOnline = True
@@ -437,12 +442,12 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 OpenOptionsMenu ->
-                    { model | optionMenu = Just ( Nothing, Nothing ) }
+                    { model | optionsMenu = Open ( Nothing, Nothing ) }
                         |> pure
                         |> mapToMainScreen
 
                 CloseOptionsMenu ->
-                    { model | optionMenu = Nothing }
+                    { model | optionsMenu = Closed }
                         |> pure
                         |> mapToMainScreen
 
@@ -450,8 +455,8 @@ update topMsg topModel =
                     case model.location of
                         UsingGeoLocation coords ->
                             { model
-                                | optionMenu =
-                                    Just
+                                | optionsMenu =
+                                    Open
                                         ( Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
@@ -465,8 +470,8 @@ update topMsg topModel =
 
                         FixedCoordinates coords ->
                             { model
-                                | optionMenu =
-                                    Just
+                                | optionsMenu =
+                                    Open
                                         ( Just
                                             { latitude = coords.latitude |> String.fromFloat
                                             , longitude = coords.longitude |> String.fromFloat
@@ -479,11 +484,11 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 OnChangeLatitude newLatitude ->
-                    case model.optionMenu of
-                        Just ( Just isEditingCoordinatesManually, err ) ->
+                    case model.optionsMenu of
+                        Open ( Just isEditingCoordinatesManually, err ) ->
                             { model
-                                | optionMenu =
-                                    Just
+                                | optionsMenu =
+                                    Open
                                         ( Just
                                             { isEditingCoordinatesManually
                                                 | latitude = newLatitude
@@ -500,11 +505,11 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 OnChangeLongitude newLongitude ->
-                    case model.optionMenu of
-                        Just ( Just isEditingCoordinatesManually, err ) ->
+                    case model.optionsMenu of
+                        Open ( Just isEditingCoordinatesManually, err ) ->
                             { model
-                                | optionMenu =
-                                    Just
+                                | optionsMenu =
+                                    Open
                                         ( Just
                                             { isEditingCoordinatesManually
                                                 | longitude = newLongitude
@@ -521,9 +526,9 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 CancelManualForm ->
-                    case model.optionMenu of
-                        Just ( Just _, err ) ->
-                            { model | optionMenu = Just ( Nothing, err ) }
+                    case model.optionsMenu of
+                        Open ( Just _, err ) ->
+                            { model | optionsMenu = Open ( Nothing, err ) }
                                 |> pure
                                 |> mapToMainScreen
 
@@ -533,8 +538,8 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 SubmitManualLocationForm ->
-                    case model.optionMenu of
-                        Just ( Just manualCoordinates, err ) ->
+                    case model.optionsMenu of
+                        Open ( Just manualCoordinates, err ) ->
                             let
                                 { latitude, longitude } =
                                     manualCoordinates
@@ -542,8 +547,8 @@ update topMsg topModel =
                                 setManualLocationError : Maybe Localizations.LatAndLongManualError -> ( Model, Cmd Msg )
                                 setManualLocationError error =
                                     { model
-                                        | optionMenu =
-                                            Just
+                                        | optionsMenu =
+                                            Open
                                                 ( Just
                                                     { manualCoordinates
                                                         | error = error
@@ -570,7 +575,7 @@ update topMsg topModel =
                                                         | location = FixedCoordinates { latitude = latFloat, longitude = lonFloat }
                                                         , currentRefetchingStatus = Refetching
                                                         , currentRefetchingAnim = Animator.init Refetching
-                                                        , optionMenu = Just ( Nothing, Nothing )
+                                                        , optionsMenu = Open ( Nothing, Nothing )
                                                       }
                                                     , Cmd.batch
                                                         [ Api.getReverseGeocoding { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
@@ -599,9 +604,9 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                         FixedCoordinates _ ->
-                            case model.optionMenu of
-                                Just ( manualCoords, _ ) ->
-                                    ( { model | optionMenu = Just ( manualCoords, Nothing ) }, Ports.requestLoc )
+                            case model.optionsMenu of
+                                Open ( manualCoords, _ ) ->
+                                    ( { model | optionsMenu = Open ( manualCoords, Nothing ) }, Ports.requestLoc )
                                         |> mapToMainScreen
 
                                 _ ->
@@ -609,13 +614,13 @@ update topMsg topModel =
                                         |> mapToMainScreen
 
                 RequestLocationPermsApiError err ->
-                    case model.optionMenu of
-                        Just ( manuallyCoords, _ ) ->
-                            { model | optionMenu = Just ( manuallyCoords, Just (Localizations.geoLocationApiError model.language (codeToGeoLocationApiError err) ++ ".") ) }
+                    case model.optionsMenu of
+                        Open ( manuallyCoords, _ ) ->
+                            { model | optionsMenu = Open ( manuallyCoords, Just (Localizations.geoLocationApiError model.language (codeToGeoLocationApiError err) ++ ".") ) }
                                 |> pure
                                 |> mapToMainScreen
 
-                        Nothing ->
+                        Closed ->
                             { model
                                 | geolocationApiError = Just (codeToGeoLocationApiError err)
                                 , currentRefetchingStatus = Error
@@ -625,9 +630,9 @@ update topMsg topModel =
                                 |> mapToMainScreen
 
                 NoGeoLocationApi ->
-                    case model.optionMenu of
-                        Just ( manuallyCoords, _ ) ->
-                            { model | optionMenu = Just ( manuallyCoords, Just (Localizations.deviceDoesNotSupportGeolocation model.language ++ ".") ) }
+                    case model.optionsMenu of
+                        Open ( manuallyCoords, _ ) ->
+                            { model | optionsMenu = Open ( manuallyCoords, Just (Localizations.deviceDoesNotSupportGeolocation model.language ++ ".") ) }
                                 |> pure
                                 |> mapToMainScreen
 
@@ -686,9 +691,9 @@ update topMsg topModel =
                         |> mapToMainScreen
 
                 ReceivedGeoLocation coords ->
-                    case model.optionMenu of
-                        Just _ ->
-                            ( { model | optionMenu = Just ( Nothing, Nothing ), location = UsingGeoLocation coords }
+                    case model.optionsMenu of
+                        Open _ ->
+                            ( { model | optionsMenu = Open ( Nothing, Nothing ), location = UsingGeoLocation coords }
                             , Cmd.batch
                                 [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
                                 , Api.getWeatherData coords GotRefetchingWeatherResp
@@ -745,7 +750,7 @@ update topMsg topModel =
                                 , primaryColor = primary
                                 , customThemes = a.customThemes
                                 , secondaryColor = secondary
-                                , optionMenu = Nothing
+                                , optionsMenu = Closed
                                 , geolocationApiError = Nothing
                                 , currentAddress = a.currentAddress
                                 , countryAndStateVisibility = Animator.init True
@@ -787,8 +792,8 @@ view model =
                     MainScreen modelData ->
                         column [ width fill, noPointerEvents, height fill ]
                             [ el [ autoPointerEvents, width fill ]
-                                (case modelData.optionMenu of
-                                    Just ( isEnteringManualCoordinates, geoApiError ) ->
+                                (case modelData.optionsMenu of
+                                    Open ( isEnteringManualCoordinates, geoApiError ) ->
                                         let
                                             divider : Element msg
                                             divider =
@@ -1092,7 +1097,7 @@ view model =
                                             , divider
                                             ]
 
-                                    Nothing ->
+                                    Closed ->
                                         none
                                 )
                             , el [ height fill, noPointerEvents ] none
