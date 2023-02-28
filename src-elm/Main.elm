@@ -1117,37 +1117,32 @@ loadingScreenView { fetchingStatus, language } =
     el
         [ width fill
         , height fill
+        , Background.color defaultPrimary
+        , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
         ]
-        (el
-            [ width fill
-            , height fill
-            , Background.color defaultPrimary
-            , paddingEach { top = 15, bottom = 16, left = 0, right = 0 }
-            ]
-            (case fetchingStatus of
-                Loading ->
-                    initialLoadingScreen language
+        (case fetchingStatus of
+            Loading ->
+                initialLoadingScreen language
 
-                Failure err ->
-                    column [ centerX, centerY ]
-                        [ paragraph [ Font.center, Font.size 54, Font.semiBold ]
-                            [ el [ Font.center ] (text "Error:")
-                            , br
-                            , el [ Font.heavy ] (text (Localizations.httpError language err))
-                            ]
-                        , el [ paddingTop 18, centerX ]
-                            (button
-                                [ centerX
-                                , Background.color defaultSecondary
-                                , Font.color white
-                                , Font.bold
-                                , paddingXY 24 12
-                                , Font.size 22
-                                ]
-                                { label = text "RETRY", onPress = Just (OnLoadingScreenMsg RetryFetchingWeather) }
-                            )
+            Failure err ->
+                column [ centerX, centerY ]
+                    [ paragraph [ Font.center, Font.size 54, Font.semiBold ]
+                        [ el [ Font.center ] (text "Error:")
+                        , br
+                        , el [ Font.heavy ] (text (Localizations.httpError language err))
                         ]
-            )
+                    , el [ paddingTop 18, centerX ]
+                        (button
+                            [ centerX
+                            , Background.color defaultSecondary
+                            , Font.color white
+                            , Font.bold
+                            , paddingXY 24 12
+                            , Font.size 22
+                            ]
+                            { label = text "RETRY", onPress = Just (OnLoadingScreenMsg RetryFetchingWeather) }
+                        )
+                    ]
         )
 
 
