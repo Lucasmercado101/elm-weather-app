@@ -1038,48 +1038,12 @@ view model =
                                                             , Font.heavy
                                                             ]
                                                             (text (Localizations.languagePicker modelData.language))
-                                                        , case modelData.language of
-                                                            English ->
-                                                                row
-                                                                    [ Border.color modelData.primaryColor
-                                                                    , Border.width 3
-                                                                    ]
-                                                                    [ el
-                                                                        [ Font.color modelData.primaryColor
-                                                                        , paddingXY 8 5
-                                                                        , Font.heavy
-                                                                        ]
-                                                                        (text "EN")
-                                                                    , el
-                                                                        [ Background.color modelData.primaryColor
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.secondaryColor
-                                                                        , paddingXY 8 5
-                                                                        ]
-                                                                        (text "ES")
-                                                                    ]
-
-                                                            Spanish ->
-                                                                row
-                                                                    [ Border.color modelData.primaryColor
-                                                                    , Border.width 3
-                                                                    ]
-                                                                    [ el
-                                                                        [ Background.color modelData.primaryColor
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.secondaryColor
-                                                                        , paddingXY 8 5
-                                                                        ]
-                                                                        (text "EN")
-                                                                    , el
-                                                                        [ Font.color modelData.primaryColor
-                                                                        , paddingXY 8 5
-                                                                        , Font.heavy
-                                                                        , Font.color modelData.primaryColor
-                                                                        , centerX
-                                                                        ]
-                                                                        (text "ES")
-                                                                    ]
+                                                        , Components.toggle
+                                                            { primaryColor = modelData.primaryColor
+                                                            , secondaryColor = modelData.secondaryColor
+                                                            , isToggled = modelData.language == English
+                                                            , values = ( "EN", "ES" )
+                                                            }
                                                         ]
                                                 , onPress = Just ToggleLanguage
                                                 }
