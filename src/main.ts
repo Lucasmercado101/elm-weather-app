@@ -44,11 +44,12 @@ const cachedWeatherData = localStorage.getItem(localStorageKeys.WEATHER_DATA);
 const cachedAddressData = localStorage.getItem(localStorageKeys.ADDRESS_DATA);
 const theme = localStorage.getItem(localStorageKeys.THEME);
 const customThemes = localStorage.getItem(localStorageKeys.THEMES);
-const usingGeo = localStorage.getItem(localStorageKeys.USING_GEOLOCATION);
+const usingGeolocation = localStorage.getItem(
+  localStorageKeys.USING_GEOLOCATION
+);
 const lang = localStorage.getItem(localStorageKeys.LANGUAGE);
 
 let parsedTheme: any = null;
-let usingGeoLocation: boolean = false;
 let language: number = appLanguage.ENGLISH;
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -64,9 +65,6 @@ try {
     document.body.style.background = `rgb(254, 225, 66)`;
   }
 
-  if (usingGeo) {
-    usingGeoLocation = JSON.parse(usingGeo);
-  }
   if (lang) {
     language = JSON.parse(lang);
   }
@@ -83,7 +81,7 @@ try {
           city: parsedAddressData.address.city ?? null,
           state: parsedAddressData.address.state ?? null
         },
-        usingGeoLocation: usingGeoLocation,
+        usingGeoLocation: usingGeolocation,
         language:
           language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
@@ -97,7 +95,7 @@ try {
       startAppWFlags({
         posixTimeNow: Date.now(),
         cachedWeatherData: parsedData,
-        usingGeoLocation: usingGeoLocation,
+        usingGeoLocation: usingGeolocation,
         language:
           language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
