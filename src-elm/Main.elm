@@ -787,10 +787,10 @@ view model =
             ]
         , width fill
         , inFront
-            (el [ centerX, width (fill |> maximum maxAppWidth) ]
-                (case model of
-                    MainScreen modelData ->
-                        column [ width fill, noPointerEvents, height fill ]
+            (case model of
+                MainScreen modelData ->
+                    el [ centerX, width (fill |> maximum maxAppWidth), height fill, noPointerEvents ]
+                        (column [ width fill, noPointerEvents, height fill ]
                             [ el [ autoPointerEvents, width fill ]
                                 (case modelData.optionsMenu of
                                     Open ( isEnteringManualCoordinates, geoApiError ) ->
@@ -1067,17 +1067,19 @@ view model =
                                         ]
                                 )
                             ]
-                            |> Element.map OnMainScreenMsg
+                        )
+                        |> Element.map OnMainScreenMsg
 
-                    ThemePickerScreen _ ->
-                        none
+                ThemePickerScreen _ ->
+                    none
 
-                    LoadingScreen _ ->
-                        none
+                LoadingScreen _ ->
+                    none
 
-                    WelcomeScreen noLocationDataModel ->
-                        if noLocationDataModel.geoLocationApiError /= "" then
-                            paragraph
+                WelcomeScreen noLocationDataModel ->
+                    if noLocationDataModel.geoLocationApiError /= "" then
+                        el [ centerX, width (fill |> maximum maxAppWidth) ]
+                            (paragraph
                                 [ Background.color defaultSecondary
                                 , Font.color defaultPrimary
                                 , Font.bold
@@ -1085,10 +1087,10 @@ view model =
                                 , Font.size 22
                                 ]
                                 [ text "Error: ", el [ Font.light ] (text noLocationDataModel.geoLocationApiError) ]
+                            )
 
-                        else
-                            none
-                )
+                    else
+                        none
             )
         ]
         (el
