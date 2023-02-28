@@ -1041,7 +1041,7 @@ view model =
                                         Just err ->
                                             column []
                                                 [ el [ width fill, height (px 2), Background.color modelData.primaryColor ] none
-                                                , row [ width fill, Background.color modelData.secondaryColor, Font.size 21, Font.bold ]
+                                                , row [ width fill, Background.color modelData.secondaryColor, Font.size 21, Font.bold, Font.color modelData.primaryColor ]
                                                     [ paragraph [ padding 8 ]
                                                         [ el [ Font.heavy ] (text "Error: "), text (Localizations.geoLocationApiError modelData.language err) ]
                                                     , button [ height fill, paddingX 12 ]
