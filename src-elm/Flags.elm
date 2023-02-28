@@ -131,6 +131,21 @@ initialFlagDecoder =
     languageDecoder |> map Initial
 
 
+jsonField : String -> Decoder a -> Decoder a
+jsonField fieldName decoder =
+    field fieldName string
+        |> map (decodeString decoder)
+        |> andThen
+            (\result ->
+                case result of
+                    Ok value ->
+                        succeed value
+
+                    Err _ ->
+                        fail ("Failed to decode " ++ fieldName ++ " field")
+            )
+
+
 cachedWeatherDataFlagDecoder : Decoder Flags
 cachedWeatherDataFlagDecoder =
     map7
@@ -150,7 +165,7 @@ cachedWeatherDataFlagDecoder =
         (field "usingGeoLocation" bool)
         (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" customThemeColorsDecoder))
+        (maybe (jsonField "customThemes" customThemeColorsDecoder))
         (field "timezone" string)
 
 
@@ -190,7 +205,7 @@ cachedWeatherAndAddressDataDecoder =
         (field "usingGeoLocation" bool)
         (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
-        (maybe (field "customThemes" customThemeColorsDecoder))
+        (maybe (jsonField "customThemes" customThemeColorsDecoder))
         (field "timezone" string)
 
 

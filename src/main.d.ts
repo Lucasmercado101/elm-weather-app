@@ -12,6 +12,8 @@ const enum appLanguage {
   SPANISH = 2
 }
 
+type localStorageJSONValue = string | null;
+
 // -----------------
 // ELM
 // NOTE: 1 to 1 mapping to elm flags
@@ -23,7 +25,7 @@ type CachedWeatherDataFlag = {
   usingGeoLocation: boolean;
   language: string;
   theme: any;
-  customThemes: any;
+  customThemes: localStorageJSONValue;
   timezone: string;
 };
 

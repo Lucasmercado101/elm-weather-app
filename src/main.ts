@@ -48,7 +48,6 @@ const usingGeo = localStorage.getItem(localStorageKeys.USING_GEOLOCATION);
 const lang = localStorage.getItem(localStorageKeys.LANGUAGE);
 
 let parsedTheme: any = null;
-let parsedCustomThemes: any = null;
 let usingGeoLocation: boolean = false;
 let language: number = appLanguage.ENGLISH;
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -65,9 +64,6 @@ try {
     document.body.style.background = `rgb(254, 225, 66)`;
   }
 
-  if (customThemes) {
-    parsedCustomThemes = JSON.parse(customThemes);
-  }
   if (usingGeo) {
     usingGeoLocation = JSON.parse(usingGeo);
   }
@@ -91,7 +87,7 @@ try {
         language:
           language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
-        customThemes: parsedCustomThemes,
+        customThemes: customThemes,
         timezone: timeZone
       })
     );
@@ -105,7 +101,7 @@ try {
         language:
           language || navigator.language || (navigator as any).userLanguage,
         theme: parsedTheme,
-        customThemes: parsedCustomThemes,
+        customThemes: customThemes,
         timezone: timeZone
       })
     );
