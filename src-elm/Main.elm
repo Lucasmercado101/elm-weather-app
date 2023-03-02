@@ -11,6 +11,7 @@ import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
 import Element.Input as Input exposing (button)
+import Element.Lazy
 import Flags
 import FormatNumber exposing (format)
 import FormatNumber.Locales exposing (usLocale)
@@ -1096,17 +1097,17 @@ view model =
             [ centerX, width (fill |> maximum maxAppWidth), height fill ]
             (case model of
                 WelcomeScreen m ->
-                    Welcome.welcomeScreenView m
+                    Element.Lazy.lazy Welcome.welcomeScreenView m
                         |> Element.map OnWelcomeScreenMsg
 
                 LoadingScreen m ->
-                    loadingScreenView m
+                    Element.Lazy.lazy loadingScreenView m
 
                 MainScreen m ->
-                    mainScreen m |> Element.map OnMainScreenMsg
+                    Element.Lazy.lazy mainScreen m |> Element.map OnMainScreenMsg
 
                 ThemePickerScreen m ->
-                    ThemePicker.themePickerView m |> Element.map OnThemePickerScreenMsg
+                    Element.Lazy.lazy ThemePicker.themePickerView m |> Element.map OnThemePickerScreenMsg
             )
         )
 
