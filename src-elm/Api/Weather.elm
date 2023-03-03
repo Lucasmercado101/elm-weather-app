@@ -1,4 +1,4 @@
-module Api.GetWeather exposing (..)
+module Api.Weather exposing (..)
 
 import Http
 import Iso8601

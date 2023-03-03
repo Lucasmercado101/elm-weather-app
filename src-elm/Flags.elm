@@ -1,6 +1,6 @@
 module Flags exposing (..)
 
-import Api.GetWeather
+import Api.Weather
 import Element exposing (Color)
 import Json.Decode exposing (..)
 import List.Nonempty exposing (Nonempty(..))
@@ -13,7 +13,7 @@ type Flags
     = Initial Language
     | CachedWeatherData
         { posixTimeNow : Int
-        , cachedWeatherData : Api.GetWeather.WeatherData
+        , cachedWeatherData : Api.Weather.WeatherData
         , usingGeoLocation : Bool
         , language : Language
         , theme : Maybe Theme
@@ -22,7 +22,7 @@ type Flags
         }
     | CachedWeatherAndAddressData
         { posixTimeNow : Int
-        , cachedWeatherData : Api.GetWeather.WeatherData
+        , cachedWeatherData : Api.Weather.WeatherData
         , addressData :
             { country : String
             , state : Maybe String
@@ -161,7 +161,7 @@ cachedWeatherDataFlagDecoder =
                 }
         )
         (field "posixTimeNow" int)
-        (field "cachedWeatherData" Api.GetWeather.responseDataDecoder)
+        (field "cachedWeatherData" Api.Weather.responseDataDecoder)
         (maybe (jsonField "usingGeoLocation" bool) |> map (Maybe.withDefault False))
         (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
@@ -194,7 +194,7 @@ cachedWeatherAndAddressDataDecoder =
                 }
         )
         (field "posixTimeNow" int)
-        (field "cachedWeatherData" Api.GetWeather.responseDataDecoder)
+        (field "cachedWeatherData" Api.Weather.responseDataDecoder)
         (field "addressData"
             (map3 (\country state city -> { country = country, state = state, city = city })
                 (field "country" string)

@@ -1,4 +1,4 @@
-module Api.GetAddress exposing (Address, getAddress)
+module Api.Address exposing (Address, getAddress)
 
 import Http
 import Json.Decode exposing (..)
