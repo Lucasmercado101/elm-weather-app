@@ -7,7 +7,7 @@ import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
 import Dict
-import Element exposing (Color, Element, alignBottom, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Element exposing (Color, Element, alignBottom, alignLeft, alignRight, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1402,6 +1402,7 @@ mainScreen ({ zone } as model) =
                     , Font.color model.secondaryColor
                     , Font.heavy
                     , Font.center
+                    , alignLeft
                     , alignTop
                     ]
                     { label =
@@ -1447,45 +1448,45 @@ mainScreen ({ zone } as model) =
                     }
 
                 -- current country / state / city
-                , column
-                    [ Font.color model.secondaryColor
-                    , width fill
-                    , spacing 6
-                    , paddingY 15
-                    , alpha
-                        (Animator.move model.countryAndStateVisibility <|
-                            \state ->
-                                if state then
-                                    Animator.at 1
+                , case model.currentAddress of
+                    Just address ->
+                        let
+                            title : String -> Element msg
+                            title val =
+                                paragraph
+                                    [ centerX
+                                    , centerY
+                                    , Font.heavy
+                                    , Font.size 28
+                                    , Font.center
+                                    ]
+                                    [ text val ]
 
-                                else
-                                    Animator.at 0
-                        )
-                    ]
-                    (case model.currentAddress of
-                        Just address ->
-                            let
-                                title : String -> Element msg
-                                title val =
-                                    paragraph
-                                        [ centerX
-                                        , centerY
-                                        , Font.heavy
-                                        , Font.size 28
-                                        , Font.center
-                                        ]
-                                        [ text val ]
+                            subtitle : String -> Element msg
+                            subtitle val =
+                                paragraph
+                                    [ centerX
+                                    , centerY
+                                    , Font.center
+                                    ]
+                                    [ text val ]
+                        in
+                        column
+                            [ Font.color model.secondaryColor
+                            , width fill
+                            , spacing 6
+                            , paddingY 15
+                            , alpha
+                                (Animator.move model.countryAndStateVisibility <|
+                                    \state ->
+                                        if state then
+                                            Animator.at 1
 
-                                subtitle : String -> Element msg
-                                subtitle val =
-                                    paragraph
-                                        [ centerX
-                                        , centerY
-                                        , Font.center
-                                        ]
-                                        [ text val ]
-                            in
-                            case address.state of
+                                        else
+                                            Animator.at 0
+                                )
+                            ]
+                            (case address.state of
                                 Just state ->
                                     [ title address.country
                                     , subtitle state
@@ -1500,16 +1501,17 @@ mainScreen ({ zone } as model) =
 
                                         Nothing ->
                                             [ title address.country ]
+                            )
 
-                        Nothing ->
-                            [ none ]
-                    )
+                    Nothing ->
+                        none
 
                 -- Menu button
                 , button
                     [ padding 18
                     , Font.color model.secondaryColor
                     , Font.heavy
+                    , alignRight
                     , alignTop
                     , Font.center
                     ]
