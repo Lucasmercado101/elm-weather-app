@@ -89,8 +89,8 @@ customThemeColorsDecoder =
         |> andThen
             (\l ->
                 let
-                    isThemeColor : List Float -> Maybe Color
-                    isThemeColor colors =
+                    rgbToColor : List Float -> Maybe Color
+                    rgbToColor colors =
                         case colors of
                             [ red, green, blue ] ->
                                 Just (Element.rgb red green blue)
@@ -98,9 +98,9 @@ customThemeColorsDecoder =
                             _ ->
                                 Nothing
 
-                    isValidTheme : List Float -> List Float -> Maybe Theme
-                    isValidTheme primaryColors secondaryColors =
-                        case ( isThemeColor primaryColors, isThemeColor secondaryColors ) of
+                    convertToTheme : List Float -> List Float -> Maybe Theme
+                    convertToTheme primaryColors secondaryColors =
+                        case ( rgbToColor primaryColors, rgbToColor secondaryColors ) of
                             ( Just primary, Just secondary ) ->
                                 Just ( primary, secondary )
 
@@ -121,13 +121,13 @@ customThemeColorsDecoder =
                                     x :: xs ->
                                         succeed (Nonempty x xs)
 
-                            -- We have at least one theme
-                            possibleTheme :: restColors ->
+                            -- We may have at least one theme
+                            possibleTheme :: rest ->
                                 case possibleTheme of
                                     [ primaryColorArr, secondaryColorArr ] ->
-                                        case isValidTheme primaryColorArr secondaryColorArr of
-                                            Just themeColor ->
-                                                decodeValidThemes (acc ++ [ themeColor ]) restColors
+                                        case convertToTheme primaryColorArr secondaryColorArr of
+                                            Just validTheme ->
+                                                decodeValidThemes (acc ++ [ validTheme ]) rest
 
                                             Nothing ->
                                                 fail "Invalid custom theme colors, either missing RGB values or invalid RGB values"
