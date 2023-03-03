@@ -1355,13 +1355,7 @@ mainScreen ({ zone } as model) =
                                 (hourlyClosestToMine
                                     |> .windSpeed
                                     -- NOTE: it can come as null in the JSON
-                                    |> Maybe.map
-                                        (\l ->
-                                            l
-                                                |> round
-                                                |> String.fromInt
-                                                |> (\s -> s ++ "km/h")
-                                        )
+                                    |> Maybe.map (round >> String.fromInt >> prepend "km/h")
                                     |> Maybe.withDefault "--"
                                 )
                             , humidityCard

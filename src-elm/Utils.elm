@@ -412,3 +412,8 @@ nonEmptyString v =
 
     else
         Just v
+
+
+prepend : String -> String -> String
+prepend value prefix =
+    prefix ++ value
