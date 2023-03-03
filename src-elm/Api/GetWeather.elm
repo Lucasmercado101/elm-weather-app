@@ -1,8 +1,8 @@
-module Api exposing (..)
+module Api.GetWeather exposing (..)
 
 import Http
 import Iso8601
-import Json.Decode exposing (Decoder, decodeString, field, float, int, list, map, map3, map4, map7, maybe, string)
+import Json.Decode exposing (..)
 import MIcons exposing (foggy, partlyCloudy, rainy, snowing, weatherSnowy)
 import Material.Icons as Icons
 import Material.Icons.Types exposing (Icon)
@@ -10,81 +10,6 @@ import Task exposing (Task)
 import Time exposing (Posix, Zone)
 import Time.Extra exposing (Interval(..), add)
 import Utils exposing (Coordinates, toIso8601BasicFormat)
-
-
-
--- REVERSE GEOCODING API
-
-
-reverseGeocodingEndpoint : Coordinates -> String
-reverseGeocodingEndpoint { latitude, longitude } =
-    "https://nominatim.openstreetmap.org/reverse?lat="
-        ++ String.fromFloat latitude
-        ++ "&lon="
-        ++ String.fromFloat longitude
-        ++ "&format=json"
-        ++ "&zoom=8"
-
-
-type alias ReverseGeocodingResponse =
-    { address : Address
-    }
-
-
-type alias Address =
-    { country : String
-    , state : Maybe String
-    , city : Maybe String
-    }
-
-
-reverseGeocodingDecoder : Decoder ReverseGeocodingResponse
-reverseGeocodingDecoder =
-    map ReverseGeocodingResponse
-        (field "address" addressDecoder)
-
-
-addressDecoder : Decoder Address
-addressDecoder =
-    map3
-        (\country maybeState maybeCity ->
-            let
-                ifEmptyThenNone : String -> Maybe String
-                ifEmptyThenNone v =
-                    if v == "" then
-                        Nothing
-
-                    else
-                        Just v
-
-                state : Maybe String
-                state =
-                    maybeState |> Maybe.andThen ifEmptyThenNone
-
-                city : Maybe String
-                city =
-                    maybeCity |> Maybe.andThen ifEmptyThenNone
-            in
-            { country = country
-            , state = state
-            , city = city
-            }
-        )
-        (field "country" string)
-        (maybe (field "state" string))
-        (maybe (field "city" string))
-
-
-getReverseGeocoding : Coordinates -> (Result Http.Error ReverseGeocodingResponse -> msg) -> Cmd msg
-getReverseGeocoding coordinates msg =
-    Http.get
-        { url = reverseGeocodingEndpoint coordinates
-        , expect = Http.expectJson msg reverseGeocodingDecoder
-        }
-
-
-
--- WEATHER API
 
 
 type alias EndpointQuery =
@@ -107,7 +32,7 @@ getWeatherDataEndpoint { latitude, longitude, startDate, endDate } =
         ++ endDate
 
 
-getWeatherDataAsTask : Coordinates -> Task Http.Error ( ResponseData, Posix, Zone )
+getWeatherDataAsTask : Coordinates -> Task Http.Error ( WeatherData, Posix, Zone )
 getWeatherDataAsTask { latitude, longitude } =
     Task.map2 Tuple.pair Time.here Time.now
         |> Task.andThen
@@ -177,12 +102,12 @@ getWeatherDataAsTask { latitude, longitude } =
             )
 
 
-getWeatherData : Coordinates -> (Result Http.Error ( ResponseData, Posix, Zone ) -> msg) -> Cmd msg
-getWeatherData coords msg =
+getWeather : Coordinates -> (Result Http.Error ( WeatherData, Posix, Zone ) -> msg) -> Cmd msg
+getWeather coords msg =
     getWeatherDataAsTask coords |> Task.attempt msg
 
 
-type alias ResponseData =
+type alias WeatherData =
     { daily : Daily
     , hourly : List Hourly
     , latitude : Float
@@ -192,7 +117,7 @@ type alias ResponseData =
 
 
 -- NOTE: normalize Hourly so that they all have a value
--- and ignore that have one missing?
+-- and ignore the ones that have one missing?
 
 
 type alias Hourly =
@@ -236,9 +161,9 @@ hourlyDecoder =
         (field "visibility" (list float))
 
 
-responseDataDecoder : Decoder ResponseData
+responseDataDecoder : Decoder WeatherData
 responseDataDecoder =
-    map4 ResponseData
+    map4 WeatherData
         (field "daily" dailyDecoder)
         (field "hourly" hourlyDecoder)
         (field "latitude" float)

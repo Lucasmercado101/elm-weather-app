@@ -403,3 +403,12 @@ noPointerEvents =
 autoPointerEvents : Element.Attribute msg
 autoPointerEvents =
     Element.htmlAttribute (Html.Attributes.style "pointer-events" "auto")
+
+
+nonEmptyString : String -> Maybe String
+nonEmptyString v =
+    if v == "" then
+        Nothing
+
+    else
+        Just v

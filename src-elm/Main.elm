@@ -1,7 +1,8 @@
 module Main exposing (..)
 
 import Animator
-import Api exposing (Hourly, ResponseData, ReverseGeocodingResponse, WMOCode, esWmoCodeToString, wmoCodeToIcon, wmoCodeToString)
+import Api.GetAddress exposing (Address)
+import Api.GetWeather exposing (WeatherData)
 import Browser
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
@@ -112,11 +113,11 @@ type alias MainScreenModel =
     -- NOTE: when I fetch I return response and current time posix
     -- they're synced as I don't need to use posix anywhere else
     -- but when I get the data and to do things at the time I fetched it
-    , apiData : ( ResponseData, Posix )
+    , apiData : ( WeatherData, Posix )
 
     -- NOTE: could be made into a Loading | Loaded | Error type union
     -- can't be bothered though
-    , currentAddress : Maybe Api.Address
+    , currentAddress : Maybe Address
     , countryAndStateVisibility : Animator.Timeline Bool
     }
 
@@ -142,14 +143,14 @@ type Model
 
 type LoadingScreenMsg
     = RetryFetchingWeather
-    | GotWeatherResponse (Result Http.Error ( ResponseData, Posix, Zone ))
+    | GotWeatherResponse (Result Http.Error ( WeatherData, Posix, Zone ))
 
 
 type MainScreenMsg
     = RefetchDataOnBackground
-    | GotRefetchingWeatherResp (Result Http.Error ( ResponseData, Posix, Zone ))
+    | GotRefetchingWeatherResp (Result Http.Error ( WeatherData, Posix, Zone ))
     | Tick Time.Posix
-    | GotCountryAndStateMainScreen (Result Http.Error ReverseGeocodingResponse)
+    | GotCountryAndStateMainScreen (Result Http.Error Address)
     | ReceivedGeoLocation { latitude : Float, longitude : Float }
     | GoToThemePickerScreen
     | WentOnline
@@ -196,8 +197,8 @@ init val =
         Ok flags ->
             let
                 mainDefaults :
-                    { apiData : ( ResponseData, Posix )
-                    , currentAddress : Maybe Api.Address
+                    { apiData : ( WeatherData, Posix )
+                    , currentAddress : Maybe Address
                     , customThemes : Maybe (Nonempty Theme)
                     , language : Language
                     , location : Location
@@ -267,8 +268,8 @@ init val =
 
                       else
                         Cmd.batch
-                            [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            , Api.getWeatherData { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
+                            [ Api.GetAddress.getAddress { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            , Api.GetWeather.getWeather { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
                             ]
                     )
                         |> mapToMainScreen
@@ -311,8 +312,8 @@ init val =
 
                       else
                         Cmd.batch
-                            [ Api.getReverseGeocoding { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
-                            , Api.getWeatherData { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
+                            [ Api.GetAddress.getAddress { latitude = latitude, longitude = longitude } GotCountryAndStateMainScreen
+                            , Api.GetWeather.getWeather { latitude = latitude, longitude = longitude } GotRefetchingWeatherResp
                             ]
                     )
                         |> mapToMainScreen
@@ -349,8 +350,8 @@ update topMsg topModel =
                                     , isUsingGeoLocation = welcomeScreenModel.usingGeoLocation
                                     , language = welcomeScreenModel.language
                                     }
-                                , Api.getWeatherData coords GotWeatherResponse |> Cmd.map OnLoadingScreenMsg
-                                  -- NOTE: Api.getReverseGeocoding could be called here
+                                , Api.GetWeather.getWeather coords GotWeatherResponse |> Cmd.map OnLoadingScreenMsg
+                                  -- NOTE: Api.GetAddress.getAddress could be called here
                                   -- to pass it along to MainScreen but it's not really worth it
                                 )
 
@@ -386,7 +387,7 @@ update topMsg topModel =
                                 , countryAndStateVisibility = Animator.init False
                                 , isOnline = True
                                 }
-                            , Api.getReverseGeocoding { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
+                            , Api.GetAddress.getAddress { latitude = data.latitude, longitude = data.longitude } GotCountryAndStateMainScreen
                                 |> Cmd.map OnMainScreenMsg
                             )
 
@@ -395,7 +396,7 @@ update topMsg topModel =
 
                 RetryFetchingWeather ->
                     ( LoadingScreen { model | fetchingStatus = Loading }
-                    , Api.getWeatherData model.coordinates GotWeatherResponse
+                    , Api.GetWeather.getWeather model.coordinates GotWeatherResponse
                         |> Cmd.map OnLoadingScreenMsg
                     )
 
@@ -578,8 +579,8 @@ update topMsg topModel =
                                                         , optionsMenu = Open ( Nothing, Nothing )
                                                       }
                                                     , Cmd.batch
-                                                        [ Api.getReverseGeocoding { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
-                                                        , Api.getWeatherData { latitude = latFloat, longitude = lonFloat } GotRefetchingWeatherResp
+                                                        [ Api.GetAddress.getAddress { latitude = latFloat, longitude = lonFloat } GotCountryAndStateMainScreen
+                                                        , Api.GetWeather.getWeather { latitude = latFloat, longitude = lonFloat } GotRefetchingWeatherResp
                                                         ]
                                                     )
                                                         |> mapToMainScreen
@@ -644,7 +645,7 @@ update topMsg topModel =
                 -- Background refetching
                 GotCountryAndStateMainScreen countryAndState ->
                     case countryAndState of
-                        Ok { address } ->
+                        Ok address ->
                             { model
                                 | currentAddress = Just address
                                 , countryAndStateVisibility =
@@ -684,8 +685,8 @@ update topMsg topModel =
 
                         FixedCoordinates coords ->
                             Cmd.batch
-                                [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords GotRefetchingWeatherResp
+                                [ Api.GetAddress.getAddress coords GotCountryAndStateMainScreen
+                                , Api.GetWeather.getWeather coords GotRefetchingWeatherResp
                                 ]
                     )
                         |> mapToMainScreen
@@ -695,8 +696,8 @@ update topMsg topModel =
                         Open _ ->
                             ( { model | optionsMenu = Open ( Nothing, Nothing ), location = UsingGeoLocation coords }
                             , Cmd.batch
-                                [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords GotRefetchingWeatherResp
+                                [ Api.GetAddress.getAddress coords GotCountryAndStateMainScreen
+                                , Api.GetWeather.getWeather coords GotRefetchingWeatherResp
                                 ]
                             )
                                 |> mapToMainScreen
@@ -704,8 +705,8 @@ update topMsg topModel =
                         _ ->
                             ( { model | location = UsingGeoLocation coords }
                             , Cmd.batch
-                                [ Api.getReverseGeocoding coords GotCountryAndStateMainScreen
-                                , Api.getWeatherData coords GotRefetchingWeatherResp
+                                [ Api.GetAddress.getAddress coords GotCountryAndStateMainScreen
+                                , Api.GetWeather.getWeather coords GotRefetchingWeatherResp
                                 ]
                             )
                                 |> mapToMainScreen
@@ -1153,7 +1154,7 @@ loadingScreenView { fetchingStatus, language } =
 mainScreen : MainScreenModel -> Element MainScreenMsg
 mainScreen ({ zone } as model) =
     let
-        hasHourlyDataOfToday : Maybe (Nonempty Hourly)
+        hasHourlyDataOfToday : Maybe (Nonempty Api.GetWeather.Hourly)
         hasHourlyDataOfToday =
             apiData.hourly |> hourlyDataOfToday zone currentTime |> NEList.fromList
 
@@ -1207,7 +1208,7 @@ mainScreen ({ zone } as model) =
                             ]
                             (text (Localizations.dailySummary model.language))
                         , let
-                            closestHourly : Hourly
+                            closestHourly : Api.GetWeather.Hourly
                             closestHourly =
                                 timeClosestToMine zone currentTime firstHourly restHourly
 
@@ -1254,7 +1255,7 @@ mainScreen ({ zone } as model) =
             case hasHourlyDataOfToday of
                 Just (Nonempty firstHourly restHourly) ->
                     let
-                        closestHourly : Hourly
+                        closestHourly : Api.GetWeather.Hourly
                         closestHourly =
                             timeClosestToMine zone currentTime firstHourly restHourly
 
@@ -1277,10 +1278,10 @@ mainScreen ({ zone } as model) =
                                         (\l ->
                                             case model.language of
                                                 English ->
-                                                    l |> wmoCodeToString
+                                                    l |> Api.GetWeather.wmoCodeToString
 
                                                 Spanish ->
-                                                    l |> esWmoCodeToString
+                                                    l |> Api.GetWeather.esWmoCodeToString
                                         )
                                     |> Maybe.withDefault ""
                                 )
@@ -1346,7 +1347,7 @@ mainScreen ({ zone } as model) =
                     (case hasHourlyDataOfToday of
                         Just (Nonempty firstHourly restHourly) ->
                             let
-                                hourlyClosestToMine : Hourly
+                                hourlyClosestToMine : Api.GetWeather.Hourly
                                 hourlyClosestToMine =
                                     timeClosestToMine zone currentTime firstHourly restHourly
                             in
@@ -1574,7 +1575,7 @@ initialLoadingScreen lang =
         [ paragraph [ Font.center, paddingXY 32 0 ] [ el [ Font.bold, Font.size 64 ] (text (Localizations.loading lang)) ] ]
 
 
-weeklyForecastCard : Color -> Posix -> Float -> WMOCode -> Element msg
+weeklyForecastCard : Color -> Posix -> Float -> Api.GetWeather.WMOCode -> Element msg
 weeklyForecastCard borderColor date max code =
     let
         month : String
@@ -1595,7 +1596,7 @@ weeklyForecastCard borderColor date max code =
         , spacing 12
         ]
         [ el [ centerX ] (text (String.fromFloat max ++ "°"))
-        , el [ centerX ] (wmoCodeToIcon code 24 Inherit |> Element.html)
+        , el [ centerX ] (Api.GetWeather.wmoCodeToIcon code 24 Inherit |> Element.html)
         , el [ centerX, Font.size 14 ] (text (day ++ nbsp ++ String.left 3 month))
         ]
 
@@ -1604,7 +1605,7 @@ weeklyForecastCard borderColor date max code =
 -- HELPERS
 
 
-hourlyDataOfToday : Zone -> Posix -> List Hourly -> List Hourly
+hourlyDataOfToday : Zone -> Posix -> List Api.GetWeather.Hourly -> List Api.GetWeather.Hourly
 hourlyDataOfToday myZone currTime list =
     let
         year : Int
@@ -1651,7 +1652,7 @@ numberWithSign n =
         String.fromFloat n
 
 
-timeClosestToMine : Zone -> Posix -> Hourly -> List Hourly -> Hourly
+timeClosestToMine : Zone -> Posix -> Api.GetWeather.Hourly -> List Api.GetWeather.Hourly -> Api.GetWeather.Hourly
 timeClosestToMine zone time firstItem list =
     -- NOTE: could be made even more bulletproof and use a
     -- function that checks that it's a few hours before

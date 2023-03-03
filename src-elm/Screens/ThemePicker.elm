@@ -1,6 +1,7 @@
 module Screens.ThemePicker exposing (..)
 
-import Api
+import Api.GetAddress
+import Api.GetWeather
 import Cmd.Extra exposing (pure)
 import Components exposing (statCard)
 import Element exposing (Color, Element, centerX, centerY, column, el, fill, height, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spacing, text, toRgb, width)
@@ -46,8 +47,8 @@ type alias ThemePickerModel =
     , customThemes : Maybe CustomThemes
     , location : Location
     , zone : Zone
-    , apiData : ( Api.ResponseData, Posix )
-    , currentAddress : Maybe Api.Address
+    , apiData : ( Api.GetWeather.WeatherData, Posix )
+    , currentAddress : Maybe Api.GetAddress.Address
 
     --
     , customizingTheme :
@@ -230,7 +231,7 @@ themePickerUpdate msg model =
             )
 
 
-themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.ResponseData, Posix ) -> Maybe Api.Address -> Maybe (Nonempty Theme) -> ThemePickerModel
+themePickerInit : Language -> Theme -> Zone -> Location -> ( Api.GetWeather.WeatherData, Posix ) -> Maybe Api.GetAddress.Address -> Maybe (Nonempty Theme) -> ThemePickerModel
 themePickerInit lang currentTheme zone location apiData currentAddress customThemes =
     { language = lang
     , currentTheme = currentTheme
