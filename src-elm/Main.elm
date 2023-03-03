@@ -1549,13 +1549,13 @@ mainScreen ({ zone } as model) =
                     [ el
                         [ Font.color model.secondaryColor ]
                         (text (Localizations.attribution model.language ++ " "))
-                    , link [ Font.family [ Font.monospace ], Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open-Meteo", url = "https://open-meteo.com/" }
+                    , link [ Font.family [ Font.monospace ], Font.underline, Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open-Meteo", url = "https://open-meteo.com/" }
                     ]
                 , paragraph [ Font.alignRight, paddingEach { bottom = 0, top = 8, left = 8, right = 8 }, width fill ]
                     [ el
                         [ Font.color model.secondaryColor ]
                         (text (Localizations.attributionAddress model.language ++ " "))
-                    , link [ Font.family [ Font.monospace ], Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open Street map", url = "https://www.openstreetmap.org/" }
+                    , link [ Font.family [ Font.monospace ], Font.underline, Font.color model.primaryColor, Background.color model.secondaryColor, paddingXY 6 2 ] { label = text "Open Street map", url = "https://www.openstreetmap.org/" }
                     ]
                 ]
             ]
