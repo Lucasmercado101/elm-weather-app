@@ -70,6 +70,19 @@ themeColorsDecoder =
         (field "secondary" colorDecoder)
 
 
+{-| parses something like
+
+```javascript
+[ [ [0, 0, 0], [1,1,1] ], [ [1, 1, 1], [0, 0, 0] ] ]
+```
+
+into
+
+```elm
+Nonempty ( (0,0,0), (1,1,1) ) [ ( (1,1,1), (0,0,0) ) ]
+```
+
+-}
 customThemeColorsDecoder : Decoder (Nonempty Theme)
 customThemeColorsDecoder =
     list (list (list float))
