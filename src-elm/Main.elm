@@ -1359,11 +1359,10 @@ mainScreen ({ zone } as model) =
                                     |> Maybe.withDefault "--"
                                 )
                             , humidityCard
-                                ((hourlyClosestToMine
+                                (hourlyClosestToMine
                                     |> .relativeHumidity
                                     |> String.fromInt
-                                 )
-                                    ++ "%"
+                                    |> prepend "%"
                                 )
                             , visibilityCard
                                 ((hourlyClosestToMine
