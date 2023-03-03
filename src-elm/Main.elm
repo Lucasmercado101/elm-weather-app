@@ -1365,13 +1365,12 @@ mainScreen ({ zone } as model) =
                                     |> prepend "%"
                                 )
                             , visibilityCard
-                                ((hourlyClosestToMine
+                                (hourlyClosestToMine
                                     |> .visibility
                                     |> toKm
                                     |> round
                                     |> String.fromInt
-                                 )
-                                    ++ "km"
+                                    |> prepend "km"
                                 )
                             ]
 
