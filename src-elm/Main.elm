@@ -4,10 +4,12 @@ import Animator
 import Api.Address exposing (Address)
 import Api.Weather exposing (WeatherData)
 import Browser
+import Chart as C
+import Chart.Attributes as CA
 import Cmd.Extra exposing (pure)
 import Components exposing (..)
 import Dict
-import Element exposing (Color, Element, alignBottom, alignLeft, alignRight, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, width)
+import Element exposing (Color, Element, alignBottom, alignLeft, alignRight, alignTop, alpha, centerX, centerY, column, el, fill, height, inFront, layout, link, maximum, none, padding, paddingEach, paddingXY, paragraph, px, rgb, rotate, row, scrollbarX, spaceEvenly, spacing, text, toRgb, width)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Font as Font
@@ -1520,7 +1522,77 @@ mainScreen ({ zone } as model) =
             , currentDateChip
             , bigCurrentTemperature
             , dailySummary
-            , statCards
+            , case hasHourlyDataOfToday of
+                Just val ->
+                    let
+                        pColor =
+                            toRgb model.secondaryColor
+                                |> (\{ blue, green, red } ->
+                                        List.map toHex
+                                            [ round (red * 255)
+                                            , round (green * 255)
+                                            , round (blue * 255)
+
+                                            -- don't know how to do alpha so i'm just omitting it here
+                                            -- , round (alpha * 255)
+                                            ]
+                                            |> (::) "#"
+                                            |> String.concat
+                                   )
+
+                        data : List { x : Float, y : Maybe Float }
+                        data =
+                            val
+                                |> NEList.toList
+                                |> List.map
+                                    (\hourly ->
+                                        { x = hourly.time |> Time.toHour model.zone |> toFloat
+                                        , y = hourly.temperature
+                                        }
+                                    )
+
+                        lowestTemp =
+                            data
+                                |> List.map .y
+                                |> List.map (Maybe.withDefault 0)
+                                |> List.minimum
+                                |> Maybe.map (\l -> l - 1)
+                                |> Maybe.withDefault 0
+
+                        highestTemp =
+                            data
+                                |> List.map .y
+                                |> List.map (Maybe.withDefault 0)
+                                |> List.maximum
+                                |> Maybe.map ((+) 1)
+                                |> Maybe.withDefault 0
+                    in
+                    el [ width fill, paddingEach { right = 18, top = 32, bottom = 32, left = 50 } ]
+                        (C.chart
+                            [ CA.domain
+                                [ CA.lowest lowestTemp CA.exactly
+                                , CA.highest highestTemp CA.exactly
+                                ]
+                            ]
+                            [ C.xLabels
+                                [ CA.color pColor
+                                , CA.ints
+                                , CA.pinned .min
+                                ]
+                            , C.yLabels
+                                [ CA.color pColor
+                                , CA.ints
+                                ]
+                            , C.series .x
+                                [ C.interpolatedMaybe .y [ CA.color pColor ] []
+                                ]
+                                data
+                            ]
+                            |> Element.html
+                        )
+
+                Nothing ->
+                    none
             , -- Weekly Forecast
               el
                 [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
@@ -1542,6 +1614,7 @@ mainScreen ({ zone } as model) =
                     -- don't know if it would be worth it
                     (List.map (\( date, code, max ) -> weeklyForecastCard model.secondaryColor date max code) apiData.daily)
                 )
+            , statCards
 
             -- Attribution
             , column [ width fill, spacing 8 ]
