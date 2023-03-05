@@ -1522,6 +1522,7 @@ mainScreen ({ zone } as model) =
             , currentDateChip
             , bigCurrentTemperature
             , dailySummary
+            , statCards
             , case hasHourlyDataOfToday of
                 Just val ->
                     let
@@ -1614,7 +1615,6 @@ mainScreen ({ zone } as model) =
                     -- don't know if it would be worth it
                     (List.map (\( date, code, max ) -> weeklyForecastCard model.secondaryColor date max code) apiData.daily)
                 )
-            , statCards
 
             -- Attribution
             , column [ width fill, spacing 8 ]
