@@ -1522,7 +1522,6 @@ mainScreen ({ zone } as model) =
             , currentDateChip
             , bigCurrentTemperature
             , dailySummary
-            , statCards
             , case hasHourlyDataOfToday of
                 Just val ->
                     let
@@ -1594,6 +1593,7 @@ mainScreen ({ zone } as model) =
 
                 Nothing ->
                     none
+            , statCards
             , -- Weekly Forecast
               el
                 [ paddingEach { top = 15, left = 15, right = 0, bottom = 0 }
