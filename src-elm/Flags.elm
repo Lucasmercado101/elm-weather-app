@@ -194,7 +194,7 @@ toNonEmptyStr v =
 
 cachedAddressDataDecoder : Decoder Api.Address.Address
 cachedAddressDataDecoder =
-    map3 (\country state city -> { country = country, state = state, city = city })
+    map3 Api.Address.Address
         (field "country" string)
         (maybe (field "state" string) |> map (Maybe.andThen toNonEmptyStr))
         (maybe (field "city" string) |> map (Maybe.andThen toNonEmptyStr))
