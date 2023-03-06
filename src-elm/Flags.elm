@@ -1,5 +1,6 @@
 module Flags exposing (..)
 
+import Api.Address
 import Api.Weather
 import Element exposing (Color)
 import Json.Decode exposing (..)
@@ -191,6 +192,14 @@ toNonEmptyStr v =
         Just v
 
 
+cachedAddressDataDecoder : Decoder Api.Address.Address
+cachedAddressDataDecoder =
+    map3 (\country state city -> { country = country, state = state, city = city })
+        (field "country" string)
+        (maybe (field "state" string) |> map (Maybe.andThen toNonEmptyStr))
+        (maybe (field "city" string) |> map (Maybe.andThen toNonEmptyStr))
+
+
 cachedWeatherAndAddressDataDecoder : Decoder Flags
 cachedWeatherAndAddressDataDecoder =
     map8
@@ -208,13 +217,7 @@ cachedWeatherAndAddressDataDecoder =
         )
         (field "posixTimeNow" int)
         (field "cachedWeatherData" Api.Weather.responseDataDecoder)
-        (field "addressData"
-            (map3 (\country state city -> { country = country, state = state, city = city })
-                (field "country" string)
-                (maybe (field "state" string) |> map (Maybe.andThen toNonEmptyStr))
-                (maybe (field "city" string) |> map (Maybe.andThen toNonEmptyStr))
-            )
-        )
+        (field "addressData" cachedAddressDataDecoder)
         (maybe (jsonField "usingGeoLocation" bool) |> map (Maybe.withDefault False))
         (field "language" languageDecoder)
         (maybe (field "theme" themeColorsDecoder))
