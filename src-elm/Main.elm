@@ -1386,6 +1386,80 @@ mainScreen ({ zone } as model) =
                             ]
                     )
                 )
+
+        temperatureGraph : Element msg
+        temperatureGraph =
+            case hasHourlyDataOfToday of
+                Just val ->
+                    let
+                        pColor =
+                            toRgb model.secondaryColor
+                                |> (\{ blue, green, red } ->
+                                        List.map toHex
+                                            [ round (red * 255)
+                                            , round (green * 255)
+                                            , round (blue * 255)
+
+                                            -- don't know how to do alpha so i'm just omitting it here
+                                            -- , round (alpha * 255)
+                                            ]
+                                            |> (::) "#"
+                                            |> String.concat
+                                   )
+
+                        data : List { x : Float, y : Maybe Float }
+                        data =
+                            val
+                                |> NEList.toList
+                                |> List.map
+                                    (\hourly ->
+                                        { x = hourly.time |> Time.toHour model.zone |> toFloat
+                                        , y = hourly.temperature
+                                        }
+                                    )
+
+                        lowestTemp =
+                            data
+                                |> List.map .y
+                                |> List.map (Maybe.withDefault 0)
+                                |> List.minimum
+                                |> Maybe.map (\l -> l - 1)
+                                |> Maybe.withDefault 0
+
+                        highestTemp =
+                            data
+                                |> List.map .y
+                                |> List.map (Maybe.withDefault 0)
+                                |> List.maximum
+                                |> Maybe.map ((+) 1)
+                                |> Maybe.withDefault 0
+                    in
+                    el [ width fill, paddingEach { right = 18, top = 32, bottom = 32, left = 50 } ]
+                        (C.chart
+                            [ CA.domain
+                                [ CA.lowest lowestTemp CA.exactly
+                                , CA.highest highestTemp CA.exactly
+                                ]
+                            ]
+                            [ C.xLabels
+                                [ CA.color pColor
+                                , CA.ints
+                                , CA.pinned .min
+                                ]
+                            , C.yLabels
+                                [ CA.color pColor
+                                , CA.ints
+                                ]
+                            , C.series .x
+                                [ C.interpolatedMaybe .y [ CA.color pColor ] []
+                                ]
+                                data
+                            ]
+                            |> Element.html
+                        )
+
+                Nothing ->
+                    none
     in
     el
         [ width fill
@@ -1522,77 +1596,7 @@ mainScreen ({ zone } as model) =
             , currentDateChip
             , bigCurrentTemperature
             , dailySummary
-            , case hasHourlyDataOfToday of
-                Just val ->
-                    let
-                        pColor =
-                            toRgb model.secondaryColor
-                                |> (\{ blue, green, red } ->
-                                        List.map toHex
-                                            [ round (red * 255)
-                                            , round (green * 255)
-                                            , round (blue * 255)
-
-                                            -- don't know how to do alpha so i'm just omitting it here
-                                            -- , round (alpha * 255)
-                                            ]
-                                            |> (::) "#"
-                                            |> String.concat
-                                   )
-
-                        data : List { x : Float, y : Maybe Float }
-                        data =
-                            val
-                                |> NEList.toList
-                                |> List.map
-                                    (\hourly ->
-                                        { x = hourly.time |> Time.toHour model.zone |> toFloat
-                                        , y = hourly.temperature
-                                        }
-                                    )
-
-                        lowestTemp =
-                            data
-                                |> List.map .y
-                                |> List.map (Maybe.withDefault 0)
-                                |> List.minimum
-                                |> Maybe.map (\l -> l - 1)
-                                |> Maybe.withDefault 0
-
-                        highestTemp =
-                            data
-                                |> List.map .y
-                                |> List.map (Maybe.withDefault 0)
-                                |> List.maximum
-                                |> Maybe.map ((+) 1)
-                                |> Maybe.withDefault 0
-                    in
-                    el [ width fill, paddingEach { right = 18, top = 32, bottom = 32, left = 50 } ]
-                        (C.chart
-                            [ CA.domain
-                                [ CA.lowest lowestTemp CA.exactly
-                                , CA.highest highestTemp CA.exactly
-                                ]
-                            ]
-                            [ C.xLabels
-                                [ CA.color pColor
-                                , CA.ints
-                                , CA.pinned .min
-                                ]
-                            , C.yLabels
-                                [ CA.color pColor
-                                , CA.ints
-                                ]
-                            , C.series .x
-                                [ C.interpolatedMaybe .y [ CA.color pColor ] []
-                                ]
-                                data
-                            ]
-                            |> Element.html
-                        )
-
-                Nothing ->
-                    none
+            , temperatureGraph
             , statCards
             , -- Weekly Forecast
               el
